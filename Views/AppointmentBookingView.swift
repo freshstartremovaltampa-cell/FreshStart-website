@@ -5,23 +5,19 @@ struct AppointmentBookingView: View {
     @ObservedObject var viewModel: AppointmentViewModel
     @Environment(\.dismiss) private var dismiss
 
-    // Populate fields when editing an existing appointment
     let existingAppointment: Appointment?
 
-    @State private var customerName = ""
-    @State private var customerPhone = ""
-    @State private var customerEmail = ""
-    @State private var serviceAddress = ""
-    @State private var serviceType = ServiceType.fullJunkRemoval
-    @State private var scheduledDate = Date()
-    @State private var estimatedCost = ""
-    @State private var notes = ""
-    @State private var status = AppointmentStatus.pending
+    @State private var customerName    = ""
+    @State private var customerPhone   = ""
+    @State private var serviceAddress  = ""
+    @State private var scheduledDate   = Date()
+    @State private var notes           = ""
 
+    // PhotosPicker state — capped at 5 selections
     @State private var selectedPhotoItems: [PhotosPickerItem] = []
-    @State private var displayImages: [UIImage] = []
+    @State private var selectedImages: [UIImage] = []
 
-    @State private var isSaving = false
+    @State private var isSaving  = false
     @State private var showError = false
     @State private var errorText = ""
 
@@ -32,30 +28,32 @@ struct AppointmentBookingView: View {
 
     var isEditing: Bool { existingAppointment != nil }
 
+    // MARK: - Body
+
     var body: some View {
         NavigationStack {
             Form {
-                customerSection
-                serviceSection
-                scheduleSection
-                photosSection
+                contactSection
+                addressSection
+                dateTimeSection
+                photoSection
                 notesSection
-                if isEditing { statusSection }
             }
-            .navigationTitle(isEditing ? "Edit Appointment" : "New Appointment")
+            .navigationTitle(isEditing ? "Edit Booking" : "Book a Pickup")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(isEditing ? "Save" : "Book") {
+                    Button(isEditing ? "Save" : "Request Quote") {
                         Task { await save() }
                     }
+                    .fontWeight(.semibold)
                     .disabled(isSaving || !isFormValid)
                 }
             }
-            .alert("Error", isPresented: $showError) {
+            .alert("Something went wrong", isPresented: $showError) {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(errorText)
@@ -64,80 +62,136 @@ struct AppointmentBookingView: View {
         }
     }
 
-    // MARK: - Form Sections
+    // MARK: - Sections
 
-    private var customerSection: some View {
-        Section("Customer Info") {
+    /// Name and phone fields.
+    private var contactSection: some View {
+        Section("Your Info") {
             TextField("Full Name", text: $customerName)
                 .textContentType(.name)
+
             TextField("Phone Number", text: $customerPhone)
                 .textContentType(.telephoneNumber)
                 .keyboardType(.phonePad)
-            TextField("Email", text: $customerEmail)
-                .textContentType(.emailAddress)
-                .keyboardType(.emailAddress)
-                .autocapitalization(.none)
         }
     }
 
-    private var serviceSection: some View {
-        Section("Service Details") {
-            TextField("Service Address", text: $serviceAddress)
+    /// Single-line address field.
+    private var addressSection: some View {
+        Section("Pickup Address") {
+            TextField("Street, City, State, ZIP", text: $serviceAddress)
                 .textContentType(.fullStreetAddress)
-
-            Picker("Service Type", selection: $serviceType) {
-                ForEach(ServiceType.allCases, id: \.self) { type in
-                    Text(type.rawValue).tag(type)
-                }
-            }
-
-            HStack {
-                Text("Estimated Cost")
-                Spacer()
-                TextField("$0.00", text: $estimatedCost)
-                    .keyboardType(.decimalPad)
-                    .multilineTextAlignment(.trailing)
-                    .frame(width: 100)
-            }
         }
     }
 
-    private var scheduleSection: some View {
-        Section("Schedule") {
+    /// Date and time picker limited to future dates.
+    private var dateTimeSection: some View {
+        Section("Preferred Date & Time") {
             DatePicker(
-                "Date & Time",
+                "Pickup Date",
                 selection: $scheduledDate,
                 in: Date()...,
                 displayedComponents: [.date, .hourAndMinute]
             )
+            .datePickerStyle(.graphical)
+            .tint(.green)
         }
     }
 
-    private var photosSection: some View {
-        Section("Job Photos") {
-            PhotoGridView(
-                selectedItems: $selectedPhotoItems,
-                displayImages: $displayImages,
-                uploadProgress: viewModel.uploadProgress
-            )
+    /// PhotosPicker button + horizontal scroll grid of thumbnails.
+    private var photoSection: some View {
+        Section {
+            // Picker button — always visible so the user can add more photos
+            PhotosPicker(
+                selection: $selectedPhotoItems,
+                maxSelectionCount: 5,
+                matching: .images,
+                photoLibrary: .shared()
+            ) {
+                Label(
+                    selectedImages.isEmpty
+                        ? "Add Photos of Your Junk"
+                        : "Change Photos (\(selectedImages.count)/5)",
+                    systemImage: "camera.fill"
+                )
+                .frame(maxWidth: .infinity, alignment: .center)
+                .foregroundStyle(.green)
+            }
+            // Only show the grid once photos are chosen
+            .onChange(of: selectedPhotoItems) { _, newItems in
+                loadImages(from: newItems)
+            }
+
+            if !selectedImages.isEmpty {
+                photoThumbnailRow
+            }
+        } header: {
+            Text("Junk Photos")
+        } footer: {
+            Text("Upload up to 5 photos so we can give you an accurate quote.")
+                .font(.footnote)
+        }
+    }
+
+    /// Horizontal scrolling row of selected photo thumbnails with remove buttons.
+    private var photoThumbnailRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                ForEach(Array(selectedImages.enumerated()), id: \.offset) { index, image in
+                    ZStack(alignment: .topTrailing) {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 110, height: 110)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .shadow(radius: 2)
+
+                        // Remove button
+                        Button {
+                            removePhoto(at: index)
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .symbolRenderingMode(.palette)
+                                .foregroundStyle(.white, .black.opacity(0.7))
+                                .font(.title3)
+                        }
+                        .padding(4)
+                    }
+                }
+            }
+            .padding(.vertical, 4)
         }
     }
 
     private var notesSection: some View {
-        Section("Notes") {
-            TextField("Any special instructions…", text: $notes, axis: .vertical)
+        Section("Notes (optional)") {
+            TextField("Describe the items, heavy furniture, stairs, etc.", text: $notes, axis: .vertical)
                 .lineLimit(3...6)
         }
     }
 
-    private var statusSection: some View {
-        Section("Status") {
-            Picker("Job Status", selection: $status) {
-                ForEach(AppointmentStatus.allCases, id: \.self) { s in
-                    Text(s.rawValue).tag(s)
+    // MARK: - Photo Helpers
+
+    /// Loads `UIImage` values from the picker items and updates `selectedImages`.
+    private func loadImages(from items: [PhotosPickerItem]) {
+        selectedImages = []
+        for item in items {
+            item.loadTransferable(type: Data.self) { result in
+                guard case .success(let data) = result,
+                      let data,
+                      let image = UIImage(data: data) else { return }
+                DispatchQueue.main.async {
+                    selectedImages.append(image)
                 }
             }
-            .pickerStyle(.segmented)
+        }
+    }
+
+    private func removePhoto(at index: Int) {
+        guard index < selectedImages.count else { return }
+        selectedImages.remove(at: index)
+        if index < selectedPhotoItems.count {
+            selectedPhotoItems.remove(at: index)
         }
     }
 
@@ -149,19 +203,15 @@ struct AppointmentBookingView: View {
         !serviceAddress.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    // MARK: - Actions
+    // MARK: - Save
 
     private func populateIfEditing() {
         guard let appt = existingAppointment else { return }
-        customerName    = appt.customerName
-        customerPhone   = appt.customerPhone
-        customerEmail   = appt.customerEmail
-        serviceAddress  = appt.serviceAddress
-        serviceType     = appt.serviceType
-        scheduledDate   = appt.scheduledDate
-        notes           = appt.notes
-        status          = appt.status
-        estimatedCost   = appt.estimatedCost.map { String(format: "%.2f", $0) } ?? ""
+        customerName   = appt.customerName
+        customerPhone  = appt.customerPhone
+        serviceAddress = appt.serviceAddress
+        scheduledDate  = appt.scheduledDate
+        notes          = appt.notes
     }
 
     private func save() async {
@@ -181,14 +231,11 @@ struct AppointmentBookingView: View {
                 id: appointmentID,
                 customerName: customerName.trimmingCharacters(in: .whitespaces),
                 customerPhone: customerPhone.trimmingCharacters(in: .whitespaces),
-                customerEmail: customerEmail.trimmingCharacters(in: .whitespaces),
                 serviceAddress: serviceAddress.trimmingCharacters(in: .whitespaces),
-                serviceType: serviceType,
                 scheduledDate: scheduledDate,
                 photoURLs: uploadedURLs,
                 notes: notes,
-                status: status,
-                estimatedCost: Double(estimatedCost),
+                status: existingAppointment?.status ?? .pending,
                 createdAt: existingAppointment?.createdAt ?? Date(),
                 updatedAt: Date()
             )
