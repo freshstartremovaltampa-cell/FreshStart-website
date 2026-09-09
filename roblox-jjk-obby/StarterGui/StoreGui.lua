@@ -172,11 +172,15 @@ for _, cat in ipairs(categories) do
 		buyBtn.Parent=row
 		local bc=Instance.new("UICorner"); bc.CornerRadius=UDim.new(0,8); bc.Parent=buyBtn
 
-		buyBtn.MouseButton1Click:Connect(function()
-			local product = GameData.Products[item.key]
-			if product and product.productId ~= 0 then
+		local product = GameData.Products[item.key]
+		if not product or product.productId == 0 then
+			buyBtn.Text             = "Coming Soon"
+			buyBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+			buyBtn.TextColor3       = Color3.fromRGB(120, 120, 140)
+		else
+			buyBtn.MouseButton1Click:Connect(function()
 				MarketplaceService:PromptProductPurchase(player, product.productId)
-			end
-		end)
+			end)
+		end
 	end
 end

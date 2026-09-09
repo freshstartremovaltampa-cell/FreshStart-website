@@ -122,10 +122,22 @@ GameData.CursedTools = {
 }
 
 -- ============================================================
--- STORE ITEMS (Robux products — fill in actual IDs)
+-- STORE ITEMS (Robux products)
+--
+-- HOW TO SET UP PRODUCT IDs (do this before publishing):
+--   1. Go to create.roblox.com → open your game → Monetization → Developer Products
+--   2. Click "+ Create a Developer Product" for each item below
+--   3. Use the exact Name shown and the Robux price listed
+--   4. After creating, Roblox gives you a numeric Product ID
+--   5. Replace the 0 next to productId= with that number
+--   6. Repeat for all 9 products
+--
+-- The game works with 0s (buttons show "Coming Soon") but
+-- purchases won't process until real IDs are filled in.
 -- ============================================================
 
 GameData.Products = {
+	-- Name in Creator Hub            productId  Price   Notes
 	EarlyPathSwitch  = { productId=0, name="Early Path Switch",      robux=99,  description="Switch paths now. Cursed tools carry over." },
 	DoubleDamage     = { productId=0, name="x2 DAMAGE",              robux=299, description="Permanently double your damage output.",  permanent=true },
 	SpeedBoost       = { productId=0, name="+5 Speed PERMANENT",     robux=199, description="Add +5 walkspeed permanently.",           permanent=true },

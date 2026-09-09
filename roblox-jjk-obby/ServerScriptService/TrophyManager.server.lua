@@ -25,9 +25,10 @@ function TrophyManager.Award(player, baseAmount)
 	local data = PDM().Get(player)
 	if not data then return end
 
-	local rebirthMult = GameData.GetRebirthMultiplier(data.rebirthCount)
-	local vipMult     = data.hasVip and 2 or 1
-	local total       = math.floor(baseAmount * rebirthMult * vipMult)
+	local rebirthMult  = GameData.GetRebirthMultiplier(data.rebirthCount)
+	local vipMult      = data.hasVip and 2 or 1
+	local timedMult    = (data.doubleTrophiesExpiry and os.time() < data.doubleTrophiesExpiry) and 2 or 1
+	local total        = math.floor(baseAmount * rebirthMult * vipMult * timedMult)
 
 	PDM().AddTrophies(player, total)
 	PDM().AddXP(player, math.floor(total * 0.1))

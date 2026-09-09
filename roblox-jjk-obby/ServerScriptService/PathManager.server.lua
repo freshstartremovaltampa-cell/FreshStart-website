@@ -21,6 +21,7 @@ local UpdateStats   = RemoteEvents:WaitForChild("UpdateStats")     -- server →
 local PathChanged   = RemoteEvents:WaitForChild("PathChanged")     -- server → client: (newPath, stage)
 
 local EARLY_SWITCH_PRODUCT_ID = GameData.Products.EarlyPathSwitch.productId
+-- 0 means not yet configured in Creator Hub — purchase prompt is disabled until set
 
 local function applyPlayerStats(player)
 	local PDM  = getPlayerDataManager()
@@ -68,10 +69,11 @@ SwitchPath.OnServerEvent:Connect(function(player)
 
 	if canSwitchFree then
 		performSwitch(player, data, PDM)
-	else
-		-- Prompt purchase of early switch
+	elseif EARLY_SWITCH_PRODUCT_ID ~= 0 then
+		-- Receipt is handled by PurchaseManager.server.lua
 		MarketplaceService:PromptProductPurchase(player, EARLY_SWITCH_PRODUCT_ID)
-		-- Actual switch handled in ProcessReceipt below
+	else
+		warn("[PathManager] EarlyPathSwitch productId not set — configure it in GameData.Products.")
 	end
 end)
 
@@ -84,22 +86,6 @@ function performSwitch(player, data, PDM)
 
 	PathChanged:FireClient(player, data.path, data.stage)
 	applyPlayerStats(player)
-end
-
--- Handle paid product receipts
-MarketplaceService.ProcessReceipt = function(receiptInfo)
-	if receiptInfo.ProductId == EARLY_SWITCH_PRODUCT_ID then
-		local player = Players:GetPlayerByUserId(receiptInfo.PlayerId)
-		if player then
-			local PDM  = getPlayerDataManager()
-			local data = PDM.Get(player)
-			if data and data.path then
-				performSwitch(player, data, PDM)
-			end
-		end
-		return Enum.ProductPurchaseDecision.PurchaseGranted
-	end
-	return Enum.ProductPurchaseDecision.NotProcessedYet
 end
 
 -- Re-apply stats when character respawns

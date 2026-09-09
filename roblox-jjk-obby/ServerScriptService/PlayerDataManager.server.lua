@@ -24,10 +24,12 @@ local DEFAULT_DATA = {
 	-- inventory (cursed tools - NEVER reset on rebirth)
 	inventory       = {},
 	-- purchased perks (permanent, survive rebirth)
-	hasDoubleDamage = false,
-	hasSpeedBoost   = false,
-	hasVip          = false,
-	hasAutoFight    = false,
+	hasDoubleDamage      = false,
+	hasSpeedBoost        = false,
+	hasVip               = false,
+	hasAutoFight         = false,
+	-- timed boost
+	doubleTrophiesExpiry = 0,   -- os.time() when 2x trophies expires (0 = inactive)
 	-- session boosts (reset on join, not saved)
 	tempDamageMultiplier = 1,
 	-- daily reward
