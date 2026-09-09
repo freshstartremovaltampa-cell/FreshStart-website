@@ -28,10 +28,14 @@ for _, name in ipairs({
 	"SelectPath","SwitchPath","StageEvolved","UpdateStats","PathChanged",
 	"EnemyKilled","InventoryUpdate","TrophyUpdate","RebirthRequest",
 	"RebirthResult","BuyStageRequest","DamageBoostRequest","WaveUpdate",
+	"BuyDomain","EquipDomain","SpiritAction","SpiritDropped","DailyRewardClaimed",
 }) do re(ev, name) end
 
 -- Functions
-for _, name in ipairs({"GetPlayerData","GetInventory"}) do rf(fn, name) end
+for _, name in ipairs({
+	"GetPlayerData","GetInventory",
+	"ClaimDailyReward","GetDailyStatus","GetDomainsData","GetSpiritsData",
+}) do rf(fn, name) end
 
 -- Ensure Stages folder exists before builders run
 if not workspace:FindFirstChild("Stages") then

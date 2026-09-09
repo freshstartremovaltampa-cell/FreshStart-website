@@ -32,6 +32,15 @@ function StatsCalculator.GetFinalStats(path, stageId, inventory)
 	}
 end
 
+-- Convenience wrapper: pass the full player data table
+function StatsCalculator.GetPlayerStats(data)
+	local stats = StatsCalculator.GetFinalStats(data.path, data.stage, data.inventory)
+	local domainMult  = GameData.GetDomainMult(data.equippedDomain)
+	local spiritMult  = GameData.GetSpiritsMult(data.equippedSpirits, data.spirits)
+	stats.damage = math.round(stats.damage * domainMult * spiritMult)
+	return stats
+end
+
 -- Applies stats to an actual Roblox character model
 function StatsCalculator.ApplyToCharacter(character, stats)
 	local humanoid = character:FindFirstChildOfClass("Humanoid")

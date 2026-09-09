@@ -138,6 +138,49 @@ GameData.Products = {
 }
 
 -- ============================================================
+-- DOMAINS  (Auras — buy with trophies, require rebirth count)
+-- ============================================================
+
+GameData.Domains = {
+	{ id="CursedEnergyVeil",    name="Cursed Energy Veil",     damageMult=1.25, trophyCost=0,         rebirthReq=0,  color=Color3.fromRGB(120,200,80)  },
+	{ id="BlackFlash",           name="Black Flash",             damageMult=1.5,  trophyCost=1000,      rebirthReq=1,  color=Color3.fromRGB(60,120,220)  },
+	{ id="DivergentFist",        name="Divergent Fist",          damageMult=2,    trophyCost=10000,     rebirthReq=3,  color=Color3.fromRGB(220,120,60)  },
+	{ id="HollowPurple",         name="Hollow Purple",           damageMult=3,    trophyCost=100000,    rebirthReq=5,  color=Color3.fromRGB(160,60,220)  },
+	{ id="MalevolentShrine",     name="Malevolent Shrine",       damageMult=5,    trophyCost=1000000,   rebirthReq=10, color=Color3.fromRGB(220,0,80)    },
+	{ id="UnlimitedVoid",        name="Unlimited Void",          damageMult=8,    trophyCost=10000000,  rebirthReq=20, color=Color3.fromRGB(0,200,255)   },
+	{ id="AuthenticMutualLove",  name="Authentic Mutual Love",   damageMult=12,   trophyCost=100000000, rebirthReq=30, color=Color3.fromRGB(255,200,0)   },
+}
+
+-- ============================================================
+-- SPIRITS  (Pets — drop from enemies, equip up to 4)
+-- ============================================================
+
+GameData.Spirits = {
+	{ id="CursedWombSpirit",   name="Cursed Womb",   rarity="Common",    damageMult=1.10, dropWeight=30 },
+	{ id="FingerBearerSpirit", name="Finger Bearer", rarity="Common",    damageMult=1.15, dropWeight=25 },
+	{ id="SmallpoxSpirit",     name="Smallpox Deity",rarity="Uncommon",  damageMult=1.30, dropWeight=18 },
+	{ id="MahitoSpirit",       name="Mahito",        rarity="Uncommon",  damageMult=1.50, dropWeight=12 },
+	{ id="HanamiSpirit",       name="Hanami",        rarity="Rare",      damageMult=1.75, dropWeight=7  },
+	{ id="JogoSpirit",         name="Jogo",          rarity="Rare",      damageMult=2.00, dropWeight=5  },
+	{ id="DagonSpirit",        name="Dagon",         rarity="Epic",      damageMult=2.50, dropWeight=2  },
+	{ id="GetouSpirit",        name="Suguru Geto",   rarity="Legendary", damageMult=3.00, dropWeight=1  },
+}
+
+-- ============================================================
+-- DAILY REWARDS  (7-day streak, loops after day 7)
+-- ============================================================
+
+GameData.DailyRewards = {
+	{ day=1, type="trophies",  amount=500,   label="🏆 +500 Trophies",        emoji="🏆" },
+	{ day=2, type="speed",     amount=5,     label="⚡ +5 Speed (session)",    emoji="⚡" },
+	{ day=3, type="tool",      rarity="Uncommon", label="🗡️ Uncommon Cursed Tool",  emoji="🗡️" },
+	{ day=4, type="trophies",  amount=5000,  label="🏆 +5,000 Trophies",       emoji="🏆" },
+	{ day=5, type="hp",        amount=50,    label="❤️ +50 Max HP (session)",  emoji="❤️" },
+	{ day=6, type="tool",      rarity="Rare",    label="🗡️ Rare Cursed Tool",       emoji="🗡️" },
+	{ day=7, type="chest",     amount=25000, label="💜 Legendary Chest!",      emoji="💜" },
+}
+
+-- ============================================================
 -- RARITY COLORS
 -- ============================================================
 
@@ -151,6 +194,54 @@ GameData.RarityColors = {
 -- ============================================================
 -- HELPERS
 -- ============================================================
+
+function GameData.GetDomainById(id)
+	for _, d in ipairs(GameData.Domains) do
+		if d.id == id then return d end
+	end
+end
+
+function GameData.GetSpiritById(id)
+	for _, s in ipairs(GameData.Spirits) do
+		if s.id == id then return s end
+	end
+end
+
+-- Returns total damage multiplier from an equipped domain (1 if none)
+function GameData.GetDomainMult(equippedDomainId)
+	if not equippedDomainId then return 1 end
+	local d = GameData.GetDomainById(equippedDomainId)
+	return d and d.damageMult or 1
+end
+
+-- Returns total damage multiplier from equipped spirits
+-- equippedUids: array of instance uids; spiritInstances: array of {spiritId, uid}
+function GameData.GetSpiritsMult(equippedUids, spiritInstances)
+	local bonus = 0
+	for _, uid in ipairs(equippedUids or {}) do
+		for _, inst in ipairs(spiritInstances or {}) do
+			if inst.uid == uid then
+				local sd = GameData.GetSpiritById(inst.spiritId)
+				if sd then bonus = bonus + (sd.damageMult - 1) end
+				break
+			end
+		end
+	end
+	return 1 + bonus
+end
+
+-- Weighted random spirit drop
+function GameData.RollSpiritDrop()
+	local totalWeight = 0
+	for _, s in ipairs(GameData.Spirits) do totalWeight = totalWeight + s.dropWeight end
+	local roll = math.random() * totalWeight
+	local running = 0
+	for _, s in ipairs(GameData.Spirits) do
+		running = running + s.dropWeight
+		if roll <= running then return s end
+	end
+	return GameData.Spirits[1]
+end
 
 function GameData.GetToolById(id)
 	for _, t in ipairs(GameData.CursedTools) do

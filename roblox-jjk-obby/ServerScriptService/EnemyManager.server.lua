@@ -12,6 +12,7 @@ local GameData = require(ReplicatedStorage.Modules.GameData)
 local function PDM() return require(game.ServerScriptService.PlayerDataManager) end
 local function TM()  return require(game.ServerScriptService.TrophyManager)     end
 local function CTM() return require(game.ServerScriptService.CursedToolManager) end
+local function SM()  return require(game.ServerScriptService.SpiritManager)     end
 
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
 local EnemyKilled  = RemoteEvents:WaitForChild("EnemyKilled")
@@ -185,6 +186,9 @@ spawnWave = function(player)
 					-- Award trophies per kill
 					local tBase = GameData.TrophiesPerKill[data.stage] or 20
 					TM().Award(player, tBase)
+
+					-- Spirit drop (independent of tool drop)
+					SM().TryDropSpirit(player)
 
 					-- Loot roll
 					local toolId = rollDrop(enemyData)

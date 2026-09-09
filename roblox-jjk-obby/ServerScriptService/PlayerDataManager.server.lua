@@ -30,6 +30,16 @@ local DEFAULT_DATA = {
 	hasAutoFight    = false,
 	-- session boosts (reset on join, not saved)
 	tempDamageMultiplier = 1,
+	-- daily reward
+	lastDailyReward = 0,    -- os.time() of last successful claim
+	dailyStreak     = 0,    -- 1-7; 0 = never claimed
+	-- domains (auras)
+	ownedDomains    = {},   -- array of domain id strings
+	equippedDomain  = nil,
+	-- spirits (pets)
+	spirits         = {},   -- array of { spiritId=string, uid=number }
+	spiritNextUid   = 1,
+	equippedSpirits = {},   -- array of up to 4 spirit instance uids
 }
 
 local XP_PER_LEVEL = 1000  -- flat for now; can curve later
@@ -113,6 +123,144 @@ end
 
 function PlayerDataManager.XpNeeded()
 	return XP_PER_LEVEL
+end
+
+-- ---- Daily reward ----
+-- Returns { ok=bool, reward=DailyReward, streak=N } or { ok=false, wait=seconds }
+function PlayerDataManager.ClaimDaily(player)
+	local data = cache[player.UserId]
+	if not data then return { ok=false } end
+	local now = os.time()
+	local elapsed = now - data.lastDailyReward
+	if elapsed < 86400 then
+		return { ok=false, wait=86400 - elapsed }
+	end
+	-- streak expires if more than 48 hours have passed
+	if elapsed >= 172800 then data.dailyStreak = 0 end
+	data.dailyStreak    = (data.dailyStreak % 7) + 1
+	data.lastDailyReward = now
+	save(player)
+	local GameData = require(game.ReplicatedStorage.Modules.GameData)
+	return { ok=true, reward=GameData.DailyRewards[data.dailyStreak], streak=data.dailyStreak }
+end
+
+-- ---- Domains ----
+function PlayerDataManager.BuyDomain(player, domainId)
+	local data = cache[player.UserId]
+	if not data then return false, "no data" end
+	local GameData = require(game.ReplicatedStorage.Modules.GameData)
+	local domain = GameData.GetDomainById(domainId)
+	if not domain then return false, "unknown domain" end
+	for _, id in ipairs(data.ownedDomains) do
+		if id == domainId then return false, "already owned" end
+	end
+	if data.rebirthCount < domain.rebirthReq then return false, "need "..domain.rebirthReq.." rebirths" end
+	if data.trophies < domain.trophyCost then return false, "not enough trophies" end
+	data.trophies = data.trophies - domain.trophyCost
+	table.insert(data.ownedDomains, domainId)
+	save(player)
+	return true
+end
+
+function PlayerDataManager.EquipDomain(player, domainId)
+	local data = cache[player.UserId]
+	if not data then return false end
+	if domainId == nil then data.equippedDomain = nil save(player) return true end
+	for _, id in ipairs(data.ownedDomains) do
+		if id == domainId then
+			data.equippedDomain = domainId
+			save(player)
+			return true
+		end
+	end
+	return false
+end
+
+-- ---- Spirits ----
+local MAX_SPIRITS    = 100
+local MAX_EQUIPPED   = 4
+
+function PlayerDataManager.AddSpirit(player, spiritId)
+	local data = cache[player.UserId]
+	if not data then return false end
+	if #data.spirits >= MAX_SPIRITS then return false end
+	local uid = data.spiritNextUid
+	data.spiritNextUid = uid + 1
+	table.insert(data.spirits, { spiritId=spiritId, uid=uid })
+	save(player)
+	return uid
+end
+
+function PlayerDataManager.RemoveSpirit(player, instanceUid)
+	local data = cache[player.UserId]
+	if not data then return false end
+	for i, inst in ipairs(data.spirits) do
+		if inst.uid == instanceUid then
+			table.remove(data.spirits, i)
+			-- unequip if equipped
+			for j, uid in ipairs(data.equippedSpirits) do
+				if uid == instanceUid then table.remove(data.equippedSpirits, j) break end
+			end
+			save(player)
+			return true
+		end
+	end
+	return false
+end
+
+function PlayerDataManager.EquipSpirit(player, instanceUid)
+	local data = cache[player.UserId]
+	if not data then return false end
+	-- check already equipped
+	for _, uid in ipairs(data.equippedSpirits) do
+		if uid == instanceUid then return true end
+	end
+	-- check owned
+	local owned = false
+	for _, inst in ipairs(data.spirits) do
+		if inst.uid == instanceUid then owned=true break end
+	end
+	if not owned then return false end
+	if #data.equippedSpirits >= MAX_EQUIPPED then
+		table.remove(data.equippedSpirits, 1)  -- drop oldest
+	end
+	table.insert(data.equippedSpirits, instanceUid)
+	save(player)
+	return true
+end
+
+function PlayerDataManager.UnequipSpirit(player, instanceUid)
+	local data = cache[player.UserId]
+	if not data then return false end
+	for i, uid in ipairs(data.equippedSpirits) do
+		if uid == instanceUid then table.remove(data.equippedSpirits, i) save(player) return true end
+	end
+	return false
+end
+
+function PlayerDataManager.UnequipAllSpirits(player)
+	local data = cache[player.UserId]
+	if not data then return end
+	data.equippedSpirits = {}
+	save(player)
+end
+
+-- ---- EquipBestSpirits: auto-equip the 4 highest damageMult spirits ----
+function PlayerDataManager.EquipBestSpirits(player)
+	local data = cache[player.UserId]
+	if not data then return end
+	local GameData = require(game.ReplicatedStorage.Modules.GameData)
+	local sorted = {}
+	for _, inst in ipairs(data.spirits) do
+		local sd = GameData.GetSpiritById(inst.spiritId)
+		table.insert(sorted, { uid=inst.uid, mult=sd and sd.damageMult or 1 })
+	end
+	table.sort(sorted, function(a,b) return a.mult > b.mult end)
+	data.equippedSpirits = {}
+	for i = 1, math.min(MAX_EQUIPPED, #sorted) do
+		table.insert(data.equippedSpirits, sorted[i].uid)
+	end
+	save(player)
 end
 
 -- Reset everything except inventory and permanent perks

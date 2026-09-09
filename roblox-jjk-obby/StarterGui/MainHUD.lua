@@ -146,7 +146,6 @@ local dailyBtn = makeButton(topBar,"DailyBtn","🎁  DAILY",
 	UDim2.new(0,110,0,32),
 	UDim2.new(0,8,0.5,-16),
 	function()
-		-- open daily reward gui
 		local g = playerGui:FindFirstChild("DailyGui")
 		if g then g.Enabled = not g.Enabled end
 	end)
@@ -182,7 +181,10 @@ local domainBtn = makeButton(topBar,"DomainBtn","Domain",
 	Color3.fromRGB(40,180,80),
 	UDim2.new(0,110,0,32),
 	UDim2.new(0.5,90,0.5,-16),
-	function() end)
+	function()
+		local g = playerGui:FindFirstChild("DomainsGui")
+		if g then g.Enabled = not g.Enabled end
+	end)
 
 -- EVENT button
 local eventBtn = makeButton(topBar,"EventBtn","EVENT",
@@ -234,7 +236,10 @@ local spiritsBtn = makeButton(row1,"SpiritsBtn","Spirits",
 	Enum.Font.Gotham,12,Color3.new(1,1,1),
 	Color3.fromRGB(60,40,100),
 	UDim2.new(0.5,-2,1,0), UDim2.new(0,0,0,0),
-	function() end)
+	function()
+		local g = playerGui:FindFirstChild("SpiritsGui")
+		if g then g.Enabled = not g.Enabled end
+	end)
 
 local rebirthBtn = makeButton(row1,"RebirthBtn","Rebirth",
 	Enum.Font.Gotham,12,Color3.fromRGB(5,5,15),
