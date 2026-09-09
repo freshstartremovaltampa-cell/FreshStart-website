@@ -27,7 +27,7 @@ local fn = folder(ReplicatedStorage, "RemoteFunctions")
 for _, name in ipairs({
 	"SelectPath","SwitchPath","StageEvolved","UpdateStats","PathChanged",
 	"EnemyKilled","InventoryUpdate","TrophyUpdate","RebirthRequest",
-	"RebirthResult","BuyStageRequest","DamageBoostRequest","StageEndReached",
+	"RebirthResult","BuyStageRequest","DamageBoostRequest","WaveUpdate",
 }) do re(ev, name) end
 
 -- Functions

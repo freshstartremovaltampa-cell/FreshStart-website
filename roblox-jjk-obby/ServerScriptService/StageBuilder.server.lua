@@ -1,389 +1,273 @@
 -- StageBuilder.server.lua (Script → ServerScriptService)
--- Procedurally generates all 7 obby stage layouts in Workspace at server start
+-- Builds 7 themed combat arenas in Workspace at server start.
+-- Each arena is a flat enclosed battlefield — no obstacle courses.
+-- Enemy spawn zones, decorative pillars, and a return-to-hub portal are included.
 
-local GameData = require(game:GetService("ReplicatedStorage").Modules.GameData)
-
--- Spacing between stages on the X axis
 local STAGE_OFFSET_X = 600
 local BASE_Y         = 100
+local ARENA_W        = 90   -- width (X)
+local ARENA_D        = 90   -- depth (Z)
+local WALL_H         = 12
+local WALL_T         = 3
 
--- ----------------------------------------------------------------
--- Platform type definitions
--- Each platform entry: { w, d, h, gapZ, gapY, type, [mx, mDist, mSpd] }
---   w=width, d=depth, h=height
---   gapZ = Z gap before this platform (space to jump)
---   gapY = height change (positive = higher platform)
---   type: "normal" | "kill" | "movingX" | "movingZ" | "narrow" | "disappear"
---   mx, mDist, mSpd = move axis distance and speed (for moving types)
--- ----------------------------------------------------------------
+local arenaConfigs = {
 
-local stageConfigs = {
-
-	-- STAGE 1: Tokyo Jujutsu High - EASY
+	-- 1: Tokyo Jujutsu High — school courtyard, stone/tan
 	{
-		name    = "TokyoJJHigh",
-		color   = Color3.fromRGB(160,160,140),
-		material= Enum.Material.SmoothPlastic,
-		killColor = Color3.fromRGB(255,50,50),
-		platforms = {
-			{ 14,14,1, 0,  0, "normal" },  -- start platform (wide)
-			{  8, 6,1, 4,  0, "normal" },
-			{  8, 6,1, 4,  1, "normal" },
-			{  6, 5,1, 5,  0, "normal" },
-			{  6, 5,1, 4,  1, "normal" },
-			{  8, 6,1, 4,  0, "normal" },
-			{  5, 5,1, 5,  0, "normal" },
-			{  6, 6,1, 4,  1, "normal" },
-			{  6, 5,1, 5,  0, "normal" },
-			{  8, 6,1, 4,  1, "normal" },
-			{  5, 5,1, 5,  2, "normal" },
-			{  6, 6,1, 4,  0, "normal" },
-			{  6, 5,1, 4,  1, "normal" },
-			{  8, 6,1, 5,  0, "normal" },
-			{ 14,14,1, 4,  0, "normal" },  -- end platform (wide, trigger zone)
-		},
+		name        = "TokyoJJHigh",
+		floor       = { color=Color3.fromRGB(200,190,160), mat=Enum.Material.SmoothPlastic },
+		wall        = { color=Color3.fromRGB(160,150,120), mat=Enum.Material.SmoothPlastic },
+		pillar      = { color=Color3.fromRGB(140,130,100), mat=Enum.Material.SmoothPlastic },
+		accent      = Color3.fromRGB(100,160,220),
+		description = "Tokyo Jujutsu High School",
 	},
 
-	-- STAGE 2: Kyoto Jujutsu High - EASY/MEDIUM (introduces moving platforms)
+	-- 2: Kyoto Jujutsu High — traditional dojo, red/dark wood
 	{
-		name    = "KyotoJJHigh",
-		color   = Color3.fromRGB(160,50,50),
-		material= Enum.Material.Wood,
-		killColor = Color3.fromRGB(255,80,0),
-		platforms = {
-			{ 14,14,1, 0,  0, "normal" },
-			{  7, 5,1, 5,  0, "normal" },
-			{  6, 5,1, 4,  1, "normal" },
-			{  5, 5,1, 5,  0, "movingX", 10, 0.8 },
-			{  6, 5,1, 5,  1, "normal" },
-			{  5, 4,1, 6,  0, "movingX", 12, 1.0 },
-			{  6, 5,1, 5,  1, "normal" },
-			{  6, 5,1, 4,  1, "normal" },
-			{  5, 4,1, 6,  0, "movingX", 14, 1.2 },
-			{  6, 5,1, 5,  1, "normal" },
-			{  5, 4,1, 5,  0, "narrow"  },
-			{  6, 5,1, 5,  1, "normal" },
-			{  5, 5,1, 5,  0, "movingZ", 10, 0.8 },
-			{  6, 5,1, 5,  2, "normal" },
-			{  6, 5,1, 5,  0, "normal" },
-			{  7, 5,1, 5,  1, "normal" },
-			{  5, 4,1, 6,  0, "movingX", 12, 1.0 },
-			{ 14,14,1, 5,  0, "normal" },
-		},
+		name        = "KyotoJJHigh",
+		floor       = { color=Color3.fromRGB(120,50,30),   mat=Enum.Material.Wood         },
+		wall        = { color=Color3.fromRGB(80,30,15),    mat=Enum.Material.Wood         },
+		pillar      = { color=Color3.fromRGB(60,20,10),    mat=Enum.Material.Wood         },
+		accent      = Color3.fromRGB(220,160,40),
+		description = "Kyoto Jujutsu High Dojo",
 	},
 
-	-- STAGE 3: Shibuya - MEDIUM (narrow + moving + first kill bricks)
+	-- 3: Shibuya — underground station, concrete/grey
 	{
-		name    = "Shibuya",
-		color   = Color3.fromRGB(70,70,90),
-		material= Enum.Material.Concrete,
-		killColor = Color3.fromRGB(200,0,200),
-		platforms = {
-			{ 14,14,1, 0,  0, "normal" },
-			{  6, 5,1, 5,  1, "normal" },
-			{  4, 4,1, 5,  0, "narrow"  },
-			{  5, 5,1, 5,  1, "movingX", 12, 1.0 },
-			{  4, 3,1, 6,  0, "narrow"  },
-			{  6, 5,1, 5,  1, "normal" },
-			{  4, 4,1, 6,  0, "kill"   },  -- first kill brick
-			{  6, 5,1, 4,  1, "normal" },
-			{  4, 3,1, 6,  0, "narrow"  },
-			{  5, 5,1, 5,  0, "movingZ", 12, 1.0 },
-			{  6, 5,1, 5,  1, "normal" },
-			{  4, 4,1, 5,  0, "kill"   },
-			{  6, 5,1, 5,  1, "normal" },
-			{  4, 3,1, 6,  0, "narrow"  },
-			{  5, 4,1, 5,  0, "movingX", 14, 1.2 },
-			{  4, 4,1, 5,  1, "narrow"  },
-			{  6, 5,1, 5,  1, "normal" },
-			{  4, 3,1, 6,  0, "kill"   },
-			{  6, 5,1, 5,  2, "normal" },
-			{ 14,14,1, 4,  0, "normal" },
-		},
+		name        = "Shibuya",
+		floor       = { color=Color3.fromRGB(70,70,80),    mat=Enum.Material.Concrete     },
+		wall        = { color=Color3.fromRGB(50,50,60),    mat=Enum.Material.Concrete     },
+		pillar      = { color=Color3.fromRGB(60,60,70),    mat=Enum.Material.Concrete     },
+		accent      = Color3.fromRGB(220,50,50),
+		description = "Shibuya Station — October 31st",
 	},
 
-	-- STAGE 4: Fight Club - MEDIUM/HARD
+	-- 4: Fight Club — dark industrial warehouse
 	{
-		name    = "FightClub",
-		color   = Color3.fromRGB(40,40,50),
-		material= Enum.Material.Metal,
-		killColor = Color3.fromRGB(255,30,30),
-		platforms = {
-			{ 14,14,1, 0,  0, "normal" },
-			{  5, 5,1, 5,  1, "movingX", 14, 1.2 },
-			{  4, 4,1, 6,  0, "kill"   },
-			{  5, 5,1, 5,  1, "narrow"  },
-			{  5, 4,1, 6,  0, "movingX", 16, 1.4 },
-			{  4, 4,1, 5,  1, "kill"   },
-			{  6, 5,1, 5,  1, "normal" },
-			{  4, 3,1, 7,  0, "narrow"  },
-			{  5, 4,1, 6,  0, "movingZ", 14, 1.2 },
-			{  4, 4,1, 6,  1, "kill"   },
-			{  5, 5,1, 5,  1, "normal" },
-			{  4, 3,1, 7,  0, "narrow"  },
-			{  5, 4,1, 6,  0, "movingX", 18, 1.5 },
-			{  4, 4,1, 6,  0, "kill"   },
-			{  5, 5,1, 5,  1, "normal" },
-			{  4, 3,1, 7,  1, "narrow"  },
-			{  5, 4,1, 6,  0, "movingZ", 16, 1.4 },
-			{  4, 4,1, 6,  0, "kill"   },
-			{  5, 5,1, 5,  1, "normal" },
-			{  5, 4,1, 5,  2, "normal" },
-			{  5, 4,1, 5,  0, "movingX", 16, 1.5 },
-			{ 14,14,1, 4,  0, "normal" },
-		},
+		name        = "FightClub",
+		floor       = { color=Color3.fromRGB(40,40,45),    mat=Enum.Material.Metal        },
+		wall        = { color=Color3.fromRGB(30,30,35),    mat=Enum.Material.Metal        },
+		pillar      = { color=Color3.fromRGB(50,50,55),    mat=Enum.Material.Metal        },
+		accent      = Color3.fromRGB(255,100,0),
+		description = "Hakari's Fight Club",
 	},
 
-	-- STAGE 5: Shinjuku - HARD
+	-- 5: Shinjuku — city street, dark urban + neon
 	{
-		name    = "Shinjuku",
-		color   = Color3.fromRGB(30,50,90),
-		material= Enum.Material.Neon,
-		killColor = Color3.fromRGB(0,200,255),
-		platforms = {
-			{ 14,14,1, 0,  0, "normal" },
-			{  5, 4,1, 6,  1, "movingX", 16, 1.5 },
-			{  3, 4,1, 6,  0, "narrow"  },
-			{  5, 4,1, 6,  0, "kill"   },
-			{  4, 4,1, 6,  1, "movingX", 18, 1.6 },
-			{  3, 3,1, 7,  0, "narrow"  },
-			{  4, 4,1, 6,  0, "movingZ", 16, 1.5 },
-			{  3, 4,1, 6,  1, "kill"   },
-			{  4, 4,1, 6,  0, "narrow"  },
-			{  5, 4,1, 6,  0, "movingX", 18, 1.6 },
-			{  3, 3,1, 7,  1, "narrow"  },
-			{  4, 4,1, 6,  0, "kill"   },
-			{  5, 4,1, 6,  1, "movingZ", 16, 1.5 },
-			{  3, 3,1, 7,  0, "narrow"  },
-			{  4, 4,1, 6,  0, "movingX", 20, 1.7 },
-			{  3, 4,1, 6,  1, "kill"   },
-			{  4, 4,1, 6,  0, "narrow"  },
-			{  5, 4,1, 6,  0, "movingX", 18, 1.6 },
-			{  4, 4,1, 6,  1, "kill"   },
-			{  4, 4,1, 6,  0, "movingZ", 16, 1.5 },
-			{  4, 4,1, 6,  2, "normal" },
-			{  5, 4,1, 5,  0, "movingX", 16, 1.6 },
-			{ 14,14,1, 4,  0, "normal" },
-		},
+		name        = "Shinjuku",
+		floor       = { color=Color3.fromRGB(35,40,55),    mat=Enum.Material.SmoothPlastic},
+		wall        = { color=Color3.fromRGB(25,30,45),    mat=Enum.Material.SmoothPlastic},
+		pillar      = { color=Color3.fromRGB(20,60,100),   mat=Enum.Material.Neon         },
+		accent      = Color3.fromRGB(0,180,255),
+		description = "Shinjuku — Final Arc",
 	},
 
-	-- STAGE 6: Culling Games Colony - VERY HARD
+	-- 6: Culling Games Colony — outdoor battlefield, earth/grass
 	{
-		name    = "CullingGames",
-		color   = Color3.fromRGB(90,70,40),
-		material= Enum.Material.Grass,
-		killColor = Color3.fromRGB(80,200,0),
-		platforms = {
-			{ 14,14,1, 0,  0, "normal" },
-			{  4, 4,1, 7,  1, "movingX", 18, 1.7 },
-			{  3, 3,1, 7,  0, "narrow"  },
-			{  4, 4,1, 7,  0, "kill"   },
-			{  4, 4,1, 7,  1, "movingZ", 18, 1.7 },
-			{  3, 3,1, 8,  0, "narrow"  },
-			{  4, 4,1, 7,  0, "kill"   },
-			{  4, 4,1, 7,  1, "movingX", 20, 1.8 },
-			{  3, 3,1, 8,  0, "narrow"  },
-			{  4, 4,1, 7,  0, "kill"   },
-			{  4, 4,1, 7,  1, "movingZ", 18, 1.7 },
-			{  3, 3,1, 8,  0, "narrow"  },
-			{  4, 4,1, 7,  0, "movingX", 20, 1.8 },
-			{  3, 3,1, 8,  1, "kill"   },
-			{  4, 4,1, 7,  0, "narrow"  },
-			{  4, 4,1, 7,  0, "movingZ", 20, 1.8 },
-			{  3, 3,1, 8,  1, "narrow"  },
-			{  4, 4,1, 7,  0, "kill"   },
-			{  4, 4,1, 7,  0, "movingX", 22, 1.9 },
-			{  3, 3,1, 8,  1, "narrow"  },
-			{  4, 4,1, 7,  0, "kill"   },
-			{  4, 4,1, 7,  0, "movingZ", 20, 1.8 },
-			{  4, 4,1, 7,  2, "normal" },
-			{  5, 5,1, 6,  0, "movingX", 18, 1.7 },
-			{ 14,14,1, 4,  0, "normal" },
-		},
+		name        = "CullingGames",
+		floor       = { color=Color3.fromRGB(90,75,50),    mat=Enum.Material.Ground       },
+		wall        = { color=Color3.fromRGB(100,80,50),   mat=Enum.Material.SmoothPlastic},
+		pillar      = { color=Color3.fromRGB(110,85,50),   mat=Enum.Material.Rock         },
+		accent      = Color3.fromRGB(180,220,60),
+		description = "Culling Games Colony",
 	},
 
-	-- STAGE 7: Domain Expansion - EXTREME
+	-- 7: Domain Expansion — void realm, black + purple neon
 	{
-		name    = "FinalDomain",
-		color   = Color3.fromRGB(40,0,80),
-		material= Enum.Material.Neon,
-		killColor = Color3.fromRGB(255,0,80),
-		platforms = {
-			{ 14,14,1, 0,  0, "normal" },
-			{  4, 4,1, 8,  1, "movingX", 20, 2.0 },
-			{  3, 3,1, 8,  0, "narrow"  },
-			{  4, 4,1, 8,  0, "kill"   },
-			{  4, 4,1, 8,  1, "movingZ", 22, 2.0 },
-			{  3, 3,1, 9,  0, "kill"   },
-			{  4, 4,1, 8,  1, "narrow"  },
-			{  4, 4,1, 8,  0, "movingX", 24, 2.1 },
-			{  3, 3,1, 9,  1, "kill"   },
-			{  4, 4,1, 8,  0, "narrow"  },
-			{  4, 4,1, 8,  0, "movingZ", 22, 2.0 },
-			{  3, 3,1, 9,  1, "kill"   },
-			{  4, 4,1, 8,  0, "movingX", 24, 2.1 },
-			{  3, 3,1, 9,  0, "narrow"  },
-			{  4, 4,1, 8,  1, "kill"   },
-			{  4, 4,1, 8,  0, "movingZ", 22, 2.0 },
-			{  3, 3,1, 9,  0, "narrow"  },
-			{  4, 4,1, 8,  1, "movingX", 24, 2.1 },
-			{  3, 3,1, 9,  0, "kill"   },
-			{  4, 4,1, 8,  1, "narrow"  },
-			{  4, 4,1, 8,  0, "movingZ", 22, 2.0 },
-			{  3, 3,1, 9,  0, "kill"   },
-			{  4, 4,1, 8,  1, "movingX", 24, 2.2 },
-			{  3, 3,1, 9,  0, "narrow"  },
-			{  4, 4,1, 8,  0, "kill"   },
-			{  4, 4,1, 8,  1, "movingZ", 22, 2.0 },
-			{  4, 4,1, 8,  2, "normal" },
-			{  5, 5,1, 6,  0, "movingX", 22, 2.0 },
-			{ 14,14,1, 5,  0, "normal" },
-		},
+		name        = "FinalDomain",
+		floor       = { color=Color3.fromRGB(10,5,20),     mat=Enum.Material.Neon         },
+		wall        = { color=Color3.fromRGB(20,0,40),     mat=Enum.Material.SmoothPlastic},
+		pillar      = { color=Color3.fromRGB(120,0,200),   mat=Enum.Material.Neon         },
+		accent      = Color3.fromRGB(200,0,255),
+		description = "Domain Expansion — Malevolent Shrine",
 	},
 }
 
 -- ----------------------------------------------------------------
--- Builder
+-- Helpers
 -- ----------------------------------------------------------------
 
-local function makeKillScript(part)
-	local script = Instance.new("Script")
-	script.Source = [[
-		local part = script.Parent
-		part.Touched:Connect(function(hit)
-			local hum = hit.Parent:FindFirstChildOfClass("Humanoid")
-			if hum then hum:TakeDamage(hum.MaxHealth) end
+local function part(parent, name, size, pos, color, mat, anchored, trans)
+	local p        = Instance.new("Part")
+	p.Name         = name
+	p.Size         = size
+	p.Position     = pos
+	p.Color        = color
+	p.Material     = mat or Enum.Material.SmoothPlastic
+	p.Anchored     = anchored ~= false
+	p.CanCollide   = true
+	p.CastShadow   = false
+	p.Transparency = trans or 0
+	p.Parent       = parent
+	return p
+end
+
+local function billboard(adornee, text, textColor, yOff)
+	local bg          = Instance.new("BillboardGui")
+	bg.Adornee        = adornee
+	bg.Size           = UDim2.new(0,200,0,50)
+	bg.StudsOffset    = Vector3.new(0, yOff or 4, 0)
+	bg.AlwaysOnTop    = false
+	bg.Parent         = adornee
+	local lbl         = Instance.new("TextLabel")
+	lbl.Text          = text
+	lbl.Font          = Enum.Font.GothamBold
+	lbl.TextSize      = 14
+	lbl.TextColor3    = textColor or Color3.new(1,1,1)
+	lbl.TextWrapped   = true
+	lbl.Size          = UDim2.new(1,0,1,0)
+	lbl.BackgroundColor3 = Color3.fromRGB(10,10,20)
+	lbl.BackgroundTransparency = 0.2
+	lbl.Parent        = bg
+	local c = Instance.new("UICorner"); c.CornerRadius=UDim.new(0,6); c.Parent=lbl
+end
+
+-- ----------------------------------------------------------------
+-- Arena builder
+-- ----------------------------------------------------------------
+
+local function buildArena(stageIndex, cfg, stagesFolder)
+	local cx  = (stageIndex - 1) * STAGE_OFFSET_X
+	local cy  = BASE_Y
+	local cz  = 0
+	local ctr = Vector3.new(cx, cy, cz)
+
+	local folder      = Instance.new("Folder")
+	folder.Name       = cfg.name
+	folder.Parent     = stagesFolder
+
+	-- Floor
+	local floor = part(folder, "Floor",
+		Vector3.new(ARENA_W, 1, ARENA_D),
+		ctr + Vector3.new(0, -0.5, 0),
+		cfg.floor.color, cfg.floor.mat)
+
+	-- Player spawn (center of arena)
+	local spawnLoc        = Instance.new("SpawnLocation")
+	spawnLoc.Name         = "StageSpawn"
+	spawnLoc.Size         = Vector3.new(6, 0.2, 6)
+	spawnLoc.Position     = ctr + Vector3.new(0, 0.6, 0)
+	spawnLoc.Anchored     = true
+	spawnLoc.CanCollide   = false
+	spawnLoc.Transparency = 1
+	spawnLoc.TeamColor    = BrickColor.new("Bright blue")
+	spawnLoc.AllowTeamChangeOnTouch = false
+	spawnLoc.Parent       = folder
+
+	-- Four walls (N, S, E, W) — south wall has a gap for the return portal
+	local halfW = ARENA_W / 2
+	local halfD = ARENA_D / 2
+
+	-- North wall (Z-)
+	part(folder,"WallN",Vector3.new(ARENA_W,WALL_H,WALL_T),
+		ctr+Vector3.new(0,WALL_H/2,-halfD),cfg.wall.color,cfg.wall.mat)
+	-- South wall (Z+) - split into two halves to leave portal gap
+	part(folder,"WallS_L",Vector3.new(ARENA_W/2-8,WALL_H,WALL_T),
+		ctr+Vector3.new(-ARENA_W/4-4,WALL_H/2,halfD),cfg.wall.color,cfg.wall.mat)
+	part(folder,"WallS_R",Vector3.new(ARENA_W/2-8,WALL_H,WALL_T),
+		ctr+Vector3.new( ARENA_W/4+4,WALL_H/2,halfD),cfg.wall.color,cfg.wall.mat)
+	-- East wall (X+)
+	part(folder,"WallE",Vector3.new(WALL_T,WALL_H,ARENA_D),
+		ctr+Vector3.new(halfW,WALL_H/2,0),cfg.wall.color,cfg.wall.mat)
+	-- West wall (X-)
+	part(folder,"WallW",Vector3.new(WALL_T,WALL_H,ARENA_D),
+		ctr+Vector3.new(-halfW,WALL_H/2,0),cfg.wall.color,cfg.wall.mat)
+
+	-- Four corner pillars (decorative + solid)
+	local corners = {
+		Vector3.new(-halfW+3, 0,  halfD-3),
+		Vector3.new( halfW-3, 0,  halfD-3),
+		Vector3.new(-halfW+3, 0, -halfD+3),
+		Vector3.new( halfW-3, 0, -halfD+3),
+	}
+	for i, off in ipairs(corners) do
+		part(folder,"Pillar"..i,Vector3.new(4,WALL_H+4,4),
+			ctr+off+Vector3.new(0,(WALL_H+4)/2,0),
+			cfg.pillar.color,cfg.pillar.mat)
+	end
+
+	-- Interior pillars (mid-arena, 4 positions) — cover, not obstacles
+	local innerPillars = {
+		Vector3.new(-20, 0,  20),
+		Vector3.new( 20, 0,  20),
+		Vector3.new(-20, 0, -20),
+		Vector3.new( 20, 0, -20),
+	}
+	for i, off in ipairs(innerPillars) do
+		part(folder,"InnerPillar"..i,Vector3.new(3,6,3),
+			ctr+off+Vector3.new(0,3,0),cfg.pillar.color,cfg.pillar.mat)
+
+		-- Neon ring on top of each inner pillar
+		local ring = part(folder,"PillarTop"..i,Vector3.new(4,0.5,4),
+			ctr+off+Vector3.new(0,6.25,0),cfg.accent,Enum.Material.Neon)
+		ring.Shape = Enum.PartType.Cylinder
+	end
+
+	-- Accent trim along top of north wall
+	part(folder,"AccentTrimN",Vector3.new(ARENA_W,0.6,WALL_T+0.5),
+		ctr+Vector3.new(0,WALL_H,-halfD),cfg.accent,Enum.Material.Neon)
+
+	-- Stage name billboard (above north wall, visible from inside)
+	local signPart = part(folder,"StageSign",Vector3.new(20,4,1),
+		ctr+Vector3.new(0,WALL_H+2,-halfD+0.5),cfg.accent,Enum.Material.Neon)
+	billboard(signPart,
+		string.format("Stage %d — %s", stageIndex, cfg.description),
+		Color3.new(1,1,1), 2)
+
+	-- 6 enemy spawn zones (invisible, around perimeter inner edge)
+	local spawnOffsets = {
+		Vector3.new(0,   1, -halfD+8),   -- N center
+		Vector3.new(0,   1,  halfD-8),   -- S center
+		Vector3.new(-halfW+8, 1, 0),     -- W center
+		Vector3.new( halfW-8, 1, 0),     -- E center
+		Vector3.new(-halfW+8, 1, -halfD+8), -- NW
+		Vector3.new( halfW-8, 1, -halfD+8), -- NE
+	}
+	for i, off in ipairs(spawnOffsets) do
+		local sp           = part(folder,"EnemySpawn"..i,Vector3.new(4,0.5,4),
+			ctr+off,Color3.fromRGB(200,0,0),Enum.Material.Neon,true,0.9)
+		sp.CanCollide      = false
+	end
+
+	-- Return to hub portal (south gap in wall)
+	local portal = part(folder,"HubPortal",Vector3.new(14,10,2),
+		ctr+Vector3.new(0,5,halfD),cfg.accent,Enum.Material.Neon,true,0.4)
+	portal.CanCollide = false
+
+	billboard(portal,"Return to Hub\n[Walk through]",Color3.fromRGB(255,200,50),5)
+
+	-- Portal touch → teleport to hub
+	local portalScript   = Instance.new("Script")
+	portalScript.Source  = [[
+		local portal  = script.Parent
+		local Players = game:GetService("Players")
+		local debounce = {}
+		portal.Touched:Connect(function(hit)
+			local player = Players:GetPlayerFromCharacter(hit.Parent)
+			if player and not debounce[player.UserId] then
+				debounce[player.UserId] = true
+				local hrp = hit.Parent:FindFirstChild("HumanoidRootPart")
+				local hubSpawn = workspace:FindFirstChild("Hub") and
+					workspace.Hub:FindFirstChild("HubSpawnPoint")
+				if hrp and hubSpawn then
+					hrp.CFrame = hubSpawn.CFrame + Vector3.new(0,3,0)
+				end
+				task.wait(2)
+				debounce[player.UserId] = nil
+			end
 		end)
 	]]
-	script.Parent = part
-end
-
-local function buildStage(stageIndex, config, stagesFolder)
-	local baseX   = (stageIndex - 1) * STAGE_OFFSET_X
-	local basePos = Vector3.new(baseX, BASE_Y, 0)
-
-	local folder  = Instance.new("Folder")
-	folder.Name   = config.name
-	folder.Parent = stagesFolder
-
-	local cursor = basePos  -- tracks where next platform starts (front edge)
-
-	for i, plat in ipairs(config.platforms) do
-		local w, d, h = plat[1], plat[2], plat[3]
-		local gapZ    = plat[4]
-		local gapY    = plat[5]
-		local pType   = plat[6]
-		local mDist   = plat[7] or 10
-		local mSpd    = plat[8] or 1.0
-
-		-- New position
-		local pos = Vector3.new(
-			cursor.X,
-			cursor.Y + gapY,
-			cursor.Z + gapZ + d / 2
-		)
-		cursor = Vector3.new(pos.X, pos.Y, pos.Z + d / 2)
-
-		local part = Instance.new("Part")
-		part.Size     = Vector3.new(w, h, d)
-		part.Position = pos
-		part.Material = (pType == "kill") and Enum.Material.Neon or config.material
-		part.Color    = (pType == "kill") and config.killColor or config.color
-		part.Anchored = true
-		part.CanCollide = true
-		part.Parent   = folder
-
-		-- Name end platform so StageManager can find it
-		if i == #config.platforms then
-			part.Name = "StageEnd"
-
-			-- Glow effect on end platform
-			local sg = Instance.new("SelectionBox")
-			sg.Adornee  = part
-			sg.Color3   = Color3.fromRGB(255,215,0)
-			sg.LineThickness = 0.06
-			sg.Parent   = part
-
-			-- Touch detector → fires server to award stage clear
-			local touchScript = Instance.new("Script")
-			touchScript.Source = string.format([[
-				local Players = game:GetService("Players")
-				local RS = game:GetService("ReplicatedStorage")
-				local StageEnd = script.Parent
-				local StageEndReached = RS:WaitForChild("RemoteEvents"):WaitForChild("StageEndReached")
-				local debounce = {}
-				StageEnd.Touched:Connect(function(hit)
-					local player = Players:GetPlayerFromCharacter(hit.Parent)
-					if player and not debounce[player.UserId] then
-						debounce[player.UserId] = true
-						StageEndReached:FireServer(%d)
-						task.wait(2)
-						debounce[player.UserId] = nil
-					end
-				end)
-			]], stageIndex)
-			touchScript.Parent = part
-		elseif i == 1 then
-			-- Mark spawn point on first platform
-			local spawnPart      = Instance.new("SpawnLocation")
-			spawnPart.Name       = "StageSpawn"
-			spawnPart.Size       = Vector3.new(w, 0.2, d)
-			spawnPart.Position   = pos + Vector3.new(0, h/2 + 0.1, 0)
-			spawnPart.Anchored   = true
-			spawnPart.CanCollide = false
-			spawnPart.Transparency = 1
-			spawnPart.TeamColor  = BrickColor.new("Bright blue")
-			spawnPart.AllowTeamChangeOnTouch = false
-			spawnPart.Parent     = folder
-		end
-
-		-- Kill brick damage script
-		if pType == "kill" then
-			makeKillScript(part)
-		end
-
-		-- Moving platform tween
-		if pType == "movingX" or pType == "movingZ" then
-			part.Anchored = false
-
-			local axis    = (pType == "movingX") and Vector3.new(1,0,0) or Vector3.new(0,0,1)
-			local origPos = pos
-
-			local mScript = Instance.new("Script")
-			mScript.Source = string.format([[
-				local part    = script.Parent
-				local origPos = part.Position
-				local axis    = Vector3.new(%g, 0, %g)
-				local dist    = %g
-				local spd     = %g
-				local dir     = 1
-				local moved   = 0
-				local dt      = 0.05
-
-				part.Anchored = false
-				local weld = Instance.new("WeldConstraint")
-
-				game:GetService("RunService").Heartbeat:Connect(function(delta)
-					local step = spd * delta
-					moved = moved + step * dir
-					if math.abs(moved) >= dist then dir = -dir end
-					local vel = axis * spd * dir
-					part.Velocity = vel
-				end)
-			]], axis.X, axis.Z, mDist, mSpd)
-			mScript.Parent = part
-		end
-	end
+	portalScript.Parent = portal
 end
 
 -- ----------------------------------------------------------------
--- Run at server start
+-- Run
 -- ----------------------------------------------------------------
 
 local stagesFolder = workspace:WaitForChild("Stages")
 
-for i, cfg in ipairs(stageConfigs) do
-	buildStage(i, cfg, stagesFolder)
+for i, cfg in ipairs(arenaConfigs) do
+	buildArena(i, cfg, stagesFolder)
 end
 
-print("[StageBuilder] All 7 stages built.")
+print("[StageBuilder] 7 combat arenas built.")

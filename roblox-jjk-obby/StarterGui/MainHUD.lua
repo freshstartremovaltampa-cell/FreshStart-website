@@ -31,6 +31,7 @@ local RebirthResult      = RemoteEvents:WaitForChild("RebirthResult")
 local RebirthRequest     = RemoteEvents:WaitForChild("RebirthRequest")
 local DamageBoostRequest = RemoteEvents:WaitForChild("DamageBoostRequest")
 local StageEvolved       = RemoteEvents:WaitForChild("StageEvolved")
+local WaveUpdate         = RemoteEvents:WaitForChild("WaveUpdate")
 
 local GetPlayerData      = RemoteFunctions:WaitForChild("GetPlayerData")
 
@@ -52,6 +53,7 @@ local state = {
 	rebirthCount = 0,
 	rebirthMult  = 1,
 	autoFight    = false,
+	wave         = 1,
 }
 
 -- ============================================================
@@ -375,6 +377,16 @@ local damageLbl = makeLabel(damageFrame,"DamageLbl",
 	"10 DAMAGE",Enum.Font.GothamBlack,20,Color3.fromRGB(255,210,0))
 damageLbl.TextXAlignment = Enum.TextXAlignment.Center
 
+-- Wave counter
+local waveFrame = makeFrame(botBar,"WaveFrame",
+	UDim2.new(0,110,0,34),
+	UDim2.new(0.5,228,0,2),
+	Color3.fromRGB(25,15,40))
+corner(waveFrame,6)
+local waveLbl = makeLabel(waveFrame,"WaveLbl",
+	"⚔ WAVE 1",Enum.Font.GothamBlack,16,Color3.fromRGB(255,150,50))
+waveLbl.TextXAlignment = Enum.TextXAlignment.Center
+
 -- Level bar
 local levelBarBg = makeFrame(botBar,"LevelBarBg",
 	UDim2.new(0.5,-10,0,22),
@@ -444,6 +456,7 @@ local function updateHUD()
 	local pathDisp = state.path == "Sorcerer" and "⚔ Sorcerer" or
 	                 state.path == "CurseSpirit" and "☠ Curse Spirit" or "—"
 	pathStageLbl.Text = pathDisp .. "\nStage: " .. state.stage .. "/8"
+	waveLbl.Text = "⚔ WAVE " .. state.wave
 end
 
 -- ============================================================
@@ -480,7 +493,13 @@ end)
 
 StageEvolved:Connect(function(newStage, stageData)
 	state.stage = newStage
+	state.wave  = 1
 	updateHUD()
+end)
+
+WaveUpdate:Connect(function(waveNumber)
+	state.wave = waveNumber
+	waveLbl.Text = "⚔ WAVE " .. waveNumber
 end)
 
 -- ============================================================

@@ -1,197 +1,261 @@
 -- EnemyManager.server.lua (Script → ServerScriptService)
--- Spawns enemies appropriate for each player's path and stage, handles combat and loot drops
+-- Continuous wave-based combat. Each player gets their own wave loop inside
+-- their current arena. Waves scale in enemy count and health per wave.
+-- Wave clear awards bonus trophies, then the next wave starts after 3 seconds.
 
 local Players           = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage     = game:GetService("ServerStorage")
 
-local GameData          = require(ReplicatedStorage.Modules.GameData)
+local GameData = require(ReplicatedStorage.Modules.GameData)
 
-local function getPlayerDataManager()
-	return require(game.ServerScriptService.PlayerDataManager)
-end
-local function getStageManager()
-	return require(game.ServerScriptService.StageManager)
-end
-local function getCursedToolManager()
-	return require(game.ServerScriptService.CursedToolManager)
-end
+local function PDM() return require(game.ServerScriptService.PlayerDataManager) end
+local function TM()  return require(game.ServerScriptService.TrophyManager)     end
+local function CTM() return require(game.ServerScriptService.CursedToolManager) end
 
-local RemoteEvents  = ReplicatedStorage:WaitForChild("RemoteEvents")
-local EnemyKilled   = RemoteEvents:WaitForChild("EnemyKilled")   -- server → client: (enemyName, dropped tool or nil)
+local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
+local EnemyKilled  = RemoteEvents:WaitForChild("EnemyKilled")
+local WaveUpdate   = RemoteEvents:WaitForChild("WaveUpdate")
 
--- Expects enemy model templates in ServerStorage/EnemyModels/<enemyId>
--- Each model must have a Humanoid and HumanoidRootPart
 local EnemyModels = ServerStorage:WaitForChild("EnemyModels")
 
--- Active enemy instances: [enemyModel] = { ownerId, enemyData }
-local activeEnemies = {}
+-- playerState[userId] = { wave=N, aliveCount=N, active=bool, lastStage=N }
+local playerState   = {}
+-- playerEnemies[userId] = { [enemyModel] = true }
+local playerEnemies = {}
+
+local MAX_WAVE_ENEMIES  = 8
+local HEALTH_SCALE_RATE = 0.15  -- +15% health per wave
+local WAVE_BONUS_MULT   = 5     -- bonus trophies = base * this on wave clear
+
+-- ────────────────────────────────────────────────────────────────
+-- Helpers
+-- ────────────────────────────────────────────────────────────────
 
 local function rollDrop(enemyData)
 	if math.random() > enemyData.dropChance then return nil end
 	local pool = enemyData.dropTable
-	if #pool == 0 then return nil end
-	return pool[math.random(1, #pool)]
+	return #pool > 0 and pool[math.random(1, #pool)] or nil
 end
 
-local function spawnEnemy(player, enemyData, spawnCFrame)
-	local template = EnemyModels:FindFirstChild(enemyData.id)
-	if not template then
-		warn("[EnemyManager] No model found for enemy: " .. enemyData.id)
-		return
+local function getArenaSpawnCFrames(stageId)
+	local locData = GameData.Locations[math.min(stageId, 7)]
+	if not locData then return {} end
+	local stagesF = workspace:FindFirstChild("Stages")
+	if not stagesF then return {} end
+	local locF = stagesF:FindFirstChild(locData.name)
+	if not locF then return {} end
+	local out = {}
+	for i = 1, 6 do
+		local sp = locF:FindFirstChild("EnemySpawn" .. i)
+		if sp then table.insert(out, sp.CFrame + Vector3.new(0, 2, 0)) end
 	end
+	return out
+end
 
-	local enemy = template:Clone()
-	enemy.Parent = workspace
-
-	local hrp = enemy:FindFirstChild("HumanoidRootPart")
-	if hrp then
-		hrp.CFrame = spawnCFrame
-	end
-
-	local humanoid = enemy:FindFirstChildOfClass("Humanoid")
-	if humanoid then
-		humanoid.MaxHealth = enemyData.health
-		humanoid.Health    = enemyData.health
-		humanoid.WalkSpeed = enemyData.speed
-	end
-
-	activeEnemies[enemy] = { ownerId = player.UserId, enemyData = enemyData }
-
-	-- Simple chase AI: enemy walks toward its owner player
-	task.spawn(function()
-		while enemy.Parent and humanoid and humanoid.Health > 0 do
-			local char = player.Character
-			if char then
-				local targetHRP = char:FindFirstChild("HumanoidRootPart")
-				if targetHRP and hrp then
-					humanoid:MoveTo(targetHRP.Position)
-				end
-			end
-			task.wait(0.5)
-		end
-	end)
-
-	-- Death handler
-	humanoid.Died:Connect(function()
-		activeEnemies[enemy] = nil
-
-		-- Register kill with StageManager
-		getStageManager().RegisterKill(player)
-
-		-- Roll for loot drop
-		local droppedToolId = rollDrop(enemyData)
-		if droppedToolId then
-			local added = getCursedToolManager().GiveTool(player, droppedToolId)
-			if added then
-				EnemyKilled:FireClient(player, enemyData.name, droppedToolId)
-			else
-				EnemyKilled:FireClient(player, enemyData.name, nil)
-			end
-		else
-			EnemyKilled:FireClient(player, enemyData.name, nil)
-		end
-
-		task.delay(2, function()
+local function cleanupPlayerEnemies(uid)
+	if playerEnemies[uid] then
+		for enemy in pairs(playerEnemies[uid]) do
 			if enemy.Parent then enemy:Destroy() end
-		end)
-	end)
-
-	-- Enemy deals damage to player on touch
-	for _, part in ipairs(enemy:GetDescendants()) do
-		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-			part.Touched:Connect(function(hit)
-				local char = player.Character
-				if not char then return end
-
-				local hum = char:FindFirstChildOfClass("Humanoid")
-				if hum and hit:IsDescendantOf(char) then
-					hum:TakeDamage(enemyData.damage * 0.1)  -- tick damage on touch
-				end
-			end)
 		end
 	end
+	playerEnemies[uid] = {}
 end
 
-local function getStageSpawnPositions(stageId)
-	-- Returns up to 5 CFrames near the stage's spawn point with slight offsets
-	local locationId = math.min(stageId, 7)
-	local locationData = GameData.Locations[locationId]
-	if not locationData then return {} end
+-- ────────────────────────────────────────────────────────────────
+-- Wave logic (forward declarations)
+-- ────────────────────────────────────────────────────────────────
 
-	local stagesFolder = workspace:FindFirstChild("Stages")
-	if not stagesFolder then return {} end
+local spawnWave
+local waveClear
 
-	local locationFolder = stagesFolder:FindFirstChild(locationData.name)
-	if not locationFolder then return {} end
+waveClear = function(player)
+	local uid = player.UserId
+	local ps  = playerState[uid]
+	if not ps or not ps.active then return end
 
-	local spawnPart = locationFolder:FindFirstChild("StageSpawn")
-	if not spawnPart then return {} end
-
-	local base = spawnPart.CFrame
-	local offsets = {
-		Vector3.new(10,  0,  0),
-		Vector3.new(-10, 0,  0),
-		Vector3.new(0,   0,  10),
-		Vector3.new(0,   0, -10),
-		Vector3.new(8,   0,  8),
-	}
-
-	local positions = {}
-	for _, offset in ipairs(offsets) do
-		table.insert(positions, base + offset)
+	-- Bonus trophies for clearing the wave
+	local data = PDM().Get(player)
+	if data and data.stage then
+		local bonus = (GameData.TrophiesPerKill[data.stage] or 20) * WAVE_BONUS_MULT
+		TM().Award(player, bonus)
 	end
-	return positions
+
+	ps.wave = ps.wave + 1
+	task.wait(3)
+
+	ps = playerState[uid]
+	if ps and ps.active then
+		spawnWave(player)
+	end
 end
 
--- Spawn a wave of enemies for a player when they enter a stage
-local function spawnWaveForPlayer(player)
-	local PDM  = getPlayerDataManager()
-	local data = PDM.Get(player)
+spawnWave = function(player)
+	local uid = player.UserId
+	local ps  = playerState[uid]
+	if not ps or not ps.active then return end
+
+	local data = PDM().Get(player)
 	if not data or not data.path then return end
 
-	local stageId = data.stage
-	local eligible = GameData.GetEnemiesForStage(data.path, stageId)
+	-- Auto-reset wave counter when stage advances
+	if ps.lastStage ~= data.stage then
+		ps.wave      = 1
+		ps.lastStage = data.stage
+		cleanupPlayerEnemies(uid)
+	end
+
+	local wave     = ps.wave
+	local eligible = GameData.GetEnemiesForStage(data.path, data.stage)
 	if #eligible == 0 then return end
 
-	local spawnPositions = getStageSpawnPositions(stageId)
-	if #spawnPositions == 0 then return end
+	local spawnCFrames = getArenaSpawnCFrames(data.stage)
+	if #spawnCFrames == 0 then return end
 
-	-- Pick a random eligible enemy type and spawn 3-5 of them
-	local count = math.random(3, 5)
+	local count  = math.min(3 + math.floor((wave - 1) / 2), MAX_WAVE_ENEMIES)
+	local hpMult = 1 + (wave - 1) * HEALTH_SCALE_RATE
+
+	ps.aliveCount        = count
+	playerEnemies[uid]   = playerEnemies[uid] or {}
+
+	WaveUpdate:FireClient(player, wave)
+
 	for i = 1, count do
-		local enemyData    = eligible[math.random(1, #eligible)]
-		local spawnCFrame  = spawnPositions[((i - 1) % #spawnPositions) + 1]
-		spawnEnemy(player, enemyData, spawnCFrame)
-		task.wait(0.3)
+		task.spawn(function()
+			ps = playerState[uid]
+			if not ps or not ps.active then return end
+
+			local enemyData   = eligible[math.random(1, #eligible)]
+			local spawnCFrame = spawnCFrames[((i - 1) % #spawnCFrames) + 1]
+			local template    = EnemyModels:FindFirstChild(enemyData.id)
+
+			if not template then
+				warn("[EnemyManager] Missing model: " .. enemyData.id)
+				ps.aliveCount = math.max(0, ps.aliveCount - 1)
+				if ps.aliveCount <= 0 then waveClear(player) end
+				return
+			end
+
+			local enemy  = template:Clone()
+			enemy.Parent = workspace
+			playerEnemies[uid][enemy] = true
+
+			local hrp = enemy:FindFirstChild("HumanoidRootPart")
+			if hrp then hrp.CFrame = spawnCFrame end
+
+			local humanoid = enemy:FindFirstChildOfClass("Humanoid")
+			if humanoid then
+				humanoid.MaxHealth = math.round(enemyData.health * hpMult)
+				humanoid.Health    = humanoid.MaxHealth
+				humanoid.WalkSpeed = enemyData.speed or 14
+			end
+
+			-- Chase AI
+			task.spawn(function()
+				while enemy.Parent and humanoid and humanoid.Health > 0 do
+					local char = player.Character
+					if char then
+						local tHrp = char:FindFirstChild("HumanoidRootPart")
+						if tHrp and hrp then humanoid:MoveTo(tHrp.Position) end
+					end
+					task.wait(0.5)
+				end
+			end)
+
+			-- Touch damage to player
+			for _, part in ipairs(enemy:GetDescendants()) do
+				if part:IsA("BasePart") and part ~= hrp then
+					part.Touched:Connect(function(hit)
+						if not player.Character then return end
+						local hum = player.Character:FindFirstChildOfClass("Humanoid")
+						if hum and hit:IsDescendantOf(player.Character) then
+							hum:TakeDamage(enemyData.damage * 0.1)
+						end
+					end)
+				end
+			end
+
+			-- Death handler
+			if humanoid then
+				humanoid.Died:Connect(function()
+					if playerEnemies[uid] then
+						playerEnemies[uid][enemy] = nil
+					end
+
+					-- Award trophies per kill
+					local tBase = GameData.TrophiesPerKill[data.stage] or 20
+					TM().Award(player, tBase)
+
+					-- Loot roll
+					local toolId = rollDrop(enemyData)
+					if toolId then
+						local added = CTM().GiveTool(player, toolId)
+						EnemyKilled:FireClient(player, enemyData.name, added and toolId or nil)
+					else
+						EnemyKilled:FireClient(player, enemyData.name, nil)
+					end
+
+					task.delay(2, function()
+						if enemy.Parent then enemy:Destroy() end
+					end)
+
+					-- Check wave clear
+					local cur = playerState[uid]
+					if cur then
+						cur.aliveCount = math.max(0, cur.aliveCount - 1)
+						if cur.aliveCount <= 0 then waveClear(player) end
+					end
+				end)
+			end
+		end)
+
+		task.wait(0.25)
 	end
 end
 
--- Listen for stage advancement to spawn new waves
-local StageComplete = RemoteEvents:WaitForChild("StageComplete")
--- StageComplete fires client-side; server spawns wave proactively when stage advances
--- We hook into StageManager via a BindableEvent instead
+-- ────────────────────────────────────────────────────────────────
+-- Player lifecycle
+-- ────────────────────────────────────────────────────────────────
 
-local SpawnWaveEvent = Instance.new("BindableEvent")
-SpawnWaveEvent.Name  = "SpawnWaveEvent"
-SpawnWaveEvent.Parent = game.ServerScriptService
+local function startCombat(player)
+	local uid  = player.UserId
+	local data = PDM().Get(player)
+	if not data or not data.path then return end  -- no path chosen yet
 
-SpawnWaveEvent.Event:Connect(function(player)
-	spawnWaveForPlayer(player)
-end)
+	cleanupPlayerEnemies(uid)
+	playerState[uid] = {
+		wave      = 1,
+		aliveCount = 0,
+		active    = true,
+		lastStage = data.stage,
+	}
+	playerEnemies[uid] = {}
 
--- Expose for StageManager to fire
-local EnemyManager = {}
-function EnemyManager.SpawnWave(player)
-	SpawnWaveEvent:Fire(player)
+	task.wait(2)  -- let character settle at spawn
+	local ps = playerState[uid]
+	if ps and ps.active then
+		spawnWave(player)
+	end
 end
 
--- Initial wave when player joins and has a path
+local function stopCombat(uid)
+	if playerState[uid] then
+		playerState[uid].active = false
+	end
+	cleanupPlayerEnemies(uid)
+end
+
 Players.PlayerAdded:Connect(function(player)
 	player.CharacterAdded:Connect(function()
-		task.wait(2)  -- let everything load
-		spawnWaveForPlayer(player)
+		local uid = player.UserId
+		stopCombat(uid)
+		startCombat(player)
 	end)
 end)
 
-return EnemyManager
+Players.PlayerRemoving:Connect(function(player)
+	local uid = player.UserId
+	stopCombat(uid)
+	playerState[uid]   = nil
+	playerEnemies[uid] = nil
+end)
