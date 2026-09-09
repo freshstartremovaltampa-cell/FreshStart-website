@@ -163,7 +163,7 @@ GameData.Spirits = {
 	{ id="HanamiSpirit",       name="Hanami",        rarity="Rare",      damageMult=1.75, dropWeight=7  },
 	{ id="JogoSpirit",         name="Jogo",          rarity="Rare",      damageMult=2.00, dropWeight=5  },
 	{ id="DagonSpirit",        name="Dagon",         rarity="Epic",      damageMult=2.50, dropWeight=2  },
-	{ id="GetouSpirit",        name="Suguru Geto",   rarity="Legendary", damageMult=3.00, dropWeight=1  },
+	{ id="RainbowDragonSpirit",name="Rainbow Dragon", rarity="Legendary", damageMult=3.00, dropWeight=1  },
 }
 
 -- ============================================================
