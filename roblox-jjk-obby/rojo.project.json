@@ -1,0 +1,72 @@
+{
+  "name": "JJK-Cursed-Evolution",
+  "tree": {
+    "$className": "DataModel",
+
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "$path": "ServerScriptService"
+    },
+
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Modules": {
+        "$className": "Folder",
+        "$path": "ReplicatedStorage/Modules"
+      }
+    },
+
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "$path": "StarterPlayerScripts"
+      },
+      "StarterCharacterScripts": {
+        "$className": "StarterCharacterScripts",
+        "$path": "StarterCharacterScripts"
+      }
+    },
+
+    "StarterGui": {
+      "$className": "StarterGui",
+
+      "MainHUD": {
+        "$className": "ScreenGui",
+        "Script": { "$className": "LocalScript", "$path": "StarterGui/MainHUD.lua" }
+      },
+      "PathSelectGui": {
+        "$className": "ScreenGui",
+        "Script": { "$className": "LocalScript", "$path": "StarterGui/PathSelectGui.lua" }
+      },
+      "InventoryGui": {
+        "$className": "ScreenGui",
+        "Script": { "$className": "LocalScript", "$path": "StarterGui/InventoryGui.lua" }
+      },
+      "StoreGui": {
+        "$className": "ScreenGui",
+        "Script": { "$className": "LocalScript", "$path": "StarterGui/StoreGui.lua" }
+      },
+      "RebirthGui": {
+        "$className": "ScreenGui",
+        "Script": { "$className": "LocalScript", "$path": "StarterGui/RebirthGui.lua" }
+      },
+      "NotificationGui": {
+        "$className": "ScreenGui",
+        "Script": { "$className": "LocalScript", "$path": "StarterGui/NotificationGui.lua" }
+      },
+      "DailyGui": {
+        "$className": "ScreenGui",
+        "Script": { "$className": "LocalScript", "$path": "StarterGui/DailyGui.lua" }
+      },
+      "DomainsGui": {
+        "$className": "ScreenGui",
+        "Script": { "$className": "LocalScript", "$path": "StarterGui/DomainsGui.lua" }
+      },
+      "SpiritsGui": {
+        "$className": "ScreenGui",
+        "Script": { "$className": "LocalScript", "$path": "StarterGui/SpiritsGui.lua" }
+      }
+    }
+  }
+}
