@@ -7,7 +7,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local GameData          = require(ReplicatedStorage.Modules.GameData)
 local StatsCalculator   = require(ReplicatedStorage.Modules.StatsCalculator)
 
-local function PDM()  return require(game.ServerScriptService.PlayerDataManager) end
+local function PDM()  return require(game.ServerScriptService.PlayerDataManager)     end
+local function CMM()  return require(game.ServerScriptService.CharacterMorphManager) end
 
 local RemoteEvents      = ReplicatedStorage:WaitForChild("RemoteEvents")
 local TrophyUpdate      = RemoteEvents:WaitForChild("TrophyUpdate")      -- server→client: (trophies)
@@ -81,6 +82,14 @@ BuyStageRequest.OnServerEvent:Connect(function(player, targetStageId)
 			if hrp then hrp.CFrame = spawn.CFrame + Vector3.new(0,3,0) end
 		end
 	end
+
+	-- Apply stage appearance (model swap if uploaded, else color + aura)
+	-- Small delay so the teleport settles before any character swap occurs
+	local evolvedPath  = data.path
+	local evolvedStage = data.stage
+	task.delay(0.5, function()
+		CMM().applyStageAppearance(player, evolvedPath, evolvedStage)
+	end)
 end)
 
 -- Handle damage boost button (temp multiplier)
