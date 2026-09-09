@@ -142,13 +142,14 @@ GameData.Products = {
 -- ============================================================
 
 GameData.Domains = {
-	{ id="CursedEnergyVeil",    name="Cursed Energy Veil",     damageMult=1.25, trophyCost=0,         rebirthReq=0,  color=Color3.fromRGB(120,200,80)  },
-	{ id="BlackFlash",           name="Black Flash",             damageMult=1.5,  trophyCost=1000,      rebirthReq=1,  color=Color3.fromRGB(60,120,220)  },
-	{ id="DivergentFist",        name="Divergent Fist",          damageMult=2,    trophyCost=10000,     rebirthReq=3,  color=Color3.fromRGB(220,120,60)  },
-	{ id="HollowPurple",         name="Hollow Purple",           damageMult=3,    trophyCost=100000,    rebirthReq=5,  color=Color3.fromRGB(160,60,220)  },
-	{ id="MalevolentShrine",     name="Malevolent Shrine",       damageMult=5,    trophyCost=1000000,   rebirthReq=10, color=Color3.fromRGB(220,0,80)    },
-	{ id="UnlimitedVoid",        name="Unlimited Void",          damageMult=8,    trophyCost=10000000,  rebirthReq=20, color=Color3.fromRGB(0,200,255)   },
-	{ id="AuthenticMutualLove",  name="Authentic Mutual Love",   damageMult=12,   trophyCost=100000000, rebirthReq=30, color=Color3.fromRGB(255,200,0)   },
+	-- Ordered weakest → strongest (lore-accurate, matching cost progression)
+	{ id="CoffinIronMountain",      name="Coffin of the Iron Mountain",      damageMult=1.25, trophyCost=0,         rebirthReq=0,  color=Color3.fromRGB(220,90,30)   }, -- Jogo (#12 lore)
+	{ id="HorizonSkandha",           name="Horizon of the Captivating Skandha", damageMult=1.5, trophyCost=1000,    rebirthReq=1,  color=Color3.fromRGB(0,180,200)   }, -- Dagon (#13 lore)
+	{ id="ChimeraShadowGarden",      name="Chimera Shadow Garden",            damageMult=2,    trophyCost=10000,     rebirthReq=3,  color=Color3.fromRGB(60,30,100)   }, -- Megumi (#11 lore)
+	{ id="SelfEmbodimentPerfection", name="Self-Embodiment of Perfection",    damageMult=3,    trophyCost=100000,    rebirthReq=5,  color=Color3.fromRGB(130,60,180)  }, -- Mahito (#5 lore)
+	{ id="AuthenticMutualLove",      name="Authentic Mutual Love",            damageMult=5,    trophyCost=1000000,   rebirthReq=10, color=Color3.fromRGB(255,255,255) }, -- Yuta (#4 lore)
+	{ id="MalevolentShrine",         name="Malevolent Shrine",                damageMult=8,    trophyCost=10000000,  rebirthReq=20, color=Color3.fromRGB(180,0,30)    }, -- Sukuna (#2 lore)
+	{ id="UnlimitedVoid",            name="Unlimited Void",                   damageMult=12,   trophyCost=100000000, rebirthReq=30, color=Color3.fromRGB(0,210,255)   }, -- Gojo (#1 lore, strongest)
 }
 
 -- ============================================================
