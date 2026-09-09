@@ -311,13 +311,9 @@ local gateScript = Instance.new("LocalScript")
 gateScript.Source = [[
 	local pp = script.Parent:WaitForChild("ProximityPrompt")
 	local RS = game:GetService("ReplicatedStorage")
-	local BuyStageRequest = RS:WaitForChild("RemoteEvents"):WaitForChild("BuyStageRequest")
-	-- "entering" fires stage 1 teleport — handled server-side by PathManager on join
-	-- This just signals the server to teleport player to their current stage
+	local EnterStages = RS:WaitForChild("RemoteEvents"):WaitForChild("EnterStages")
 	pp.Triggered:Connect(function()
-		local StageEndReached = RS:WaitForChild("RemoteEvents"):WaitForChild("StageEndReached")
-		-- Fire with stageId 0 = "go to current stage location"
-		StageEndReached:FireServer(0)
+		EnterStages:FireServer()
 	end)
 ]]
 gateScript.Parent = gateBase

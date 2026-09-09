@@ -42,4 +42,13 @@ Players.PlayerAdded:Connect(function(player)
 	end)
 end)
 
+-- Player activates the hub gate → teleport them to their current stage arena
+local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
+local EnterStages  = RemoteEvents:WaitForChild("EnterStages")
+EnterStages.OnServerEvent:Connect(function(player)
+	local data = PDM().Get(player)
+	if not data or not data.path then return end
+	teleportToCurrentStage(player)
+end)
+
 return StageManager

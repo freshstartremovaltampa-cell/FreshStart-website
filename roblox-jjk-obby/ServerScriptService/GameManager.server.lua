@@ -29,6 +29,7 @@ for _, name in ipairs({
 	"EnemyKilled","InventoryUpdate","TrophyUpdate","RebirthRequest",
 	"RebirthResult","BuyStageRequest","DamageBoostRequest","WaveUpdate",
 	"BuyDomain","EquipDomain","SpiritAction","SpiritDropped","DailyRewardClaimed",
+	"EnterStages",
 }) do re(ev, name) end
 
 -- Functions
