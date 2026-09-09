@@ -1,94 +1,69 @@
 -- GameManager.server.lua (Script → ServerScriptService)
--- Entry point: sets up remote infrastructure and bootstraps all managers
+-- Creates all Remote Events/Functions and wires GetPlayerData
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players           = game:GetService("Players")
 
--- ----------------------------------------------------------------
--- Create Remote Events / Functions folder structure if missing
--- (In production, create these manually in Studio for clarity)
--- ----------------------------------------------------------------
-
-local function ensureFolder(parent, name)
-	local f = parent:FindFirstChild(name)
-	if not f then
-		f = Instance.new("Folder")
-		f.Name   = name
-		f.Parent = parent
-	end
-	return f
+local function folder(parent, name)
+	return parent:FindFirstChild(name) or (function()
+		local f = Instance.new("Folder"); f.Name=name; f.Parent=parent; return f
+	end)()
+end
+local function re(parent, name)
+	return parent:FindFirstChild(name) or (function()
+		local r = Instance.new("RemoteEvent"); r.Name=name; r.Parent=parent; return r
+	end)()
+end
+local function rf(parent, name)
+	return parent:FindFirstChild(name) or (function()
+		local r = Instance.new("RemoteFunction"); r.Name=name; r.Parent=parent; return r
+	end)()
 end
 
-local function ensureRemoteEvent(parent, name)
-	local r = parent:FindFirstChild(name)
-	if not r then
-		r = Instance.new("RemoteEvent")
-		r.Name   = name
-		r.Parent = parent
-	end
-	return r
+local ev = folder(ReplicatedStorage, "RemoteEvents")
+local fn = folder(ReplicatedStorage, "RemoteFunctions")
+
+-- Events
+for _, name in ipairs({
+	"SelectPath","SwitchPath","StageEvolved","UpdateStats","PathChanged",
+	"EnemyKilled","InventoryUpdate","TrophyUpdate","RebirthRequest",
+	"RebirthResult","BuyStageRequest","DamageBoostRequest","StageEndReached",
+}) do re(ev, name) end
+
+-- Functions
+for _, name in ipairs({"GetPlayerData","GetInventory"}) do rf(fn, name) end
+
+-- Ensure Stages folder exists before builders run
+if not workspace:FindFirstChild("Stages") then
+	local f = Instance.new("Folder"); f.Name="Stages"; f.Parent=workspace
 end
 
-local function ensureRemoteFunction(parent, name)
-	local r = parent:FindFirstChild(name)
-	if not r then
-		r = Instance.new("RemoteFunction")
-		r.Name   = name
-		r.Parent = parent
-	end
-	return r
-end
+-- GetPlayerData remote function
+local GetPlayerData = fn:WaitForChild("GetPlayerData")
+local GetInventory  = fn:WaitForChild("GetInventory")
 
-local eventsFolder    = ensureFolder(ReplicatedStorage, "RemoteEvents")
-local functionsFolder = ensureFolder(ReplicatedStorage, "RemoteFunctions")
-
--- Remote Events
-ensureRemoteEvent(eventsFolder, "SelectPath")
-ensureRemoteEvent(eventsFolder, "SwitchPath")
-ensureRemoteEvent(eventsFolder, "StageComplete")
-ensureRemoteEvent(eventsFolder, "UpdateStats")
-ensureRemoteEvent(eventsFolder, "PathChanged")
-ensureRemoteEvent(eventsFolder, "EnemyKilled")
-ensureRemoteEvent(eventsFolder, "InventoryUpdate")
-
--- Remote Functions
-ensureRemoteFunction(functionsFolder, "GetInventory")
-ensureRemoteFunction(functionsFolder, "GetPlayerData")
-
--- ----------------------------------------------------------------
--- GetPlayerData remote function (used by client GUI on join)
--- ----------------------------------------------------------------
-
-local RemoteFunctions = ReplicatedStorage:WaitForChild("RemoteFunctions")
-local GetPlayerData   = RemoteFunctions:WaitForChild("GetPlayerData")
-
-local function getPlayerDataManager()
-	return require(game.ServerScriptService.PlayerDataManager)
-end
+local function PDM() return require(game.ServerScriptService.PlayerDataManager) end
 
 GetPlayerData.OnServerInvoke = function(player)
-	local PDM  = getPlayerDataManager()
-	local data = PDM.Get(player)
+	local data = PDM().Get(player)
 	if not data then return nil end
-
-	-- Return a safe copy (no direct reference to live table)
 	return {
 		path         = data.path,
 		stage        = data.stage,
 		inventory    = data.inventory,
 		completedAll = data.completedAll,
 		switchCount  = data.switchCount,
+		trophies     = data.trophies,
+		level        = data.level,
+		xp           = data.xp,
+		rebirthCount = data.rebirthCount,
+		hasAutoFight = data.hasAutoFight,
 	}
 end
 
--- ----------------------------------------------------------------
--- Ensure Stages folder exists in Workspace for map organisation
--- ----------------------------------------------------------------
-
-if not workspace:FindFirstChild("Stages") then
-	local stagesFolder   = Instance.new("Folder")
-	stagesFolder.Name    = "Stages"
-	stagesFolder.Parent  = workspace
+GetInventory.OnServerInvoke = function(player)
+	local data = PDM().Get(player)
+	return data and data.inventory or {}
 end
 
-print("[GameManager] JJK Obby server initialised.")
+print("[GameManager] JJK Obby server ready.")
