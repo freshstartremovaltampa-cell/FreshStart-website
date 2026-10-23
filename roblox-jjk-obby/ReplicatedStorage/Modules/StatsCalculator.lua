@@ -35,6 +35,8 @@ end
 -- Convenience wrapper: pass the full player data table
 function StatsCalculator.GetPlayerStats(data)
 	local stats = StatsCalculator.GetFinalStats(data.path, data.stage, data.inventory)
+	-- Apply permanent perks that the base stat tables don't include
+	if data.hasSpeedBoost then stats.speed = stats.speed + 5 end
 	local domainMult  = GameData.GetDomainMult(data.equippedDomain)
 	local spiritMult  = GameData.GetSpiritsMult(data.equippedSpirits, data.spirits)
 	stats.damage = math.round(stats.damage * domainMult * spiritMult)

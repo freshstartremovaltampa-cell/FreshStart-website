@@ -31,7 +31,8 @@ local function applyPlayerStats(player)
 	local char = player.Character
 	if not char then return end
 
-	local stats = StatsCalculator.GetFinalStats(data.path, data.stage, data.inventory)
+	-- GetPlayerStats includes SpeedBoost perk + domain/spirit multipliers on damage
+	local stats = StatsCalculator.GetPlayerStats(data)
 	StatsCalculator.ApplyToCharacter(char, stats)
 
 	UpdateStats:FireClient(player, stats)

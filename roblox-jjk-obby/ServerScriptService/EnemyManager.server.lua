@@ -257,6 +257,16 @@ Players.PlayerAdded:Connect(function(player)
 	end)
 end)
 
+-- New players: CharacterAdded fires before path is chosen, so startCombat returns early.
+-- When the player enters the stage arena for the first time, kick off combat now.
+local EnterStages = RemoteEvents:WaitForChild("EnterStages")
+EnterStages.OnServerEvent:Connect(function(player)
+	local uid = player.UserId
+	if not playerState[uid] or not playerState[uid].active then
+		startCombat(player)
+	end
+end)
+
 Players.PlayerRemoving:Connect(function(player)
 	local uid = player.UserId
 	stopCombat(uid)
