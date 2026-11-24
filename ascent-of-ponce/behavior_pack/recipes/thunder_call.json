@@ -1,0 +1,35 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "ponce:thunder_call"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "BWB",
+      "FBF",
+      " W "
+    ],
+    "key": {
+      "B": {
+        "item": "ponce:bull_horn"
+      },
+      "W": {
+        "item": "ponce:wind_essence"
+      },
+      "F": {
+        "item": "ponce:hawk_feather"
+      }
+    },
+    "unlock": [
+      {
+        "item": "ponce:bull_horn"
+      }
+    ],
+    "result": {
+      "item": "ponce:thunder_call"
+    }
+  }
+}

@@ -269,6 +269,13 @@ INFUSIONS = {
     "ponce:gator_hide": {"name": "Gator Scale", "cost": 2, "durability": 0.4, "swing": 0.05},
     "ponce:hydra_fang": {"name": "Hydra Fang", "cost": 1, "damage": 2.5, "crit": 0.05},
     "ponce:hydra_scale": {"name": "Hydra Scale", "cost": 2, "damage": 0.5, "durability": 0.5},
+    # Floor 3 drops
+    "ponce:bull_horn": {"name": "Bull Horn", "cost": 2, "damage": 1.5, "swing": 0.05},
+    "ponce:highland_hide": {"name": "Highland Hide", "cost": 3, "durability": 0.35},
+    "ponce:lizard_scale": {"name": "Lizard Scale", "cost": 2, "durability": 0.2, "crit": 0.03},
+    "ponce:wind_essence": {"name": "Wind Essence", "cost": 2, "swing": -0.15, "crit": 0.02},
+    "ponce:hawk_feather": {"name": "Hawk Feather", "cost": 2, "crit": 0.06, "swing": -0.05},
+    "ponce:thunder_horn": {"name": "Thunder Horn", "cost": 1, "damage": 3, "crit": 0.04},
     # Relic-only (built into Hydra Relics, never forged). lifesteal = share of each hit's damage healed.
     "relic:hydras_eye": {"name": "Hydra's Eye", "relicOnly": True, "crit": 0.1},
     "relic:hydras_thirst": {"name": "Hydra's Thirst", "relicOnly": True, "lifesteal": 0.04},

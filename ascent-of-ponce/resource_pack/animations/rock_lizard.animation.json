@@ -1,0 +1,52 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.ponce.rock_lizard.walk": {
+      "loop": true,
+      "bones": {
+        "leg0": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 50) * 60 * query.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "leg3": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 50) * 60 * query.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "leg1": {
+          "rotation": [
+            "-math.cos(query.modified_distance_moved * 50) * 60 * query.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "leg2": {
+          "rotation": [
+            "-math.cos(query.modified_distance_moved * 50) * 60 * query.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "body": {
+          "rotation": [
+            0,
+            "math.sin(query.modified_distance_moved * 50) * 8 * query.modified_move_speed",
+            0
+          ]
+        },
+        "tail": {
+          "rotation": [
+            0,
+            "-math.sin(query.modified_distance_moved * 50) * 18 * query.modified_move_speed",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

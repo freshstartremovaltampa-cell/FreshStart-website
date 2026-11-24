@@ -1,0 +1,209 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.ponce.rock_lizard",
+        "texture_width": 64,
+        "texture_height": 32,
+        "visible_bounds_width": 1.5,
+        "visible_bounds_height": 1,
+        "visible_bounds_offset": [
+          0,
+          0.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "body",
+          "pivot": [
+            0,
+            2,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -3,
+                1,
+                -6
+              ],
+              "size": [
+                6,
+                3,
+                12
+              ],
+              "uv": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        {
+          "name": "head",
+          "parent": "body",
+          "pivot": [
+            0,
+            2.5,
+            -6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -2.5,
+                1,
+                -10
+              ],
+              "size": [
+                5,
+                3,
+                4
+              ],
+              "uv": [
+                36,
+                0
+              ]
+            }
+          ]
+        },
+        {
+          "name": "tail",
+          "parent": "body",
+          "pivot": [
+            0,
+            2.5,
+            6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -1.5,
+                1.5,
+                6
+              ],
+              "size": [
+                3,
+                2,
+                10
+              ],
+              "uv": [
+                0,
+                15
+              ]
+            }
+          ]
+        },
+        {
+          "name": "leg0",
+          "parent": "body",
+          "pivot": [
+            -3,
+            2,
+            -3
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4,
+                0,
+                -4
+              ],
+              "size": [
+                2,
+                2,
+                2
+              ],
+              "uv": [
+                36,
+                8
+              ]
+            }
+          ]
+        },
+        {
+          "name": "leg1",
+          "parent": "body",
+          "pivot": [
+            3,
+            2,
+            -3
+          ],
+          "cubes": [
+            {
+              "origin": [
+                2,
+                0,
+                -4
+              ],
+              "size": [
+                2,
+                2,
+                2
+              ],
+              "uv": [
+                44,
+                8
+              ]
+            }
+          ]
+        },
+        {
+          "name": "leg2",
+          "parent": "body",
+          "pivot": [
+            -3,
+            2,
+            4
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -4,
+                0,
+                3
+              ],
+              "size": [
+                2,
+                2,
+                2
+              ],
+              "uv": [
+                52,
+                8
+              ]
+            }
+          ]
+        },
+        {
+          "name": "leg3",
+          "parent": "body",
+          "pivot": [
+            3,
+            2,
+            4
+          ],
+          "cubes": [
+            {
+              "origin": [
+                2,
+                0,
+                3
+              ],
+              "size": [
+                2,
+                2,
+                2
+              ],
+              "uv": [
+                52,
+                12
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

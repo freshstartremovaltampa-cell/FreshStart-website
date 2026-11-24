@@ -107,6 +107,12 @@ export const MOBS = {
   "ponce:hydra_head_acid": { name: "Hydra Head", level: 15, xp: 40, mastery: 1.5 },
   // XP and mastery here go to whoever fells the last head
   "ponce:mire_hydra": { name: "Mire Hydra", level: 15, xp: 900, mastery: 15, boss: true },
+  // Floor 3: the Rolling Highlands
+  "ponce:highland_bull": { name: "Highland Bull", level: 16, xp: 70 },
+  "ponce:rock_lizard": { name: "Rock Lizard", level: 17, xp: 65 },
+  "ponce:wind_sprite": { name: "Wind Sprite", level: 18, xp: 60 },
+  "ponce:crag_hawk": { name: "Crag Hawk", level: 19, xp: 64 },
+  "ponce:thunderhoof": { name: "Thunderhoof, the Highland King", level: 22, xp: 1500, mastery: 18, boss: true },
 };
 
 // XP from kills. Anything not listed falls back to its max health.

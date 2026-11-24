@@ -1041,6 +1041,41 @@ export const INFUSIONS = {
     "damage": 0.5,
     "durability": 0.5
   },
+  "ponce:bull_horn": {
+    "name": "Bull Horn",
+    "cost": 2,
+    "damage": 1.5,
+    "swing": 0.05
+  },
+  "ponce:highland_hide": {
+    "name": "Highland Hide",
+    "cost": 3,
+    "durability": 0.35
+  },
+  "ponce:lizard_scale": {
+    "name": "Lizard Scale",
+    "cost": 2,
+    "durability": 0.2,
+    "crit": 0.03
+  },
+  "ponce:wind_essence": {
+    "name": "Wind Essence",
+    "cost": 2,
+    "swing": -0.15,
+    "crit": 0.02
+  },
+  "ponce:hawk_feather": {
+    "name": "Hawk Feather",
+    "cost": 2,
+    "crit": 0.06,
+    "swing": -0.05
+  },
+  "ponce:thunder_horn": {
+    "name": "Thunder Horn",
+    "cost": 1,
+    "damage": 3,
+    "crit": 0.04
+  },
   "relic:hydras_eye": {
     "name": "Hydra's Eye",
     "relicOnly": true,

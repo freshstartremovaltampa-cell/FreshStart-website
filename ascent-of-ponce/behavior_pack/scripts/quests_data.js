@@ -15,6 +15,7 @@
 // Rewards scale with difficulty. Weapon rewards let the player pick the weapon type:
 //   fine_t1        Fine-quality Tier I weapon (Hard, Floor 1)
 //   fine_t2        Fine-quality Tier II weapon (Hard, Floor 2)
+//   masterwork_t2 with no infusions          (Hard, Floor 3)
 //   masterwork_t2  Masterwork Tier II weapon with the listed infusions (Elite)
 //   relic          Relic: unbreakable, 3 built-in infusions, highest stats (Legendary)
 
@@ -27,6 +28,8 @@ export const DIFFICULTY = {
 };
 
 export const FLOOR2_MOBS = ["ponce:bog_frog", "ponce:will_o_wisp", "ponce:mire_shambler", "ponce:marsh_gator"];
+
+export const FLOOR3_MOBS = ["ponce:highland_bull", "ponce:rock_lizard", "ponce:wind_sprite", "ponce:crag_hawk"];
 
 export const FLOOR1_MOBS = [
   "ponce:meadow_jelly", "ponce:thornback_hare", "ponce:field_wasp",
@@ -45,6 +48,10 @@ export const NPCS = {
   "ponce:npc_warden": {
     key: "warden", name: "Ysolde, the Marsh Warden",
     greeting: "You climbed the stair, then. Welcome to the marsh. Keep to the boardwalks, mind the water, and never trust a light in the fog.",
+  },
+  "ponce:npc_ranger": {
+    key: "ranger", name: "Corra, the Highland Ranger",
+    greeting: "Up here the wind tells you everything, if you listen. Right now it says the herds are restless and their king is watching from the Crown.",
   },
   "ponce:npc_cook": {
     key: "cook", name: "Pip, the Cook",
@@ -136,6 +143,39 @@ export const QUESTS = [
     objectives: [{ type: "kill", target: FLOOR2_MOBS, count: 20, label: "Floor 2 creatures" }],
     rewards: { xp: 150, col: 70 } },
 
+  // ---------------- Corra: the Rolling Highlands (Floor 3) ----------------
+  { id: "bull_run", giver: "ranger", difficulty: 2, name: "Bull Run",
+    desc: "The herds have turned mean. When one charges, they all charge. Thin them out before someone gets trampled.",
+    requires: { floor: 3 },
+    objectives: [{ type: "kill", target: "ponce:highland_bull", count: 10 }],
+    rewards: { xp: 500, col: 200, items: [["ponce:highland_stew", 1], ["minecraft:beef", 6]] } },
+  { id: "lizard_lurk", giver: "ranger", difficulty: 2, name: "Rocks That Bite",
+    desc: "Some of those rocks have teeth. Learn to tell them apart, and bring me their scales.",
+    requires: { floor: 3 },
+    objectives: [{ type: "kill", target: "ponce:rock_lizard", count: 10 }, { type: "collect", item: "ponce:lizard_scale", count: 4 }],
+    rewards: { xp: 520, col: 210, items: [["ponce:glimmer_silver_ingot", 3]] } },
+  { id: "sprite_storm", giver: "ranger", difficulty: 3, name: "Catch the Wind",
+    desc: "Wind Sprites knock climbers clean off the ridges. Ground a few of them.",
+    requires: { floor: 3, level: 16, quests: ["bull_run"] },
+    objectives: [{ type: "kill", target: "ponce:wind_sprite", count: 10 }],
+    rewards: { xp: 900, col: 360, weapon: { kind: "masterwork_t2" } } },
+  { id: "hawk_eyes", giver: "ranger", difficulty: 3, name: "Hawk Eyes",
+    desc: "The Crag Hawks dive out of the sun. Bring down enough of them and I'll fletch something special.",
+    requires: { floor: 3, level: 17 },
+    objectives: [{ type: "kill", target: "ponce:crag_hawk", count: 10 }, { type: "collect", item: "ponce:hawk_feather", count: 5 }],
+    rewards: { xp: 950, col: 380, items: [["ponce:wind_essence", 3], ["ponce:glimmer_silver_ingot", 4]] } },
+  { id: "king_of_the_hills", giver: "ranger", difficulty: 4, name: "King of the Hills",
+    desc: "Thunderhoof rules the herds from the Crown of Stones at the end of the north trail. Craft a Thunder Call and face him: " +
+      "watch his horns, jump his quakes, and never stand where the herd will run.",
+    requires: { floor: 3, level: 18, quests: ["sprite_storm", "hawk_eyes"] },
+    objectives: [{ type: "boss", target: "ponce:thunderhoof", count: 1 }],
+    rewards: { xp: 2000, col: 900, weapon: { kind: "masterwork_t2", infusions: ["ponce:wind_essence", "ponce:hawk_feather"] } } },
+  { id: "highland_patrol", giver: "ranger", difficulty: 1, repeatable: true, name: "Highland Patrol (repeatable)",
+    desc: "Walk the hills and keep the beasts off the trails.",
+    requires: { floor: 3 },
+    objectives: [{ type: "kill", target: FLOOR3_MOBS, count: 20, label: "Floor 3 creatures" }],
+    rewards: { xp: 250, col: 110 } },
+
   // ---------------- Bram: mining and smithing ----------------
   { id: "first_ore", giver: "smith", difficulty: 1, name: "Copper First",
     desc: "Every smith starts with copper. Mine some Ember Copper and bring yourself back in one piece.",
@@ -218,6 +258,11 @@ export const SHOPS = {
     buy: [["ponce:mire_lure", 400], ["ponce:marsh_gumbo", 50], ["ponce:frog_legs", 6]],
     sell: [["ponce:frog_skin", 4], ["ponce:wisp_essence", 6], ["ponce:bog_moss", 3], ["ponce:gator_hide", 8],
       ["ponce:gator_tooth", 10], ["ponce:hydra_scale", 40], ["ponce:hydra_fang", 80]],
+  },
+  ranger: {
+    buy: [["ponce:thunder_call", 600], ["ponce:highland_stew", 70]],
+    sell: [["ponce:bull_horn", 12], ["ponce:highland_hide", 8], ["ponce:lizard_scale", 10], ["ponce:wind_essence", 9],
+      ["ponce:hawk_feather", 9], ["ponce:thunder_horn", 120]],
   },
   cook: {
     buy: [["ponce:cooking_pot", 150], ["ponce:boar_skewer", 25], ["ponce:hare_stew", 35], ["ponce:jelly_tart", 40],

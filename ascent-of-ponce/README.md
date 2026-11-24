@@ -269,8 +269,56 @@ The hydra introduces **multi-head creatures** (`scripts/multihead.js`, data-driv
 
     Hydra's Eye and Hydra's Thirst exist only on these weapons and can't be forged. Hydra's Thirst is the one deliberate exception to "weapons never grant abilities".
 
+## Floor 3: the Rolling Highlands
+Floor 3 is centered on x -10000, z 10000. Reach it through the Hydra Pool's Stair Gate or Map & Travel once Floor 2 is cleared.
+
+- **The highlands**:
+  - windswept rolling hills (25+ blocks of height range) with exposed rock on the steep slopes
+  - rocky outcrops, some holding Ironheart, Glimmer Silver or Ember Copper nodes
+  - four standing-stone circles as landmarks
+  - spruce and birch only in sheltered groves, flower meadows, hill tarns (lakes), and winding trails
+- **Cairnhold**: a walled hilltop town. It has stone-and-timber houses, a fountain cairn, a drystone wall with gates, and:
+  - **Corra, the Highland Ranger** (new quest giver and shop)
+  - Bram's smithy with a forge, and Pip's kitchen with a cooking pot
+- **Crown of Stones**: the guardian arena at the end of the north trail. A grassy ring of twelve great standing stones around a stone dais, with the next Stair Gate between two tall stones.
+- **Creatures** (four per floor as before, each with a habitat; bulls come in herds):
+
+  | Creature | Lv | HP | Behavior | Drops |
+  |---|---|---|---|---|
+  | Highland Bull | 16 | 90 | Grazes in herds; hit one and the herd charges | Beef, Highland Hide, Bull Horn |
+  | Rock Lizard | 17 | 60 | Fast, blends into the rocks; more at night | Lizard Scale |
+  | Wind Sprite | 18 | 45 | Glowing whirl that hovers and strikes; more at night | Wind Essence |
+  | Crag Hawk | 19 | 40 | Circles high, dives fast; by day | Hawk Feather |
+
+- **New infusions**:
+
+  | Infusion | Cost | Effect |
+  |---|---|---|
+  | Bull Horn | 2 Bull Horn | +1.5 damage, 5% slower swing |
+  | Highland Hide | 3 Highland Hide | +35% durability |
+  | Lizard Scale | 2 Lizard Scale | +20% durability, +3% crit |
+  | Wind Essence | 2 Wind Essence | 15% faster swing, +2% crit |
+  | Hawk Feather | 2 Hawk Feather | +6% crit, 5% faster swing |
+  | Thunder Horn | 1 Thunder Horn | +3 damage, +4% crit |
+
+- **New meal**: Highland Stew (2 Beef, Potato, Carrot, Bowl; Cooking 18) gives +4 STR and +2 VIT for 5 minutes.
+- **Quests** (Corra): six of them, all needing Floor 3 reached. Hard quests give a Masterwork Tier II weapon. The Elite quest "King of the Hills" gives a Masterwork Tier II with Wind Essence and Hawk Feather. There's also a repeatable Highland Patrol.
+
+### Floor 3 guardian: Thunderhoof, the Highland King
+Lv 22, 2600 HP, a storm-grey bull nearly three times the size of a Highland Bull. Tuned for a fight of about 5 minutes around Lv 17-20 (estimated). It's tougher than the Floor 1-2 guardians and gentler than the planned Floor 5 guardian.
+- **Summon** with a **Thunder Call** (bull horns, wind essence, hawk feathers) inside the Crown of Stones. Used elsewhere, it points the way. He's leashed to the Crown.
+- **Charge**: a roar and a 1 s warning, then a straight charge for 12 damage and heavy knockback. Sidestep.
+- **Ground Quake**: stay close and he rears up (1.25 s warning) and slams the ground. Everyone within 8 blocks who is **on the ground** takes 9 damage and is slowed. **Jump** at the right moment, or get clear.
+- **Stampede** (below 70%): three lanes across the arena are marked (2 s warning), then a herd of bulls thunders down them for 10 damage each. **Stand between the lanes.**
+- **Enrage** (below 30%): faster, hits for 13, charges more often.
+- **Rewards**: Floor 3 cleared (opening its Stair Gate), +400 Col, 1500 EXP and +18 mastery to the killer, plus a Thunder Horn, hides, horns and beef.
+
 ## Roadmap
-5. Floors (part 3): Floor 3 and beyond; hydra-kind return as regular floor mobs around Floor 15
+5. Floors (part 4):
+   - Floor 4: the Frozen Peaks
+   - Floor 5: the Canyon Badlands, the toughest so far, with a high-defense, high-health, poisonous scorpion guardian
+   - hydra-kind return as regular floor mobs around Floor 15
+6. Tier III forging, so players have gear that keeps up from Floor 3 on
 
 ## Layout
 ```
@@ -299,6 +347,8 @@ behavior_pack/
     floor2_gen.js     Floor 2 layout: marsh, Stiltwater, Hydra Pool (pure code)
     floors.js         builds every floor in the game; travel, gates, fog, spawners
     multihead.js      multi-head creatures (the Mire Hydra): heads, regrowth, attacks
+    floor3_gen.js     Floor 3 layout: highlands, Cairnhold, Crown of Stones (pure code)
+    thunderhoof.js    Floor 3 guardian fight
     inventory.js, ui.js  shared helpers
     mobs.js           mole ambush, golemite weaknesses
     bosses.js         floor guardian fights
@@ -311,6 +361,7 @@ tools/gen_weapons.py  generates weapon items, icons and weapon_data.js (incl. fo
 tools/gen_jobs.py     generates ore nodes, forge, pot, ingots, meals, world gen and jobs_data.js
 tools/gen_npcs.py     generates the quest-giver NPC entities and skins
 tools/gen_floor2_mobs.py  generates the Floor 2 creatures, the hydra, drops, lure and marsh fog
+tools/gen_floor3_mobs.py  generates the Floor 3 creatures, Thunderhoof, drops and the Thunder Call
 tools/preview_floor.mjs   renders a floor's data from the real generator for previews
 tests/                run ./tests/run.sh (needs Node) to simulate gameplay against mock APIs
 ```

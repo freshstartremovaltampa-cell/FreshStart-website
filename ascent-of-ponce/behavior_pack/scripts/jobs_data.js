@@ -75,6 +75,14 @@ export const FOODS = {
       "dex": 2
     },
     "seconds": 300
+  },
+  "ponce:highland_stew": {
+    "name": "Highland Stew",
+    "stats": {
+      "str": 4,
+      "vit": 2
+    },
+    "seconds": 300
   }
 };
 
@@ -163,6 +171,30 @@ export const COOK_RECIPES = [
       },
       {
         "item": "ponce:bog_moss",
+        "count": 1
+      },
+      {
+        "item": "minecraft:bowl",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "result": "ponce:highland_stew",
+    "name": "Highland Stew",
+    "level": 18,
+    "xp": 60,
+    "ingredients": [
+      {
+        "item": "minecraft:beef",
+        "count": 2
+      },
+      {
+        "item": "minecraft:potato",
+        "count": 1
+      },
+      {
+        "item": "minecraft:carrot",
         "count": 1
       },
       {

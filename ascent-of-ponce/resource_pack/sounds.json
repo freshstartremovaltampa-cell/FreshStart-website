@@ -206,6 +206,78 @@
           "death": "mob.ravager.death",
           "ambient": "mob.ravager.ambient"
         }
+      },
+      "ponce:highland_bull": {
+        "volume": 1.0,
+        "pitch": [
+          0.6,
+          0.8
+        ],
+        "events": {
+          "ambient": "mob.cow.say",
+          "hurt": "mob.cow.hurt",
+          "death": "mob.cow.hurt",
+          "step": {
+            "sound": "mob.cow.step",
+            "volume": 0.4
+          }
+        }
+      },
+      "ponce:rock_lizard": {
+        "volume": 0.8,
+        "pitch": [
+          1.2,
+          1.4
+        ],
+        "events": {
+          "hurt": "mob.silverfish.hit",
+          "death": "mob.silverfish.kill",
+          "step": {
+            "sound": "mob.silverfish.step",
+            "volume": 0.3
+          }
+        }
+      },
+      "ponce:wind_sprite": {
+        "volume": 0.7,
+        "pitch": [
+          1.4,
+          1.7
+        ],
+        "events": {
+          "ambient": "mob.breeze.idle_ground",
+          "hurt": "mob.breeze.hurt",
+          "death": "mob.breeze.death"
+        }
+      },
+      "ponce:crag_hawk": {
+        "volume": 0.9,
+        "pitch": [
+          1.1,
+          1.3
+        ],
+        "events": {
+          "ambient": "mob.parrot.idle",
+          "hurt": "mob.parrot.hurt",
+          "death": "mob.parrot.death"
+        }
+      },
+      "ponce:thunderhoof": {
+        "volume": 2.0,
+        "pitch": [
+          0.4,
+          0.5
+        ],
+        "events": {
+          "ambient": "mob.ravager.ambient",
+          "hurt": "mob.ravager.hurt",
+          "death": "mob.ravager.death",
+          "attack": "mob.ravager.bite",
+          "step": {
+            "sound": "mob.ravager.step",
+            "volume": 1.0
+          }
+        }
       }
     }
   }

@@ -226,6 +226,30 @@
     },
     "ponce_threefold_ruin": {
       "textures": "textures/items/weapons/threefold_ruin"
+    },
+    "ponce_highland_hide": {
+      "textures": "textures/items/highland_hide"
+    },
+    "ponce_bull_horn": {
+      "textures": "textures/items/bull_horn"
+    },
+    "ponce_lizard_scale": {
+      "textures": "textures/items/lizard_scale"
+    },
+    "ponce_wind_essence": {
+      "textures": "textures/items/wind_essence"
+    },
+    "ponce_hawk_feather": {
+      "textures": "textures/items/hawk_feather"
+    },
+    "ponce_thunder_horn": {
+      "textures": "textures/items/thunder_horn"
+    },
+    "ponce_thunder_call": {
+      "textures": "textures/items/thunder_call"
+    },
+    "ponce_highland_stew": {
+      "textures": "textures/items/highland_stew"
     }
   }
 }

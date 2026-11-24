@@ -1137,7 +1137,9 @@ console.log("forms shown:", log.length);
   assert(hd.xp + hd.level * 1e6 > xp0, "the final blow earns the hydra's EXP");
   assert(dim.drops.some((x) => x.stack.typeId === "ponce:hydra_fang"), "it drops Hydra Fangs");
   assert(Q.questStatus(h, QUESTS_BY_ID.heads_will_roll) === "ready", "\"Heads Will Roll\" is ready to turn in");
-  assert(floors.useStairGate(h, 2) === "open" && h.msgs.some((m) => m.includes("Floor 3 is still being built")), "the Hydra Pool's gate opens (Floor 3 comes later)");
+  h.teleportedTo = undefined;
+  const F3a = await import("../behavior_pack/scripts/floor3_gen.js");
+  assert(floors.useStairGate(h, 2) === "travel" && Math.abs(h.teleportedTo.x - F3a.ARRIVAL.x) < 1, "the Hydra Pool's gate takes you up to Floor 3");
   assert(floors.mapText(h).includes("Floor 2") && floors.mapText(h).includes("open to you"), "the map knows you're on Floor 2");
 
   // Regular hydra-kind (planned for around Floor 15): no lure, arena or floor clear, just a dangerous mob
@@ -1209,4 +1211,114 @@ console.log("forms shown:", log.length);
   Math.random = realRandom;
   assert(relics().length === 2 && relics()[1].typeId === "ponce:threefold_ruin", "later kills: a 15% roll drops another (greatsword -> Threefold Ruin)");
   assert(sp.guardian.relic.chance === 0.15, "drop chance after the first is 15%");
+}
+
+// ================= Floor 3: the Rolling Highlands and Thunderhoof =================
+{
+  const g3 = await import("../behavior_pack/scripts/floor3_gen.js");
+  const floors = await import("../behavior_pack/scripts/floors.js");
+  const TH = await import("../behavior_pack/scripts/thunderhoof.js");
+  const Q = await import("../behavior_pack/scripts/quests.js");
+  const { QUESTS_BY_ID, QUESTS } = await import("../behavior_pack/scripts/quests_data.js");
+  const { FLOOR, ARENA, GATE, ARRIVAL } = g3;
+  const typeAt = (x, y, z) => dim.blocks.get(`${x},${y},${z}`)?.typeId;
+  dim.allLoaded = true;
+  dim.factory = (id, loc) => { const e = makeEntity(id, id === "ponce:thunderhoof" ? 2600 : 90); e.location = { ...loc }; e.remove = () => { e.isValid = false; }; return e; };
+
+  // ---- Generator ----
+  let total = 0, outside = 0, hmin = 1e9, hmax = -1e9;
+  for (let cx = g3.CHUNK_BOUNDS.min.x; cx <= g3.CHUNK_BOUNDS.max.x; cx++) for (let cz = g3.CHUNK_BOUNDS.min.z; cz <= g3.CHUNK_BOUNDS.max.z; cz++) {
+    if (!g3.chunkHasIsland(cx, cz)) continue;
+    for (const op of g3.chunkOps(cx, cz)) { total++; if ((op[2] >> 4) !== cx || ((op[0] === "f" ? op[5] : op[4]) >> 4) !== cz) outside++; }
+  }
+  for (let i = 0; i < 3000; i++) {
+    const a = Math.random() * Math.PI * 2, r = 60 + Math.random() * 150;
+    const x = Math.floor(FLOOR.center.x + Math.cos(a) * r), z = Math.floor(FLOOR.center.z + Math.sin(a) * r);
+    if (!g3.onIsland(x, z)) continue;
+    const y = g3.surfaceY(x, z); hmin = Math.min(hmin, y); hmax = Math.max(hmax, y);
+  }
+  assert(total > 400000 && outside === 0, `highlands generator: ${total} block ops, all inside their chunks`);
+  assert(hmax - hmin >= 15, `rolling hills: ${hmax - hmin} blocks between the lowest and highest ground`);
+  assert(g3.surfaceY(FLOOR.center.x, FLOOR.center.z) > FLOOR.base + 10, "Cairnhold sits on a hilltop");
+  assert(g3.STONE_CIRCLES.length === 4 && g3.STONE_CIRCLES.every((c) => g3.onIsland(c.x, c.z)), "four standing-stone circles out in the hills");
+
+  // ---- Build, quest giver, spawns ----
+  const t = makePlayer("Highlander"); world.players.push(t);
+  Object.assign(t, { dimension: dim, location: { x: 0, y: 64, z: 0 }, isSneaking: false, getGameMode: () => "Survival", isOnGround: true });
+  fire("playerSpawn", { player: t, initialSpawn: true });
+  const td = getDataFor(t); td.starter = "ponce:wayfarers_sword";
+  system.tick(20);
+  assert(Q.questStatus(t, QUESTS_BY_ID.bull_run) === "locked", "Floor 3 quests are locked until you reach Floor 3");
+  td.highestFloor = 3;
+  assert(floors.unlockedFloors(t).length === 3 && Q.questStatus(t, QUESTS_BY_ID.bull_run) === "available", "after the hydra: Floor 3 travel and quests unlock");
+  t.location = { ...ARRIVAL };
+  system.tick(500);
+  assert(floors.isChunkBuilt(3, FLOOR.center.x >> 4, FLOOR.center.z >> 4), "Cairnhold gets built");
+  const npcs = dim.entities.filter((e) => e.isValid && e.typeId.startsWith("ponce:npc_") && g3.isOnFloor(e.location));
+  assert(npcs.length === 3 && npcs.some((n) => n.typeId === "ponce:npc_ranger"), "Corra, Bram and Pip set up in Cairnhold");
+  t.location = { x: FLOOR.center.x + 100.5, y: g3.surfaceY(FLOOR.center.x + 100, FLOOR.center.z) + 1, z: FLOOR.center.z + 0.5 };
+  system.tick(400);
+  world.timeOfDay = 18000; system.tick(40 * 12); world.timeOfDay = 6000; system.tick(40 * 12);
+  const f3mobs = dim.entities.filter((e) => e.isValid && e.families?.includes("ponce_mob") && g3.isOnFloor(e.location));
+  const kinds = new Set(f3mobs.map((e) => e.typeId));
+  assert(f3mobs.length >= 4 && [...kinds].every((k) => ["ponce:highland_bull", "ponce:rock_lizard", "ponce:wind_sprite", "ponce:crag_hawk"].includes(k)), "only highland creatures spawn on Floor 3: " + [...kinds].join(", "));
+
+  // ---- Thunderhoof ----
+  t.location = { x: ARENA.x + 0.5, y: ARENA.y + 1, z: ARENA.z + 12.5 };
+  system.tick(500);
+  assert(typeAt(GATE.x, GATE.y, GATE.z) === "ponce:stair_gate", "the Crown of Stones has its Stair Gate");
+  const call = new ItemStack("ponce:thunder_call");
+  t.items[0] = call;
+  t.location = { x: ARENA.x + 70, y: ARENA.y + 1, z: ARENA.z };
+  fire("itemUse", { source: t, itemStack: call });
+  assert(t.items[0] === call && t.msgs.some((m) => m.includes("Crown of Stones")), "outside the Crown the call does nothing and points the way");
+  t.location = { x: ARENA.x + 0.5, y: ARENA.y + 1, z: ARENA.z + 10.5 };
+  fire("itemUse", { source: t, itemStack: call });
+  const boss = dim.entities.find((e) => e.isValid && e.typeId === "ponce:thunderhoof");
+  assert(boss && t.items[0] === undefined, "the Thunder Call summons Thunderhoof in the Crown");
+
+  // Quake: jumping avoids it, standing still doesn't
+  t.location = { x: boss.location.x + 3, y: boss.location.y, z: boss.location.z };
+  const st = TH.thunderState.get(boss.id) ?? (system.tick(2), TH.thunderState.get(boss.id));
+  st.nextCharge = system.currentTick + 10000; st.nextStampede = system.currentTick + 10000; st.nextQuake = 0;
+  t.health.currentValue = 20; t.isOnGround = false;
+  let saw = false;
+  for (let i = 0; i < 40; i++) { system.tick(1); if ((t.actionBar ?? "").includes("JUMP")) saw = true; }
+  assert(saw && t.health.currentValue === 20, "Ground Quake is telegraphed, and jumping over it takes no damage");
+  st.nextQuake = 0; t.isOnGround = true;
+  for (let i = 0; i < 40; i++) system.tick(1);
+  assert(t.health.currentValue <= 20 - TH.TUNING.quakeDamage + 0.01 && t.effects.slowness, "standing on the ground, the quake hits and slows you");
+
+  // Stampede below 70%: bulls run the marked lanes; standing between lanes is safe
+  boss.health.currentValue = 2600 * 0.6;
+  st.nextStampede = 0; st.nextQuake = system.currentTick + 10000;
+  t.health.currentValue = 20;
+  let lanesWarned = false, bulls = 0;
+  for (let i = 0; i < 50; i++) { system.tick(1); if ((t.actionBar ?? "").includes("STAMPEDE")) lanesWarned = true; }
+  const a = st.attack;
+  bulls = dim.entities.filter((e) => e.isValid && e.tagList.includes("ponce_stampede")).length;
+  assert(lanesWarned && a?.kind === "stampede" && bulls === 3, "Stampede: lanes are marked, then three bulls charge down them");
+  const herd = dim.entities.filter((e) => e.isValid && e.tagList.includes("ponce_stampede"));
+  t.location = { ...herd[1].location }; // stand in the middle lane, right where a bull is
+  system.tick(2);
+  assert(t.health.currentValue <= 20 - TH.TUNING.stampedeDamage + 0.01, "standing in a lane: trampled");
+  system.tick(60);
+  assert(dim.entities.filter((e) => e.isValid && e.tagList.includes("ponce_stampede")).length === 0, "the stampede herd leaves afterwards");
+
+  // Enrage and victory
+  boss.health.currentValue = 2600 * 0.25; system.tick(4);
+  assert(boss.events.includes("ponce:enrage"), "enraged below 30%");
+  Q.accept(t, QUESTS_BY_ID.bull_run);
+  td.level = 18; td.quests.done.sprite_storm = 1; td.quests.done.hawk_eyes = 1;
+  Q.accept(t, QUESTS_BY_ID.king_of_the_hills);
+  const col0 = td.col;
+  fire("entityDie", { deadEntity: boss, damageSource: { cause: "entityAttack", damagingEntity: t } });
+  boss.isValid = false;
+  assert(td.highestFloor === 4 && td.col >= col0 + TH.TUNING.col, "Floor 3 cleared: +400 Col and the gate opens");
+  assert(Q.questStatus(t, QUESTS_BY_ID.king_of_the_hills) === "ready", "\"King of the Hills\" is ready to turn in");
+  assert(floors.useStairGate(t, 3) === "open" && t.msgs.some((m) => m.includes("Floor 4 is still being built")), "the Crown's gate opens (Floor 4 comes next)");
+
+  // Rewards keep scaling with difficulty across all floors
+  const avg = (diff, k) => { const qs = QUESTS.filter((x) => x.difficulty === diff && !x.repeatable); return qs.reduce((s2, x) => s2 + x.rewards[k], 0) / qs.length; };
+  assert([2, 3, 4].every((n) => avg(n, "xp") > avg(n - 1, "xp")), "quest EXP still rises with difficulty");
 }

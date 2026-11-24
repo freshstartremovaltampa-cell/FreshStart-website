@@ -6,6 +6,7 @@
 import { world, system, BlockPermutation, BlockTypes, BlockVolume, GameMode } from "@minecraft/server";
 import * as F1 from "./floor1_gen.js";
 import * as F2 from "./floor2_gen.js";
+import * as F3 from "./floor3_gen.js";
 import { directionText } from "./floor1_gen.js";
 import { NPCS } from "./quests_data.js";
 import { getData } from "./data.js";
@@ -16,6 +17,7 @@ const OPS_PER_TICK = 700;
 const IGNORED_MODES = [GameMode?.Spectator ?? GameMode?.spectator].filter(Boolean);
 const FOG_ID = "ponce_floor";
 
+// [mob, weight, habitat, herd size]
 // habitat: "land" (dry ground), "water" (in shallow water), "any" (either), "air" (hovers above)
 export const FLOORS = [
   {
@@ -32,6 +34,13 @@ export const FLOORS = [
     spawn: {
       day: [["ponce:bog_frog", 35, "any"], ["ponce:marsh_gator", 20, "any"], ["ponce:mire_shambler", 15, "land"], ["ponce:will_o_wisp", 5, "air"]],
       night: [["ponce:bog_frog", 20, "any"], ["ponce:marsh_gator", 20, "any"], ["ponce:mire_shambler", 30, "land"], ["ponce:will_o_wisp", 30, "air"]],
+    },
+  },
+  {
+    gen: F3, fog: undefined,
+    spawn: {
+      day: [["ponce:highland_bull", 30, "land", 3], ["ponce:rock_lizard", 20, "land"], ["ponce:wind_sprite", 15, "air"], ["ponce:crag_hawk", 20, "air"]],
+      night: [["ponce:highland_bull", 15, "land", 2], ["ponce:rock_lizard", 30, "land"], ["ponce:wind_sprite", 30, "air"], ["ponce:crag_hawk", 5, "air"]],
     },
   },
 ];
@@ -328,7 +337,7 @@ function spawnTick() {
       if (!g.onIsland(x, z) || g.inTown(x, z) || Math.hypot(x - F.center.x, z - F.center.z) < F.townRadius + 8) continue;
       if (g.arenaDistance(x, z) < g.ARENA.radius + 10) continue; // the arena is for the guardian
       if (!isChunkBuilt(F.id, x >> 4, z >> 4)) continue;
-      const [id, , habitat] = pickMob(night ? f.spawn.night : f.spawn.day);
+      const [id, , habitat, herdSize] = pickMob(night ? f.spawn.night : f.spawn.day);
       const y = g.surfaceY(x, z) + 1;
       const at = dim.getBlock({ x, y, z }), below = dim.getBlock({ x, y: y - 1, z });
       if (!at || !below) continue;
@@ -340,7 +349,7 @@ function spawnTick() {
       if (habitat === "water" && !wet) continue;
       if (habitat === "any" && !(wet || (open && solidBelow))) continue;
       if (habitat === "air") { if (!(open || wet)) continue; spawnY = Math.max(y, F.base + 1) + 2; }
-      const herd = id === "ponce:tusk_boar" ? 2 : 1;
+      const herd = herdSize ?? (id === "ponce:tusk_boar" ? 2 : 1);
       for (let i = 0; i < herd; i++) dim.spawnEntity(id, { x: x + 0.5 + i, y: spawnY, z: z + 0.5 });
       break;
     }

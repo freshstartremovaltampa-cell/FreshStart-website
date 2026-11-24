@@ -35,6 +35,9 @@ FOODS = [
     # Floor 2
     ("marsh_gumbo", "Marsh Gumbo", 10, 0.8, {"agi": 4, "dex": 2}, 300, 12, 45,
      [("ponce:frog_legs", 2), ("ponce:bog_moss", 1), ("minecraft:bowl", 1)], ((110, 90, 50), (70, 84, 44))),
+    # Floor 3
+    ("highland_stew", "Highland Stew", 12, 0.9, {"str": 4, "vit": 2}, 300, 18, 60,
+     [("minecraft:beef", 2), ("minecraft:potato", 1), ("minecraft:carrot", 1), ("minecraft:bowl", 1)], ((150, 80, 50), (200, 150, 90))),
 ]
 
 
