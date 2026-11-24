@@ -7,6 +7,7 @@ import { world, system, ItemStack } from "@minecraft/server";
 import { ORES, PICKAXE_TIERS } from "./jobs_data.js";
 import { getData } from "./data.js";
 import { addJobXp, jobLevel } from "./jobs.js";
+import { notify } from "./quests.js";
 
 const DEPLETED = "ponce:depleted_node";
 const SAVE_KEY = "ponce:depleted_nodes";
@@ -96,6 +97,7 @@ export function registerMining() {
     dimension.spawnItem(new ItemStack(ore.drop, amount), { x: x + 0.5, y: y + 0.5, z: z + 0.5 });
     if (amount > 1) player.sendMessage(`§a[Ponce] Rich vein! Double ${ore.name}.`);
     addJobXp(player, "mining", ore.xp);
+    notify(player, "mine", type);
   });
 
   system.runInterval(regrow, 20);

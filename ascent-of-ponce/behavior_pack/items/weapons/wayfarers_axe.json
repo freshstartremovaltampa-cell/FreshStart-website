@@ -20,22 +20,9 @@
       "minecraft:damage": {
         "value": 4
       },
-      "minecraft:durability": {
-        "max_durability": 300
-      },
       "minecraft:enchantable": {
         "slot": "axe",
         "value": 14
-      },
-      "minecraft:repairable": {
-        "repair_items": [
-          {
-            "items": [
-              "minecraft:iron_ingot"
-            ],
-            "repair_amount": 75
-          }
-        ]
       },
       "minecraft:can_destroy_in_creative": {
         "value": false

@@ -1,0 +1,32 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "ponce:npc_guild",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/npc_guild"
+      },
+      "geometry": {
+        "default": "geometry.humanoid.custom"
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "animations": {
+        "look_at_target": "animation.common.look_at_target"
+      },
+      "scripts": {
+        "animate": [
+          "look_at_target"
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#AA2828",
+        "overlay_color": "#E0AC8C"
+      }
+    }
+  }
+}

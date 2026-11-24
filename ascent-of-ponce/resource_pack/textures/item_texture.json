@@ -148,6 +148,30 @@
     },
     "ponce_wayfarers_greatsword": {
       "textures": "textures/items/weapons/wayfarers_greatsword"
+    },
+    "ponce_boarbane": {
+      "textures": "textures/items/weapons/boarbane"
+    },
+    "ponce_wasps_kiss": {
+      "textures": "textures/items/weapons/wasps_kiss"
+    },
+    "ponce_thornwhisper": {
+      "textures": "textures/items/weapons/thornwhisper"
+    },
+    "ponce_golemheart_maul": {
+      "textures": "textures/items/weapons/golemheart_maul"
+    },
+    "ponce_tuskreaver": {
+      "textures": "textures/items/weapons/tuskreaver"
+    },
+    "ponce_molefang_pike": {
+      "textures": "textures/items/weapons/molefang_pike"
+    },
+    "ponce_verdant_moon": {
+      "textures": "textures/items/weapons/verdant_moon"
+    },
+    "ponce_kingsfall": {
+      "textures": "textures/items/weapons/kingsfall"
     }
   }
 }

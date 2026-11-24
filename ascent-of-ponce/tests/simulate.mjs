@@ -558,11 +558,14 @@ console.log("forms shown:", log.length);
   system.tick(130); await flush();
   assert(n.items.filter((i) => i?.typeId?.startsWith("ponce:wayfarers_")).length === 1, "starter is only ever given once");
 
-  const forged = Object.values(WEAPON_DEFS).filter((d) => d.tier > 0);
+  const forged = Object.values(WEAPON_DEFS).filter((d) => d.tier === 1 || d.tier === 2);
   const minForged = Math.min(...forged.map((d) => d.damage));
   const starters = Object.values(WEAPON_DEFS).filter((d) => d.tier === 0);
   assert(starters.length === 8 && starters.every((d) => d.damage < minForged), `all 8 starters are weaker than every forged weapon (max ${Math.max(...starters.map((d) => d.damage))} < ${minForged})`);
-  assert(starters.every((d) => d.durability < Math.min(...forged.map((f) => f.durability))), "starters also have the lowest durability");
+  assert(starters.every((d) => d.durability === null), "starters are unbreakable");
+  const hammerItem = n.items.find((i) => i?.typeId === "ponce:wayfarers_hammer");
+  n.setHeld(hammerItem); for (let i = 0; i < 50; i++) (await import("../behavior_pack/scripts/weapons.js")).wearWeapon(n);
+  assert(hammerItem.dur === undefined && n.items.includes(hammerItem) && hammerItem.lore.some((l) => l.includes("Unbreakable")), "starter never wears down, tooltip says Unbreakable");
   assert(starters.every((d) => !d.forge) && ORDER.every(([id]) => WEAPON_DEFS[id].tier > 0), "starters can't be forged and aren't in the forge menu");
   assert(!isDecentWeapon(new ItemStack("ponce:wayfarers_greatsword")), "starters don't count as iron-tier against Ironhide");
 
@@ -625,4 +628,138 @@ console.log("forms shown:", log.length);
   };
   const base = wearTest([]), hide = wearTest(["ponce:boar_hide"]), tusk = wearTest(["ponce:boar_tusk"]);
   assert(base === 3000 && Math.abs(hide - 3000 / 1.3) < 120 && Math.abs(tusk - 3000 / 0.9) < 120, `durability: base ${base}, Hide Grip ${hide} (~2308), Tusk Edge ${tusk} (~3333)`);
+}
+
+// ================= Phase 4: quests =================
+{
+  const Q = await import("../behavior_pack/scripts/quests.js");
+  const { QUESTS, QUESTS_BY_ID, NPCS } = await import("../behavior_pack/scripts/quests_data.js");
+  const { WEAPON_DEFS } = await import("../behavior_pack/scripts/weapon_data.js");
+  const { WEAPON_KEYS } = await import("../behavior_pack/scripts/config.js");
+  const { effectiveDamage, infusionsOf } = await import("../behavior_pack/scripts/weapons.js");
+  const { isTarget } = await import("../behavior_pack/scripts/combat.js");
+  const flush = () => new Promise((r) => setTimeout(r, 5));
+  const fireBefore = (n, e) => { world.beforeEvents[n].h.forEach((f) => f(e)); return e; };
+
+  const q = makePlayer("Quester"); world.players.push(q);
+  Object.assign(q, { dimension: dim, location: { x: 700.5, y: 64, z: 0.5 }, isSneaking: false, getGameMode: () => "Survival" });
+  fire("playerSpawn", { player: q, initialSpawn: true });
+  const d = getDataFor(q); d.starter = "ponce:wayfarers_sword";
+  const count = (id) => q.items.filter((i) => i?.typeId === id).reduce((a, i) => a + i.amount, 0);
+  const put = (id, k) => { q.items[q.items.indexOf(undefined)] = new ItemStack(id, k); };
+  const kill = (typeId, n) => { for (let i = 0; i < n; i++) { const e = makeEntity(typeId, 10); fire("entityDie", { deadEntity: e, damageSource: { cause: "entityAttack", damagingEntity: q } }); } };
+
+  // NPC: named on spawn, can't be hit by skills, talking opens its menu
+  const marla = dim.spawnEntity("ponce:npc_guild", { x: 701, y: 64, z: 2 });
+  fire("entitySpawn", { entity: marla });
+  assert(marla.nameTag === "Marla, the Guildmistress", "NPC gets its name tag on spawn");
+  assert(!isTarget(marla), "skills and splash damage never target NPCs");
+
+  // Accept through the dialogue: first button is the first available Easy quest (Jelly Cull)
+  globalThis.nextFormResponse = [{ canceled: false, selection: 0 }, { canceled: false, selection: 0 }];
+  const iev = fireBefore("playerInteractWithEntity", { player: q, target: marla, cancel: false });
+  system.tick(1); await flush();
+  assert(iev.cancel && d.quests.active.jelly_cull, "talking to Marla and choosing Accept starts Jelly Cull");
+  assert(Q.questStatus(q, QUESTS_BY_ID.boar_trouble) === "locked", "Boar Trouble is locked until Lv 3 and Jelly Cull");
+
+  kill("ponce:meadow_jelly", 9);
+  assert(Q.questStatus(q, QUESTS_BY_ID.jelly_cull) === "active" && Q.objectiveProgress(q, QUESTS_BY_ID.jelly_cull, 0) === 9, "kills count toward the quest");
+  kill("ponce:tusk_boar", 2);
+  assert(Q.objectiveProgress(q, QUESTS_BY_ID.jelly_cull, 0) === 9, "other mobs don't count");
+  kill("ponce:meadow_jelly", 3);
+  assert(Q.questStatus(q, QUESTS_BY_ID.jelly_cull) === "ready" && q.msgs.some((m) => m.includes("ready to turn in")), "quest becomes ready, player is told");
+
+  const col0 = d.col;
+  globalThis.nextFormResponse = [{ canceled: false, selection: 0 }, { canceled: false, selection: 0 }];
+  fireBefore("playerInteractWithEntity", { player: q, target: marla, cancel: false });
+  system.tick(1); await flush();
+  assert(d.quests.done.jelly_cull === 1 && d.col === col0 + 25 && count("ponce:boar_skewer") === 2, "turn in: Col, EXP and item rewards");
+  assert(Q.questStatus(q, QUESTS_BY_ID.jelly_cull) === "done", "non-repeatable quest is done for good");
+
+  // Collect objectives hand items over at turn-in
+  d.level = 3;
+  Q.accept(q, QUESTS_BY_ID.wasp_nest);
+  kill("ponce:field_wasp", 10);
+  put("ponce:wasp_stinger", 7);
+  assert(Q.questStatus(q, QUESTS_BY_ID.wasp_nest) === "ready", "collect objective counts items in the inventory");
+  await Q.turnIn(q, QUESTS_BY_ID.wasp_nest);
+  assert(count("ponce:wasp_stinger") === 2 && count("ponce:wasp_wing") === 2, "turn-in takes 5 stingers, gives wings");
+
+  // Hard: Fine Tier I weapon of the player's choice
+  d.level = 5; d.quests.done.boar_trouble = 1;
+  Q.accept(q, QUESTS_BY_ID.mole_menace);
+  kill("ponce:burrow_mole", 8); put("ponce:mole_claw", 3);
+  globalThis.nextFormResponse = [{ canceled: true }];
+  await Q.turnIn(q, QUESTS_BY_ID.mole_menace);
+  assert(Q.questStatus(q, QUESTS_BY_ID.mole_menace) === "ready" && count("ponce:mole_claw") === 3, "closing the reward picker keeps the quest ready, nothing taken");
+  globalThis.nextFormResponse = [{ canceled: false, selection: WEAPON_KEYS.indexOf("katana") }];
+  await Q.turnIn(q, QUESTS_BY_ID.mole_menace);
+  const katana = q.items.find((i) => i?.typeId === "ponce:iron_katana");
+  assert(katana?.getDynamicProperty("ponce:quality") === "fine", "Hard reward: Fine Iron Katana (chosen type)");
+
+  // Elite: Masterwork Tier II with 2 infusions
+  d.level = 6; d.quests.done.mole_menace = 1;
+  Q.accept(q, QUESTS_BY_ID.king_of_boars);
+  Q.notify(q, "boss", "ponce:ironhide");
+  globalThis.nextFormResponse = [{ canceled: false, selection: WEAPON_KEYS.indexOf("greatsword") }];
+  await Q.turnIn(q, QUESTS_BY_ID.king_of_boars);
+  const elite = q.items.find((i) => i?.typeId === "ponce:ironhide_greatsword");
+  assert(elite?.getDynamicProperty("ponce:quality") === "masterwork" && infusionsOf(elite).length === 2, "Elite reward: Masterwork Tier II with 2 infusions");
+
+  // Legendary: Relic, unbreakable, 3 infusions, best stats
+  d.level = 12; d.quests.done.stone_hearts = 1;
+  Q.accept(q, QUESTS_BY_ID.boarbane);
+  kill("ponce:tusk_boar", 30);
+  for (let i = 0; i < 3; i++) Q.notify(q, "boss", "ponce:ironhide");
+  put("ponce:boar_king_crest", 2);
+  assert(Q.questStatus(q, QUESTS_BY_ID.boarbane) === "ready", "Boarbane: all four objectives done");
+  globalThis.nextFormResponse = [{ canceled: false, selection: WEAPON_KEYS.indexOf("greatsword") }];
+  await Q.turnIn(q, QUESTS_BY_ID.boarbane);
+  const relic = q.items.find((i) => i?.typeId === "ponce:kingsfall");
+  assert(relic && relic.dur === undefined && infusionsOf(relic).length === 3, "Legendary reward: Kingsfall, unbreakable, 3 infusions");
+  assert(effectiveDamage(relic) > effectiveDamage(elite), `Relic out-hits the Elite reward (${effectiveDamage(relic).toFixed(1)} vs ${effectiveDamage(elite).toFixed(1)})`);
+  for (const type of WEAPON_KEYS) {
+    const [rid] = Object.entries(WEAPON_DEFS).find(([, w]) => w.tier === 3 && w.type === type);
+    const [tid] = Object.entries(WEAPON_DEFS).find(([, w]) => w.tier === 2 && w.type === type);
+    const r = new ItemStack(rid), t = new ItemStack(tid); t.setDynamicProperty("ponce:quality", "masterwork");
+    if (!(effectiveDamage(r) > effectiveDamage(t))) assert(false, `${type} relic beats a plain Masterwork Tier II`);
+  }
+  assert(true, "every Relic beats a Masterwork Tier II of its type");
+  assert(Object.values(WEAPON_DEFS).filter((w) => w.tier === 3).every((w) => !w.durability && w.infusions.length === 3 && !w.forge), "all 8 Relics: unbreakable, 3 infusions, not forgeable");
+
+  // Rewards scale with difficulty
+  const avg = (diff, k) => { const qs = QUESTS.filter((x) => x.difficulty === diff && !x.repeatable); return qs.reduce((a, x) => a + x.rewards[k], 0) / qs.length; };
+  const scaled = [1, 2, 3, 4, 5].every((n, i, arr) => i === 0 || (avg(n, "xp") > avg(arr[i - 1], "xp") && avg(n, "col") > avg(arr[i - 1], "col")));
+  assert(scaled, "average EXP and Col rise with every difficulty tier");
+  assert(QUESTS.filter((x) => x.rewards.weapon?.kind === "relic").every((x) => x.difficulty === 5), "only Legendary quests give Relics");
+
+  // Repeatable, cap, abandon
+  Q.accept(q, QUESTS_BY_ID.pest_control); kill("ponce:thornback_hare", 20);
+  await Q.turnIn(q, QUESTS_BY_ID.pest_control);
+  assert(Q.questStatus(q, QUESTS_BY_ID.pest_control) === "available", "repeatable quest can be taken again");
+  Q.accept(q, QUESTS_BY_ID.hare_hunt);
+  Q.abandon(q, QUESTS_BY_ID.hare_hunt);
+  assert(!d.quests.active.hare_hunt && Q.questStatus(q, QUESTS_BY_ID.hare_hunt) === "available", "abandoning frees the quest");
+
+  // Hooks from other systems
+  Q.accept(q, QUESTS_BY_ID.first_ore);
+  const node = dim.setBlock({ x: 710, y: 10, z: 0 }, "ponce:ember_copper_node");
+  fire("playerBreakBlock", { block: node, brokenBlockPermutation: { type: { id: "ponce:ember_copper_node" } }, player: q, dimension: dim });
+  assert(Q.objectiveProgress(q, QUESTS_BY_ID.first_ore, 0) === 1, "mining a node advances mining quests");
+  d.quests.done.first_ore = 1; d.quests.done.first_blade = 1;
+  Q.accept(q, QUESTS_BY_ID.fine_work);
+  Q.notify(q, "forge", "standard"); Q.notify(q, "forge", "fine"); Q.notify(q, "forge", "masterwork");
+  assert(Q.objectiveProgress(q, QUESTS_BY_ID.fine_work, 0) === 2, "Fine Work counts only Fine-or-better forges");
+
+  // Shop
+  d.col = 5;
+  const smithShop = async (sel) => { globalThis.nextFormResponse = [{ canceled: false, selection: sel }]; await Q.openShop(q, "smith"); };
+  await smithShop(1);
+  assert(count("ponce:ironheart_ingot") === 0 && q.msgs.some((m) => m.includes("Not enough Col")), "can't buy without enough Col");
+  d.col = 100; await smithShop(1);
+  assert(count("ponce:ironheart_ingot") === 1 && d.col === 75, "buying an Ironheart Ingot costs 25 Col");
+  put("ponce:raw_ironheart", 6);
+  const { SHOPS } = await import("../behavior_pack/scripts/quests_data.js");
+  await smithShop(SHOPS.smith.buy.length + 0); // first sellable row the player holds
+  assert(count("ponce:raw_ironheart") === 0 && d.col === 75 + 60, "selling 6 Raw Ironheart pays 60 Col");
 }

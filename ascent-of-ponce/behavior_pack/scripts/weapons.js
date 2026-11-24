@@ -16,13 +16,13 @@ export const QUALITIES = {
 
 // ---------- Infusions (optional monster drops added while forging) ----------
 
+/** Infusions on this weapon. Relics have theirs built in, even when spawned by command. */
 export function infusionsOf(item) {
   try {
     const raw = item?.getDynamicProperty("ponce:infusions");
-    return typeof raw === "string" ? JSON.parse(raw).filter((id) => INFUSIONS[id]) : [];
-  } catch {
-    return [];
-  }
+    if (typeof raw === "string") return JSON.parse(raw).filter((id) => INFUSIONS[id]);
+  } catch { /* fall through */ }
+  return weaponDef(item)?.infusions ?? [];
 }
 
 /** Summed stat changes from a list of infusion item ids. */
@@ -85,9 +85,9 @@ export function describeWeaponReq(data, def) {
   return parts.join("§7, ");
 }
 
-const TIER_NAMES = ["Starter", "Tier I", "Tier II"];
+const TIER_NAMES = ["Starter", "Tier I", "Tier II", "§dRelic"];
 
-export function weaponLore(def, { quality, infusions = [] } = {}) {
+export function weaponLore(def, { quality, infusions = def.infusions ?? [] } = {}) {
   const stats = Object.entries(def.req.stats).map(([k, v]) => `${STATS[k].color}${k.toUpperCase()} ${v}`).join(" §7/ ");
   const bonus = infusionBonus(infusions);
   const q = QUALITIES[quality];
@@ -97,7 +97,9 @@ export function weaponLore(def, { quality, infusions = [] } = {}) {
   lines.push(`§7Damage §f${Math.round(dmg * 10) / 10}${dmg !== def.damage ? ` §8(base ${def.damage})` : ""}`);
   for (const id of infusions) lines.push(`§d${INFUSIONS[id].name}: §7${describeInfusion(INFUSIONS[id])}`);
   lines.push(stats ? `§7Requires §eLv ${def.req.level}§7 / ${stats}` : `§7Requires §eLv ${def.req.level}`);
+  if (!def.durability) lines.push("§bUnbreakable");
   if (def.tier === 0) lines.push("§8Your first weapon. Can't be forged.");
+  if (def.tier === 3) lines.push("§8A Legendary quest reward. Can't be forged.");
   lines.push(`§8${WEAPON_HANDLING[def.type].trait}`);
   return lines;
 }

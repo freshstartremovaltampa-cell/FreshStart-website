@@ -12,7 +12,7 @@ export const dim = { id: "minecraft:overworld", entities: [], sounds: [], partic
 const worldProps = {};
 export const world = { getDimension: () => dim, getAbsoluteTime: () => system.currentTick + (world.timeOffset ?? 0),
   getDynamicProperty: (k) => worldProps[k], setDynamicProperty: (k, v) => (worldProps[k] = v),
-  beforeEvents: { playerBreakBlock: ev(), playerInteractWithBlock: ev() }, getEntity: (id) => dim.entities.find((e) => e.id === id) ?? world.players.find((p) => p.id === id), afterEvents: { playerSpawn: ev(), itemUse: ev(), playerLeave: ev(), entityHurt: ev(), entityDie: ev(), playerBreakBlock: ev(), entityHitBlock: ev(), itemCompleteUse: ev() }, players: [], getAllPlayers() { return this.players; } };
+  beforeEvents: { playerBreakBlock: ev(), playerInteractWithBlock: ev(), playerInteractWithEntity: ev() }, getEntity: (id) => dim.entities.find((e) => e.id === id) ?? world.players.find((p) => p.id === id), afterEvents: { playerSpawn: ev(), itemUse: ev(), playerLeave: ev(), entityHurt: ev(), entityDie: ev(), playerBreakBlock: ev(), entityHitBlock: ev(), itemCompleteUse: ev(), entitySpawn: ev() }, players: [], getAllPlayers() { return this.players; } };
 export const system = { currentTick: 0, intervals: [], timeouts: [],
   runInterval(f, n) { this.intervals.push({ f, n }); }, run(f) { this.timeouts.push({ f, at: this.currentTick + 1 }); }, runTimeout(f, n) { this.timeouts.push({ f, at: this.currentTick + n }); },
   tick(n = 1) { for (let i = 0; i < n; i++) { this.currentTick++; for (const it of this.intervals) if (this.currentTick % it.n === 0) it.f();

@@ -63,13 +63,14 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
 
   The passives are Backstab, Rend (bleed), Iaido Draw, Crimson Chain, Bulwark and Dual Wield.
 - **Dual Wield**: with a Ponce sword in your offhand, each hit is followed by an offhand strike, and it unlocks **Twin Tempest** (six alternating strikes).
-- **24 Ponce weapons** across 8 types:
+- **32 Ponce weapons** across 8 types:
   - **Starter**: one Wayfarer's weapon per type, chosen once on first login (see below).
   - **Tier I** (Lv 3) and **Tier II** (Lv 5-8): **forged**, not crafted (see Phase 3).
+  - **Relic** (Lv 12): Legendary quest rewards (see Phase 4).
 
   The Armory page in the menu lists them with your requirements shown in green or red.
 - **Starter weapon**: shortly after the welcome on first login, you choose a weapon type and get its **Wayfarer's** weapon. Players on older saves without one are offered it too, and it's also on the menu until chosen.
-  - Starters deal 3-4 damage and have 300 durability, weaker than every forged weapon (5+ damage, 450+ durability).
+  - Starters deal 3-4 damage, weaker than every forged weapon (5+ damage), and are **unbreakable**.
   - They can't be forged or crafted, are only given once, and don't count as iron-tier against Ironhide.
   - They can use skills, so your first skill unlock is usable right away.
 - **Requirements**: below a weapon's level or stats it deals 25% damage and can't use skills. The tooltip shows the requirements.
@@ -147,8 +148,36 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
 - One meal buff at a time; eating another replaces it. Buffs count in combat but **not** toward weapon or skill requirements.
 - **Dev Tools**: a job kit (ingots, forge, pot, ingredients, pickaxe) and all jobs set to level 20.
 
+## Phase 4 (done): quests
+- **Quest givers** (player-shaped NPCs; invulnerable, stay put, always named). Use one to talk:
+  - **Marla, the Guildmistress**: hunting and guardian quests, including the Legendary quest.
+  - **Old Bram, the Smith**: mining and forging quests.
+  - **Pip, the Cook**: cooking and ingredient quests.
+
+  For now you place them with spawn eggs or Dev Tools > "Spawn the quest givers here". Phase 5 puts them in the Floor 1 town.
+- **20 Floor 1 quests** across five difficulties, including three repeatables that pay steady Col. Objectives can be:
+  - kill mobs, defeat a guardian, or bring items (handed over at turn-in)
+  - mine nodes or forge weapons (optionally of a minimum quality)
+  - cook dishes or perfect dishes
+  - reach a combat or job level
+
+  Quests can require a level and earlier quests. You can have 8 active at once and abandon any.
+- **Rewards scale with difficulty** (average EXP and Col rise with every tier):
+
+  | Difficulty | Typical rewards |
+  |---|---|
+  | Easy | 30-80 EXP, 20-50 Col, meals or ingots |
+  | Normal | 150-220 EXP, 60-80 Col, ingots and drops |
+  | Hard | 400-450 EXP, 150-200 Col, silver or a **Fine Tier I weapon** |
+  | Elite | 800 EXP, 350-400 Col, a **Masterwork Tier II weapon with 2 infusions** |
+  | Legendary | 2000 EXP, 1000 Col, a **Relic weapon** |
+
+  Weapon rewards let you pick the weapon type at turn-in. Closing the picker keeps the quest ready.
+- **Relic weapons**, one per type: **unbreakable**, **3 built-in infusions**, base damage 3 above Tier II (more than a Masterwork Tier II), Lv 12, and they can't be forged. The relics are Boarbane, Wasp's Kiss, Thornwhisper, Golemheart Maul, Tuskreaver, Molefang Pike, Verdant Moon and Kingsfall.
+- **Quest log** in the menu: progress, details, abandon. Progress also shows above the hotbar as it happens.
+- **Shops**: each NPC sells useful goods for Col and buys monster drops, raw ore or ingredients.
+
 ## Roadmap
-4. Quests: NPCs, quest log, rewards, Col shop
 5. Floors 1–3 with guardians and stair gates
 
 ## Layout
@@ -172,6 +201,8 @@ behavior_pack/
     cooking.js        Cooking Pot menu, minigame, meal buffs
     jobs_data.js      generated ore / food / recipe table (from tools/gen_jobs.py)
     starter.js        first-login starter weapon choice
+    quests.js         quest engine, NPC dialogue, rewards, shops
+    quests_data.js    quest givers, quests, shops (hand-edited)
     inventory.js, ui.js  shared helpers
     mobs.js           mole ambush, golemite weaknesses
     bosses.js         floor guardian fights
@@ -182,6 +213,7 @@ resource_pack/        models, textures, animations, sounds, text
 tools/gen_mobs.py     generates mob files and placeholder art
 tools/gen_weapons.py  generates weapon items, icons and weapon_data.js (incl. forge recipes)
 tools/gen_jobs.py     generates ore nodes, forge, pot, ingots, meals, world gen and jobs_data.js
+tools/gen_npcs.py     generates the quest-giver NPC entities and skins
 tests/                run ./tests/run.sh (needs Node) to simulate gameplay against mock APIs
 ```
 

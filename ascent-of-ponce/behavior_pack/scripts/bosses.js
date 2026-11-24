@@ -17,6 +17,7 @@ import { world, system, EntityDamageCause, GameMode } from "@minecraft/server";
 import { getData, markDirty } from "./data.js";
 import { getHeldItem } from "./progression.js";
 import { hudHoldUntil } from "./combat.js";
+import { notify } from "./quests.js";
 
 const BOSS = "ponce:ironhide";
 const HORN = "ponce:boar_kings_call";
@@ -301,6 +302,7 @@ export function registerBosses() {
       });
       p.playSound("random.totem");
       p.sendMessage(`§6[Ponce] §fVictory! §6+${TUNING.colReward} Col${first ? "§f. The way to the second floor is open." : "."}`);
+      notify(p, "boss", BOSS);
     }
   });
 

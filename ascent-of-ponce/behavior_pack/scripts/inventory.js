@@ -40,7 +40,14 @@ export function give(player, stack) {
   if (leftover) player.dimension.spawnItem(leftover, player.location);
 }
 
+const NAMES = {
+  "ponce:boar_kings_call": "Boar King's Call", "ponce:boar_king_crest": "Boar King's Crest",
+  "ponce:ironhide": "Ironhide", "ponce:raw_boar": "Raw Boar Meat",
+  "ponce:ember_copper_node": "Ember Copper", "ponce:ironheart_node": "Ironheart", "ponce:glimmer_silver_node": "Glimmer Silver",
+};
+
 export function itemName(id) {
+  if (NAMES[id]) return NAMES[id];
   const raw = id.split(":")[1] ?? id;
   return raw.split("_").map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
 }

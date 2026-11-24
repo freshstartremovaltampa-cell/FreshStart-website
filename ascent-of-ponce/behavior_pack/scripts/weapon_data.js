@@ -6,7 +6,7 @@ export const WEAPON_DEFS = {
     "type": "sword",
     "tier": 0,
     "damage": 4,
-    "durability": 300,
+    "durability": null,
     "req": {
       "level": 1,
       "stats": {}
@@ -18,7 +18,7 @@ export const WEAPON_DEFS = {
     "type": "dagger",
     "tier": 0,
     "damage": 3,
-    "durability": 300,
+    "durability": null,
     "req": {
       "level": 1,
       "stats": {}
@@ -30,7 +30,7 @@ export const WEAPON_DEFS = {
     "type": "rapier",
     "tier": 0,
     "damage": 3,
-    "durability": 300,
+    "durability": null,
     "req": {
       "level": 1,
       "stats": {}
@@ -42,7 +42,7 @@ export const WEAPON_DEFS = {
     "type": "hammer",
     "tier": 0,
     "damage": 4,
-    "durability": 300,
+    "durability": null,
     "req": {
       "level": 1,
       "stats": {}
@@ -54,7 +54,7 @@ export const WEAPON_DEFS = {
     "type": "axe",
     "tier": 0,
     "damage": 4,
-    "durability": 300,
+    "durability": null,
     "req": {
       "level": 1,
       "stats": {}
@@ -66,7 +66,7 @@ export const WEAPON_DEFS = {
     "type": "spear",
     "tier": 0,
     "damage": 4,
-    "durability": 300,
+    "durability": null,
     "req": {
       "level": 1,
       "stats": {}
@@ -78,7 +78,7 @@ export const WEAPON_DEFS = {
     "type": "katana",
     "tier": 0,
     "damage": 4,
-    "durability": 300,
+    "durability": null,
     "req": {
       "level": 1,
       "stats": {}
@@ -90,7 +90,7 @@ export const WEAPON_DEFS = {
     "type": "greatsword",
     "tier": 0,
     "damage": 4,
-    "durability": 300,
+    "durability": null,
     "req": {
       "level": 1,
       "stats": {}
@@ -610,6 +610,166 @@ export const WEAPON_DEFS = {
         }
       ]
     }
+  },
+  "ponce:boarbane": {
+    "name": "Boarbane",
+    "type": "sword",
+    "tier": 3,
+    "damage": 11,
+    "durability": null,
+    "req": {
+      "level": 12,
+      "stats": {
+        "str": 6,
+        "dex": 6
+      }
+    },
+    "forge": null,
+    "infusions": [
+      "ponce:boar_tusk",
+      "ponce:boar_king_crest",
+      "ponce:wasp_stinger"
+    ]
+  },
+  "ponce:wasps_kiss": {
+    "name": "Wasp's Kiss",
+    "type": "dagger",
+    "tier": 3,
+    "damage": 9,
+    "durability": null,
+    "req": {
+      "level": 12,
+      "stats": {
+        "dex": 9,
+        "agi": 3
+      }
+    },
+    "forge": null,
+    "infusions": [
+      "ponce:wasp_stinger",
+      "ponce:thorn_quill",
+      "ponce:wasp_wing"
+    ]
+  },
+  "ponce:thornwhisper": {
+    "name": "Thornwhisper",
+    "type": "rapier",
+    "tier": 3,
+    "damage": 10,
+    "durability": null,
+    "req": {
+      "level": 12,
+      "stats": {
+        "dex": 9,
+        "agi": 3
+      }
+    },
+    "forge": null,
+    "infusions": [
+      "ponce:thorn_quill",
+      "ponce:wasp_wing",
+      "ponce:wasp_stinger"
+    ]
+  },
+  "ponce:golemheart_maul": {
+    "name": "Golemheart Maul",
+    "type": "hammer",
+    "tier": 3,
+    "damage": 13,
+    "durability": null,
+    "req": {
+      "level": 12,
+      "stats": {
+        "str": 11,
+        "vit": 3
+      }
+    },
+    "forge": null,
+    "infusions": [
+      "ponce:golemite_core",
+      "ponce:boar_king_crest",
+      "ponce:moss_clump"
+    ]
+  },
+  "ponce:tuskreaver": {
+    "name": "Tuskreaver",
+    "type": "axe",
+    "tier": 3,
+    "damage": 12,
+    "durability": null,
+    "req": {
+      "level": 12,
+      "stats": {
+        "str": 8,
+        "vit": 5
+      }
+    },
+    "forge": null,
+    "infusions": [
+      "ponce:boar_tusk",
+      "ponce:boar_king_crest",
+      "ponce:boar_hide"
+    ]
+  },
+  "ponce:molefang_pike": {
+    "name": "Molefang Pike",
+    "type": "spear",
+    "tier": 3,
+    "damage": 11,
+    "durability": null,
+    "req": {
+      "level": 12,
+      "stats": {
+        "agi": 8,
+        "str": 5
+      }
+    },
+    "forge": null,
+    "infusions": [
+      "ponce:mole_claw",
+      "ponce:thorn_quill",
+      "ponce:boar_tusk"
+    ]
+  },
+  "ponce:verdant_moon": {
+    "name": "Verdant Moon",
+    "type": "katana",
+    "tier": 3,
+    "damage": 11,
+    "durability": null,
+    "req": {
+      "level": 12,
+      "stats": {
+        "dex": 8,
+        "agi": 6
+      }
+    },
+    "forge": null,
+    "infusions": [
+      "ponce:wasp_wing",
+      "ponce:thorn_quill",
+      "ponce:moss_clump"
+    ]
+  },
+  "ponce:kingsfall": {
+    "name": "Kingsfall",
+    "type": "greatsword",
+    "tier": 3,
+    "damage": 15,
+    "durability": null,
+    "req": {
+      "level": 12,
+      "stats": {
+        "str": 14,
+        "vit": 6
+      }
+    },
+    "forge": null,
+    "infusions": [
+      "ponce:boar_king_crest",
+      "ponce:golemite_core",
+      "ponce:boar_tusk"
+    ]
   }
 };
 

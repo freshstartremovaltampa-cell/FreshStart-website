@@ -17,6 +17,7 @@ import { countItem, give, hasAll, itemName, takeAll } from "./inventory.js";
 import { applyStatEffects } from "./progression.js";
 import { hudHoldUntil } from "./combat.js";
 import { show } from "./ui.js";
+import { notify } from "./quests.js";
 
 const POT = "ponce:cooking_pot";
 export const COOK_TICKS = 160; // 8 seconds from raw to the end of the window
@@ -103,6 +104,8 @@ function serve(player, s, result) {
   const perfect = result === "perfect";
   give(player, new ItemStack(r.result, perfect ? 2 : 1));
   addJobXp(player, "cooking", r.xp * (perfect ? 1.5 : 1));
+  notify(player, "cook", r.result);
+  if (perfect) notify(player, "cook_perfect", r.result);
   player.onScreenDisplay.setTitle(" ", {
     subtitle: perfect ? `§a§lPERFECT! §r§f2x ${r.name}` : `§eDone. §f1x ${r.name}`, fadeInDuration: 0, stayDuration: 30, fadeOutDuration: 10,
   });

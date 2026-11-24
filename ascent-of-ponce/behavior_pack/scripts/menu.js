@@ -15,6 +15,8 @@ import { JOBS, JOB_MAX, jobXpToNext } from "./jobs.js";
 import { ORES } from "./jobs_data.js";
 import { buffActive } from "./cooking.js";
 import { needsStarter, offerStarter } from "./starter.js";
+import { activeQuests, completedCount, isComplete, MAX_ACTIVE, objectiveProgress, openQuest } from "./quests.js";
+import { DIFFICULTY, NPCS } from "./quests_data.js";
 import { equippedSkill } from "./abilities.js";
 import { INFUSIONS, WEAPON_DEFS } from "./weapon_data.js";
 import { describeInfusion, describeWeaponReq } from "./weapons.js";
@@ -53,7 +55,7 @@ export async function openMainMenu(player) {
     ["Weapon Mastery", "textures/items/weapons/iron_longsword", openMastery],
     ["Armory", "textures/items/weapons/iron_greatsword", openArmory],
     ["Jobs", "textures/items/iron_pickaxe", openJobs],
-    ["Quests  §8(coming soon)", "textures/items/book_writable", comingSoon],
+    [`Quests  §8(${activeQuests(player).length}/${MAX_ACTIVE})`, "textures/items/book_writable", openQuestLog],
     ["Floor Map  §8(coming soon)", "textures/items/map_filled", comingSoon],
     ["Journal", "textures/items/book_normal", openJournal],
     ["Settings", "textures/items/redstone_dust", openSettings],
@@ -70,7 +72,7 @@ export async function openMainMenu(player) {
 async function comingSoon(player) {
   const res = await show(player, new ActionFormData()
     .title("§l§6Coming Soon")
-    .body("Quests and the Floor Map come in a later update.\n\nFor now, climb by fighting: every kill earns EXP and weapon mastery.")
+    .body("The Floor Map comes with the tower floors in the next update.\n\nFor now, climb by fighting, questing and crafting.")
     .button("Back"));
   if (!res.canceled) await openMainMenu(player);
 }
@@ -180,6 +182,33 @@ async function openWeaponSkills(player, weapon) {
   return openSkills(player);
 }
 
+// ---------- Quests ----------
+
+async function openQuestLog(player) {
+  const list = activeQuests(player);
+  const form = new ActionFormData()
+    .title("§l§6Quest Log")
+    .body(
+      `§7Active: §f${list.length}/${MAX_ACTIVE}   §7Completed: §f${completedCount(player)}\n` +
+      "§7Quest givers on this floor: " + Object.values(NPCS).map((n) => `§f${n.name}`).join("§7, ") +
+      (list.length === 0 ? "\n\n§8No active quests. Talk to a quest giver to take one." : "")
+    );
+  for (const q of list) {
+    const done = q.objectives.reduce((a, o, i) => a + Math.min(1, objectiveProgress(player, q, i) / o.count), 0);
+    const pctDone = Math.floor((done / q.objectives.length) * 100);
+    const d = DIFFICULTY[q.difficulty];
+    form.button(`${isComplete(player, q) ? "§a[Ready] " : ""}§f${q.name}\n${d.color}${d.name} §8- ${pctDone}%`);
+  }
+  form.button("Back");
+  const res = await show(player, form);
+  if (res.canceled) return;
+  if (res.selection < list.length) {
+    await openQuest(player, list[res.selection]);
+    return openQuestLog(player);
+  }
+  return openMainMenu(player);
+}
+
 // ---------- Jobs ----------
 
 async function openJobs(player) {
@@ -287,6 +316,7 @@ async function openDev(player) {
     .button("Unlock all skills + 60 in every stat")
     .button("Job kit: ingots, forge, pot, ingredients")
     .button("All jobs to level 20")
+    .button("Spawn the quest givers here")
     .button("§cReset my progress")
     .button("Back"));
   if (res.canceled) return;
@@ -325,7 +355,18 @@ async function openDev(player) {
       markDirty(player);
       player.sendMessage("§a[Ponce] Mining, Smithing and Cooking set to level 20.");
       break;
-    case 8: resetData(player); applyStatEffects(player); player.sendMessage("§c[Ponce] Progress reset."); break;
+    case 8: {
+      const ids = Object.keys(NPCS);
+      ids.forEach((id, i) => {
+        const a = (i / ids.length) * Math.PI * 2;
+        const loc = { x: player.location.x + Math.cos(a) * 3, y: player.location.y, z: player.location.z + Math.sin(a) * 3 };
+        const npc = player.dimension.spawnEntity(id, loc);
+        npc.nameTag = NPCS[id].name;
+      });
+      player.sendMessage("§a[Ponce] Spawned the quest givers. Use them (right-click / long-press) to talk.");
+      break;
+    }
+    case 9: resetData(player); applyStatEffects(player); player.sendMessage("§c[Ponce] Progress reset."); break;
     default: return openMainMenu(player);
   }
   return openDev(player);

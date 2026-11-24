@@ -15,6 +15,7 @@ import { registerMining } from "./mining.js";
 import { registerForging } from "./forging.js";
 import { registerCooking, buffHudText } from "./cooking.js";
 import { needsStarter, offerStarter } from "./starter.js";
+import { registerQuests } from "./quests.js";
 
 const COMPASS = "ponce:wayfarer_compass";
 
@@ -80,6 +81,7 @@ registerAbilities();
 registerMining();
 registerForging();
 registerCooking();
+registerQuests();
 
 // ---------- Loops ----------
 

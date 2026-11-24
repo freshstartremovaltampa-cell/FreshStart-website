@@ -17,6 +17,7 @@ import { countItem, give, hasAll, itemName, takeAll } from "./inventory.js";
 import { QUALITIES, describeInfusion, weaponLore } from "./weapons.js";
 import { hudHoldUntil } from "./combat.js";
 import { show } from "./ui.js";
+import { notify } from "./quests.js";
 
 const FORGE = "ponce:smithing_forge";
 export const BAR = 25;
@@ -222,6 +223,7 @@ function finish(player, s, cooled) {
   }
   give(player, item);
   addJobXp(player, "smithing", s.def.forge.xp * q.xp);
+  notify(player, "forge", key);
   player.onScreenDisplay.setTitle(cooled ? "§cThe metal cooled" : "§6Forged!", {
     subtitle: `${q.name} §f${s.def.name}`, fadeInDuration: 5, stayDuration: 50, fadeOutDuration: 10,
   });

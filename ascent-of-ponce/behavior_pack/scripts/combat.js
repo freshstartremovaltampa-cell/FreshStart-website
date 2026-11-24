@@ -13,6 +13,7 @@ import { getData, markDirty } from "./data.js";
 import {
   addMastery, addXp, critChance, damageMultiplier, dodgeChance, getHeldItem, weaponTypeOf,
 } from "./progression.js";
+import { notify } from "./quests.js";
 import { effectiveDamage, getOffhand, meetsWeaponReq, qualityMult, wearWeapon, weaponBonus, weaponDef } from "./weapons.js";
 import {
   armorBroken, bleeds, lastHit, lastSwing, nextHitBuffs, reduceCooldowns, skillHits, stances,
@@ -37,7 +38,7 @@ export function isPlayer(entity) {
 /** Living things skills are allowed to hit: no players, pets, villagers or items. */
 export function isTarget(entity) {
   try {
-    if (!entity?.isValid || NOT_TARGETS.has(entity.typeId)) return false;
+    if (!entity?.isValid || NOT_TARGETS.has(entity.typeId) || entity.typeId.startsWith("ponce:npc_")) return false;
     if (!entity.getComponent("minecraft:health")) return false;
     return !entity.getComponent("minecraft:tameable")?.isTamed;
   } catch {
@@ -348,6 +349,7 @@ export function registerCombat() {
     if (isPlayer(deadEntity)) return; // no XP farming off other players
     const xp = xpFor(deadEntity);
     addXp(player, xp);
+    notify(player, "kill", deadEntity.typeId);
     const mob = MOBS[deadEntity.typeId];
     const gain = mob?.mastery ?? Math.min(MASTERY_GAIN.killMax, xp * MASTERY_GAIN.killPerXp);
     if (weapon) addMastery(player, weapon, gain);

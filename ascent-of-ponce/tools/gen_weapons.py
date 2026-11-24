@@ -28,18 +28,19 @@ WOOD, LEATHER, GOLD = (120, 84, 50), (92, 60, 40), (214, 170, 60)
 
 # id, name, type, tier, damage, durability, level, stats, recipe, palette
 WORN = {"blade": (150, 148, 140), "edge": (185, 182, 175), "shadow": (100, 98, 92)}
+RELIC = {"blade": (196, 178, 240), "edge": (255, 236, 160), "shadow": (112, 82, 170)}
 
 WEAPONS = [
-    # ---- Starter: one is chosen on first login. Can't be forged or crafted.
+    # ---- Starter: one is chosen on first login. Can't be forged or crafted. Unbreakable.
     #      Every starter is weaker than every other weapon (lowest real weapon: 5 damage). ----
-    ("wayfarers_sword", "Wayfarer's Sword", "sword", 0, 4, 300, 1, {}, None, WORN),
-    ("wayfarers_dagger", "Wayfarer's Dagger", "dagger", 0, 3, 300, 1, {}, None, WORN),
-    ("wayfarers_rapier", "Wayfarer's Rapier", "rapier", 0, 3, 300, 1, {}, None, WORN),
-    ("wayfarers_hammer", "Wayfarer's Hammer", "hammer", 0, 4, 300, 1, {}, None, WORN),
-    ("wayfarers_axe", "Wayfarer's Axe", "axe", 0, 4, 300, 1, {}, None, WORN),
-    ("wayfarers_spear", "Wayfarer's Spear", "spear", 0, 4, 300, 1, {}, None, WORN),
-    ("wayfarers_katana", "Wayfarer's Katana", "katana", 0, 4, 300, 1, {}, None, WORN),
-    ("wayfarers_greatsword", "Wayfarer's Greatsword", "greatsword", 0, 4, 300, 1, {}, None, WORN),
+    ("wayfarers_sword", "Wayfarer's Sword", "sword", 0, 4, None, 1, {}, None, WORN),
+    ("wayfarers_dagger", "Wayfarer's Dagger", "dagger", 0, 3, None, 1, {}, None, WORN),
+    ("wayfarers_rapier", "Wayfarer's Rapier", "rapier", 0, 3, None, 1, {}, None, WORN),
+    ("wayfarers_hammer", "Wayfarer's Hammer", "hammer", 0, 4, None, 1, {}, None, WORN),
+    ("wayfarers_axe", "Wayfarer's Axe", "axe", 0, 4, None, 1, {}, None, WORN),
+    ("wayfarers_spear", "Wayfarer's Spear", "spear", 0, 4, None, 1, {}, None, WORN),
+    ("wayfarers_katana", "Wayfarer's Katana", "katana", 0, 4, None, 1, {}, None, WORN),
+    ("wayfarers_greatsword", "Wayfarer's Greatsword", "greatsword", 0, 4, None, 1, {}, None, WORN),
 
     # ---- Tier I: Ironheart, forged. Lv 3. ----
     ("iron_longsword", "Iron Longsword", "sword", 1, 7, 450, 3, {"str": 2, "dex": 2},
@@ -84,6 +85,25 @@ WEAPONS = [
     ("ironhide_greatsword", "Ironhide Greatsword", "greatsword", 2, 12, 700, 8, {"str": 9, "vit": 4},
      {"upgrade": "iron_greatsword", "with": [("ponce:boar_king_crest", 1), ("ponce:boar_tusk", 2)]},
      {"blade": (140, 146, 152), "edge": (255, 150, 40), "shadow": (70, 52, 44)}),
+
+    # ---- Relic: Legendary quest rewards. Unbreakable, three built-in infusions,
+    #      base damage 3 above Tier II. Can't be forged. Lv 12. ----
+    ("boarbane", "Boarbane", "sword", 3, 11, None, 12, {"str": 6, "dex": 6},
+     {"relic": ["ponce:boar_tusk", "ponce:boar_king_crest", "ponce:wasp_stinger"]}, RELIC),
+    ("wasps_kiss", "Wasp's Kiss", "dagger", 3, 9, None, 12, {"dex": 9, "agi": 3},
+     {"relic": ["ponce:wasp_stinger", "ponce:thorn_quill", "ponce:wasp_wing"]}, RELIC),
+    ("thornwhisper", "Thornwhisper", "rapier", 3, 10, None, 12, {"dex": 9, "agi": 3},
+     {"relic": ["ponce:thorn_quill", "ponce:wasp_wing", "ponce:wasp_stinger"]}, RELIC),
+    ("golemheart_maul", "Golemheart Maul", "hammer", 3, 13, None, 12, {"str": 11, "vit": 3},
+     {"relic": ["ponce:golemite_core", "ponce:boar_king_crest", "ponce:moss_clump"]}, RELIC),
+    ("tuskreaver", "Tuskreaver", "axe", 3, 12, None, 12, {"str": 8, "vit": 5},
+     {"relic": ["ponce:boar_tusk", "ponce:boar_king_crest", "ponce:boar_hide"]}, RELIC),
+    ("molefang_pike", "Molefang Pike", "spear", 3, 11, None, 12, {"agi": 8, "str": 5},
+     {"relic": ["ponce:mole_claw", "ponce:thorn_quill", "ponce:boar_tusk"]}, RELIC),
+    ("verdant_moon", "Verdant Moon", "katana", 3, 11, None, 12, {"dex": 8, "agi": 6},
+     {"relic": ["ponce:wasp_wing", "ponce:thorn_quill", "ponce:moss_clump"]}, RELIC),
+    ("kingsfall", "Kingsfall", "greatsword", 3, 15, None, 12, {"str": 14, "vit": 6},
+     {"relic": ["ponce:boar_king_crest", "ponce:golemite_core", "ponce:boar_tusk"]}, RELIC),
 ]
 
 SHAPED_KEYS = {"I": "minecraft:iron_ingot", "S": "minecraft:stick", "N": "minecraft:iron_nugget", "L": "minecraft:leather"}
@@ -160,21 +180,26 @@ def item_json(wid, name, kind, tier, damage, durability):
     tags = [f"ponce:{kind}", "ponce:weapon", f"ponce:weapon_tier_{tier}"]
     if tier >= 1:
         tags.append("ponce:tier_iron")  # counts as a "decent weapon" against Ironhide's thick hide
-    else:
+    if tier == 0:
         tags.append("ponce:starter")
+    if tier == 3:
+        tags.append("ponce:relic")
     comps = {
         "minecraft:icon": f"ponce_{wid}",
-        "minecraft:display_name": {"value": f"§{'7fb'[tier]}{name}"},
+        "minecraft:display_name": {"value": f"§{'7fbd'[tier]}{name}"},
         "minecraft:max_stack_size": 1,
         "minecraft:hand_equipped": {"value": True},
         "minecraft:damage": {"value": damage},
-        "minecraft:durability": {"max_durability": durability},
         "minecraft:enchantable": {"slot": ENCHANT_SLOT.get(kind, "sword"), "value": 14},
-        "minecraft:repairable": {"repair_items": [{"items": ["minecraft:iron_ingot"], "repair_amount": durability // 4}]},
         "minecraft:can_destroy_in_creative": {"value": False},
         "minecraft:cooldown": {"category": "ponce_skill", "duration": 0.25},
         "minecraft:tags": {"tags": tags},
     }
+    if durability:  # starters and relics have no durability at all: unbreakable
+        comps["minecraft:durability"] = {"max_durability": durability}
+        comps["minecraft:repairable"] = {"repair_items": [{"items": ["minecraft:iron_ingot"], "repair_amount": durability // 4}]}
+    if tier == 3:
+        comps["minecraft:glint"] = {"value": True}
     if kind == "sword":
         comps["minecraft:allow_off_hand"] = {"value": True}  # for Dual Wield
     return {
@@ -192,8 +217,8 @@ INGOTS = {"dagger": 2, "spear": 2, "sword": 3, "rapier": 3, "katana": 3, "axe": 
 
 def forge_recipe(kind, tier, recipe):
     """Tier I: Ironheart plus an Ember Copper fitting. Tier II adds Glimmer Silver and Floor 1 materials.
-    Starters (tier 0) can't be forged."""
-    if tier == 0:
+    Starters (tier 0) and Relics (tier 3) can't be forged."""
+    if tier in (0, 3):
         return None
     mats = [("ponce:ironheart_ingot", INGOTS[kind]), ("ponce:ember_copper_ingot", 1)]
     if tier == 2:
@@ -245,6 +270,8 @@ def main():
         table[f"ponce:{wid}"] = {"name": name, "type": kind, "tier": tier, "damage": damage,
                                  "durability": dur, "req": {"level": level, "stats": stats},
                                  "forge": forge_recipe(kind, tier, recipe)}
+        if tier == 3:
+            table[f"ponce:{wid}"]["infusions"] = recipe["relic"]
 
     path = f"{RP}/textures/item_texture.json"
     data = json.load(open(path))

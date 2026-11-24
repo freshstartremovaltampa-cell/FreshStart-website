@@ -1,0 +1,48 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:item": {
+    "description": {
+      "identifier": "ponce:verdant_moon",
+      "menu_category": {
+        "category": "equipment",
+        "group": "minecraft:itemGroup.name.sword"
+      }
+    },
+    "components": {
+      "minecraft:icon": "ponce_verdant_moon",
+      "minecraft:display_name": {
+        "value": "\u00a7dVerdant Moon"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:hand_equipped": {
+        "value": true
+      },
+      "minecraft:damage": {
+        "value": 11
+      },
+      "minecraft:enchantable": {
+        "slot": "sword",
+        "value": 14
+      },
+      "minecraft:can_destroy_in_creative": {
+        "value": false
+      },
+      "minecraft:cooldown": {
+        "category": "ponce_skill",
+        "duration": 0.25
+      },
+      "minecraft:tags": {
+        "tags": [
+          "ponce:katana",
+          "ponce:weapon",
+          "ponce:weapon_tier_3",
+          "ponce:tier_iron",
+          "ponce:relic"
+        ]
+      },
+      "minecraft:glint": {
+        "value": true
+      }
+    }
+  }
+}
