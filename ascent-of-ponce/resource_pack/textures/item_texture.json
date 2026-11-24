@@ -43,6 +43,54 @@
     },
     "ponce_wasp_wing": {
       "textures": "textures/items/wasp_wing"
+    },
+    "ponce_iron_longsword": {
+      "textures": "textures/items/weapons/iron_longsword"
+    },
+    "ponce_iron_dagger": {
+      "textures": "textures/items/weapons/iron_dagger"
+    },
+    "ponce_iron_rapier": {
+      "textures": "textures/items/weapons/iron_rapier"
+    },
+    "ponce_iron_warhammer": {
+      "textures": "textures/items/weapons/iron_warhammer"
+    },
+    "ponce_iron_battleaxe": {
+      "textures": "textures/items/weapons/iron_battleaxe"
+    },
+    "ponce_iron_spear": {
+      "textures": "textures/items/weapons/iron_spear"
+    },
+    "ponce_iron_katana": {
+      "textures": "textures/items/weapons/iron_katana"
+    },
+    "ponce_iron_greatsword": {
+      "textures": "textures/items/weapons/iron_greatsword"
+    },
+    "ponce_tuskfang_blade": {
+      "textures": "textures/items/weapons/tuskfang_blade"
+    },
+    "ponce_stinger_dirk": {
+      "textures": "textures/items/weapons/stinger_dirk"
+    },
+    "ponce_quill_rapier": {
+      "textures": "textures/items/weapons/quill_rapier"
+    },
+    "ponce_golemite_maul": {
+      "textures": "textures/items/weapons/golemite_maul"
+    },
+    "ponce_boarhide_cleaver": {
+      "textures": "textures/items/weapons/boarhide_cleaver"
+    },
+    "ponce_thornpike": {
+      "textures": "textures/items/weapons/thornpike"
+    },
+    "ponce_verdant_katana": {
+      "textures": "textures/items/weapons/verdant_katana"
+    },
+    "ponce_ironhide_greatsword": {
+      "textures": "textures/items/weapons/ironhide_greatsword"
     }
   }
 }

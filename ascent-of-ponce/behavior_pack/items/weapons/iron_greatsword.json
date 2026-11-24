@@ -1,0 +1,57 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:item": {
+    "description": {
+      "identifier": "ponce:iron_greatsword",
+      "menu_category": {
+        "category": "equipment",
+        "group": "minecraft:itemGroup.name.sword"
+      }
+    },
+    "components": {
+      "minecraft:icon": "ponce_iron_greatsword",
+      "minecraft:display_name": {
+        "value": "\u00a7fIron Greatsword"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:hand_equipped": {
+        "value": true
+      },
+      "minecraft:damage": {
+        "value": 11
+      },
+      "minecraft:durability": {
+        "max_durability": 450
+      },
+      "minecraft:enchantable": {
+        "slot": "sword",
+        "value": 14
+      },
+      "minecraft:repairable": {
+        "repair_items": [
+          {
+            "items": [
+              "minecraft:iron_ingot"
+            ],
+            "repair_amount": 112
+          }
+        ]
+      },
+      "minecraft:can_destroy_in_creative": {
+        "value": false
+      },
+      "minecraft:cooldown": {
+        "category": "ponce_skill",
+        "duration": 0.25
+      },
+      "minecraft:tags": {
+        "tags": [
+          "ponce:greatsword",
+          "ponce:weapon",
+          "ponce:tier_iron",
+          "ponce:weapon_tier_1"
+        ]
+      }
+    }
+  }
+}

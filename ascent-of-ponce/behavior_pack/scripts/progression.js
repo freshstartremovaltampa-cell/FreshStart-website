@@ -108,22 +108,36 @@ export function checkSkillUnlocks(player) {
 
 const LONG = 20000000; // effectively permanent; reapplied after death or milk
 
+/**
+ * Keeps one of our near-permanent effects at the given level (-1 = none).
+ * Effects from other sources (potions, skills, mobs) are short, so they're
+ * told apart by duration and never removed or downgraded here.
+ */
 function ensureEffect(player, type, amplifier) {
   const current = player.getEffect(type);
+  const ours = !!current && current.duration > LONG / 20;
   if (amplifier < 0) {
-    if (current) player.removeEffect(type);
+    if (ours) player.removeEffect(type);
     return;
   }
-  if (current && current.amplifier === amplifier && current.duration > 20 * 60) return;
+  if (current && !ours && current.amplifier >= amplifier) return;
+  if (ours && current.amplifier === amplifier) return;
+  if (current) player.removeEffect(type); // a weaker effect can't replace a stronger one
   player.addEffect(type, LONG, { amplifier, showParticles: false });
 }
 
-/** Apply passive stat bonuses (VIT health, AGI speed). Safe to call often. */
+/**
+ * Apply passive bonuses: VIT health, AGI speed, and weapon handling
+ * (daggers add a speed level, greatswords slow you). Safe to call often.
+ */
 export function applyStatEffects(player) {
   const { stats } = getData(player);
+  const held = weaponTypeOf(getHeldItem(player));
   ensureEffect(player, "health_boost", Math.floor(stats.vit / STAT_EFFECTS.vitPerHealthBoost) - 1);
-  const speedLevel = STAT_EFFECTS.agiSpeedThresholds.filter((t) => stats.agi >= t).length;
+  const agiLevel = STAT_EFFECTS.agiSpeedThresholds.filter((t) => stats.agi >= t).length;
+  const speedLevel = Math.min(2, agiLevel + (held === "dagger" ? 1 : 0));
   ensureEffect(player, "speed", speedLevel - 1);
+  ensureEffect(player, "slowness", held === "greatsword" ? 0 : -1);
 }
 
 export function critChance(data) {

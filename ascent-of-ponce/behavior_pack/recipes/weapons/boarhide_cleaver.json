@@ -1,0 +1,32 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "ponce:boarhide_cleaver"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "item": "ponce:iron_battleaxe"
+      },
+      {
+        "item": "ponce:boar_hide",
+        "count": 2
+      },
+      {
+        "item": "ponce:boar_tusk",
+        "count": 1
+      }
+    ],
+    "unlock": [
+      {
+        "item": "ponce:iron_battleaxe"
+      }
+    ],
+    "result": {
+      "item": "ponce:boarhide_cleaver"
+    }
+  }
+}

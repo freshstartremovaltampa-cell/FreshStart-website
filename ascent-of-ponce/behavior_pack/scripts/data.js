@@ -20,6 +20,7 @@ function freshData() {
     mastery: Object.fromEntries(WEAPON_KEYS.map((k) => [k, 0])),
     weaponMinutes: Object.fromEntries(WEAPON_KEYS.map((k) => [k, 0])),
     skills: [], // unlocked skill ids
+    activeSkill: {}, // weapon type -> equipped active skill id
     col: 0, // currency
     highestFloor: 1,
     kills: 0,
@@ -36,6 +37,7 @@ function migrate(raw) {
   data.mastery = { ...base.mastery, ...(raw.mastery ?? {}) };
   data.weaponMinutes = { ...base.weaponMinutes, ...(raw.weaponMinutes ?? {}) };
   data.settings = { ...base.settings, ...(raw.settings ?? {}) };
+  data.activeSkill = { ...(raw.activeSkill ?? {}) };
   data.v = SCHEMA_VERSION;
   return data;
 }

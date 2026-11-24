@@ -8,6 +8,9 @@ import { addMastery, applyStatEffects, getHeldItem, weaponTypeOf } from "./progr
 import { openMainMenu } from "./menu.js";
 import { registerBosses } from "./bosses.js";
 import { registerMobs } from "./mobs.js";
+import { registerAbilities, skillHudText } from "./abilities.js";
+import { ensureLore } from "./weapons.js";
+import { forgetPlayer } from "./effects.js";
 
 const COMPASS = "ponce:wayfarer_compass";
 
@@ -60,12 +63,14 @@ world.afterEvents.itemUse.subscribe(({ source, itemStack }) => {
 
 world.afterEvents.playerLeave.subscribe(({ playerId }) => {
   lastCombatTick.delete(playerId);
+  forgetPlayer(playerId);
   forget(playerId);
 });
 
 registerCombat();
 registerBosses();
 registerMobs();
+registerAbilities();
 
 // ---------- Loops ----------
 
@@ -83,7 +88,7 @@ system.runInterval(() => {
     const next = xpToNext(d.level);
     player.onScreenDisplay.setActionBar(
       `§f${player.name} §eLv${d.level}  ${hpColor}${"|".repeat(filled)}§8${"|".repeat(20 - filled)} §f${cur}/${max}` +
-      `  §bEXP ${Math.floor((d.xp / next) * 100)}%`
+      `  §bEXP ${Math.floor((d.xp / next) * 100)}%` + skillHudText(player)
     );
   }
 }, 10);
@@ -91,10 +96,14 @@ system.runInterval(() => {
 // Save changed data every second
 system.runInterval(() => flush(world.getAllPlayers()), 20);
 
-// Re-apply stat effects in case milk or another source cleared them
+// Stat and weapon-handling effects (re-applied in case milk cleared them),
+// plus tooltips on freshly crafted Ponce weapons
 system.runInterval(() => {
-  for (const player of world.getAllPlayers()) applyStatEffects(player);
-}, 100);
+  for (const player of world.getAllPlayers()) {
+    applyStatEffects(player);
+    ensureLore(player);
+  }
+}, 10);
 
 // Time-with-weapon mastery: +1 per minute holding a weapon while actively fighting
 system.runInterval(() => {

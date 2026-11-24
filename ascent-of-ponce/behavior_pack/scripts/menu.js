@@ -1,8 +1,8 @@
 // The player menu, opened with the Wayfarer's Compass.
 
-import { system } from "@minecraft/server";
+import { system, ItemStack } from "@minecraft/server";
 import { ActionFormData, ModalFormData, FormCancelationReason } from "@minecraft/server-ui";
-import { MASTERY_CAP, STATS, STAT_KEYS, WEAPONS, WEAPON_KEYS, xpToNext } from "./config.js";
+import { MASTERY_CAP, STATS, STAT_KEYS, WEAPONS, WEAPON_HANDLING, WEAPON_KEYS, xpToNext } from "./config.js";
 import { getData, markDirty, resetData } from "./data.js";
 import {
   addMastery, addXp, applyStatEffects, checkSkillUnlocks, critChance, damageMultiplier,
@@ -10,6 +10,9 @@ import {
 } from "./progression.js";
 import { SKILLS, describeRequirements } from "./skills.js";
 import { LORE } from "./lore.js";
+import { equippedSkill } from "./abilities.js";
+import { WEAPON_DEFS } from "./weapon_data.js";
+import { describeWeaponReq } from "./weapons.js";
 
 const DIV = "§8────────────────";
 
@@ -47,7 +50,8 @@ export async function openMainMenu(player) {
     )
     .button(`Status${d.statPoints > 0 ? `  §a(+${d.statPoints})` : ""}`, "textures/items/totem")
     .button("Skills", "textures/items/book_enchanted")
-    .button("Weapon Mastery", "textures/items/iron_sword")
+    .button("Weapon Mastery", "textures/items/weapons/iron_longsword")
+    .button("Armory", "textures/items/weapons/iron_greatsword")
     .button("Quests  §8(coming soon)", "textures/items/book_writable")
     .button("Floor Map  §8(coming soon)", "textures/items/map_filled")
     .button("Journal", "textures/items/book_normal")
@@ -59,7 +63,7 @@ export async function openMainMenu(player) {
   const res = await show(player, form);
   if (res.canceled) return;
   player.playSound("random.click");
-  const pages = [openStatus, openSkills, openMastery, comingSoon, comingSoon, openJournal, openSettings, openDev];
+  const pages = [openStatus, openSkills, openMastery, openArmory, comingSoon, comingSoon, openJournal, openSettings, openDev];
   await pages[res.selection]?.(player);
 }
 
@@ -123,12 +127,15 @@ async function allocatePoints(player) {
 // ---------- Skills ----------
 
 async function openSkills(player) {
+  const d = getData(player);
   const form = new ActionFormData()
     .title("§l§6Skills")
-    .body("§7Skills belong to you, not your weapon. Use a weapon type and train your stats to unlock its skills.\n§8(Using skills in combat comes in the next update.)")
-    ;
+    .body(
+      "§7Skills belong to you, not your weapon. Train with a weapon type and your stats to unlock its skills.\n\n" +
+      "§fHow to use: §7hold a Ponce weapon and press §fuse§7 (right-click, or long-press on mobile).\n" +
+      "§fSwitch skill: §7sneak + use, or pick one here.\n§8Vanilla weapons build mastery but can't use skills."
+    );
   for (const key of WEAPON_KEYS) {
-    const d = getData(player);
     const total = SKILLS.filter((s) => s.weapon === key).length;
     const owned = SKILLS.filter((s) => s.weapon === key && d.skills.includes(s.id)).length;
     form.button(`${WEAPONS[key].name}  §8${owned}/${total}`, WEAPONS[key].icon);
@@ -142,17 +149,52 @@ async function openSkills(player) {
 
 async function openWeaponSkills(player, weapon) {
   const d = getData(player);
-  const text = SKILLS.filter((s) => s.weapon === weapon).map((s) => {
+  const equipped = equippedSkill(d, weapon);
+  const all = SKILLS.filter((s) => s.weapon === weapon);
+  const text = all.map((s) => {
     const owned = d.skills.includes(s.id);
-    const head = owned ? `§a[+] §f${s.name}` : `§8[-] §7${s.name}`;
+    const kind = s.kind === "active" ? `§3Active, ${s.cooldown}s cooldown` : "§5Passive";
+    const tag = owned && s.id === equipped?.id ? " §b[EQUIPPED]" : "";
+    const head = owned ? `§a[+] §f${s.name}${tag}` : `§8[-] §7${s.name}`;
     const req = owned ? "" : `\n§7  Needs: ${describeRequirements(d, s, WEAPONS[weapon].name)}`;
-    return `${head}\n§7  ${s.desc}${req}`;
+    return `${head}  ${kind}\n§7  ${s.desc}${req}`;
   }).join(`\n${DIV}\n`);
-  const res = await show(player, new ActionFormData()
+  const choices = all.filter((s) => s.kind === "active" && d.skills.includes(s.id) && s.id !== equipped?.id);
+  const form = new ActionFormData()
     .title(`§l§6${WEAPONS[weapon].name}`)
-    .body(`§7Mastery: §f${Math.floor(d.mastery[weapon])}/${MASTERY_CAP} ${masteryRank(d.mastery[weapon])}\n${DIV}\n${text}`)
+    .body(
+      `§7Mastery: §f${Math.floor(d.mastery[weapon])}/${MASTERY_CAP} ${masteryRank(d.mastery[weapon])}\n` +
+      `§7Handling: §f${WEAPON_HANDLING[weapon].trait}\n${DIV}\n${text}`
+    );
+  for (const s of choices) form.button(`Equip ${s.name}`);
+  form.button("Back");
+  const res = await show(player, form);
+  if (res.canceled) return;
+  if (res.selection < choices.length) {
+    d.activeSkill[weapon] = choices[res.selection].id;
+    markDirty(player);
+    player.playSound("random.click");
+    return openWeaponSkills(player, weapon);
+  }
+  return openSkills(player);
+}
+
+// ---------- Armory ----------
+
+async function openArmory(player) {
+  const d = getData(player);
+  const byTier = (tier) => Object.values(WEAPON_DEFS).filter((w) => w.tier === tier)
+    .map((w) => `§f${w.name} §8(${WEAPONS[w.type].name}, ${w.damage} dmg)\n  ${describeWeaponReq(d, w)}`).join("\n");
+  const res = await show(player, new ActionFormData()
+    .title("§l§6Armory")
+    .body(
+      "§7Ponce weapons have level and stat requirements. Below them, a weapon deals only 25% damage and can't use skills. " +
+      "Weapons never grant abilities; every weapon type handles differently.\n" +
+      `${DIV}\n§eTier I §7- crafted from iron at a crafting table\n${byTier(1)}\n` +
+      `${DIV}\n§bTier II §7- upgrade a Tier I weapon with Floor 1 materials\n${byTier(2)}`
+    )
     .button("Back"));
-  if (!res.canceled) return openSkills(player);
+  if (!res.canceled) return openMainMenu(player);
 }
 
 // ---------- Mastery ----------
@@ -210,6 +252,8 @@ async function openDev(player) {
     .button("+10,000 EXP")
     .button("+100 mastery to all weapons")
     .button("+10 Col")
+    .button("Give all Ponce weapons")
+    .button("Unlock all skills + 60 in every stat")
     .button("§cReset my progress")
     .button("Back"));
   if (res.canceled) return;
@@ -219,7 +263,21 @@ async function openDev(player) {
     case 1: addXp(player, 10000); break;
     case 2: WEAPON_KEYS.forEach((k) => addMastery(player, k, 100, true)); break;
     case 3: d.col += 10; markDirty(player); break;
-    case 4: resetData(player); applyStatEffects(player); player.sendMessage("§c[Ponce] Progress reset."); break;
+    case 4: {
+      const inv = player.getComponent("minecraft:inventory")?.container;
+      for (const id of Object.keys(WEAPON_DEFS)) inv?.addItem(new ItemStack(id, 1));
+      player.sendMessage("§a[Ponce] Gave every Ponce weapon (needs free inventory space).");
+      break;
+    }
+    case 5:
+      d.level = Math.max(d.level, 40);
+      for (const k of STAT_KEYS) d.stats[k] = Math.max(d.stats[k], 60);
+      for (const s of SKILLS) if (!d.skills.includes(s.id)) d.skills.push(s.id);
+      markDirty(player);
+      applyStatEffects(player);
+      player.sendMessage("§a[Ponce] All skills unlocked, Lv 40, 60 in every stat.");
+      break;
+    case 6: resetData(player); applyStatEffects(player); player.sendMessage("§c[Ponce] Progress reset."); break;
     default: return openMainMenu(player);
   }
   return openDev(player);

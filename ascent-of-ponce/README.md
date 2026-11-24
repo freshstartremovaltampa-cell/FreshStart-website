@@ -49,8 +49,40 @@ Lv 8, 1800 HP, 2.5x the size of a Tusk Boar. Tuned for a fight of about 5 minute
 
 Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it and re-run `python3 tools/gen_mobs.py`.
 
+## Phase 2 (done): skills and weapons
+- **Using skills**: hold a Ponce weapon and press **use** (right-click, or long-press on mobile). **Sneak + use** cycles the equipped skill, or pick one under Menu > Skills. Vanilla weapons build mastery but can't use skills.
+- **25 skills**: 19 active, with cooldowns, plus 6 passive. Every active skill is implemented:
+  - Dash Slash, Triple Arc, Twin Tempest (sword)
+  - Venom Edge, Shadow Step (dagger)
+  - Flurry, Comet Lunge, Riposte (rapier)
+  - Ground Slam, Concussion, Armor Break (hammer)
+  - Cleave, Whirlwind (axe)
+  - Piercing Line, Pole Vault, Keep-Away Sweep (spear)
+  - Still Water (katana)
+  - Titan Overhead, Gale Arc (greatsword)
+
+  The passives are Backstab, Rend (bleed), Iaido Draw, Crimson Chain, Bulwark and Dual Wield.
+- **Dual Wield**: with a Ponce sword in your offhand, each hit is followed by an offhand strike, and it unlocks **Twin Tempest** (six alternating strikes).
+- **16 Ponce weapons**, 2 tiers for each of the 8 types. Tier I is crafted from iron (Lv 3). Tier II upgrades a Tier I weapon with Floor 1 drops (Lv 5-8). The Armory page in the menu lists them with your requirements shown in green or red.
+- **Requirements**: below a weapon's level or stats it deals 25% damage and can't use skills. The tooltip shows the requirements.
+- **Each type handles differently**:
+
+  | Type | Swing time | Trait |
+  |---|---|---|
+  | Sword | 0.5 s | Balanced |
+  | Dagger | 0.3 s | Speed I while held |
+  | Rapier | 0.4 s | 25% chance of a follow-up thrust |
+  | Hammer | 0.9 s | Hits stagger the target |
+  | Axe | 0.7 s | 30% splash to a nearby enemy |
+  | Spear | 0.6 s | +25% damage from 2.5+ blocks |
+  | Katana | 0.5 s | +10% crit chance |
+  | Greatsword | 1.0 s | Knockback, but Slowness I while held |
+
+  Swinging faster than the swing time scales damage down, to a minimum of 20%.
+- **Durability**: Ponce weapons wear down per hit and per skill, can be repaired with iron ingots, and respect Unbreaking.
+- **Dev Tools** (tag `ponce_dev`): give all weapons, and unlock all skills with high stats.
+
 ## Roadmap
-2. Combat: skill activation and cooldowns, Dual Wield, weapon level/stat requirements, custom weapons
 3. Jobs: regenerating ore nodes, forging minigame, cooking
 4. Quests: NPCs, quest log, rewards, Col shop
 5. Floors 1–3 with guardians and stair gates
@@ -65,7 +97,11 @@ behavior_pack/
     config.js         all balance numbers
     data.js           save data
     progression.js    XP, mastery, skills, stat effects
-    combat.js         damage, crits, dodges, kills, enemy HP bar
+    combat.js         hit pipeline: stats, pacing, traits, passives, crits, stances, kills
+    abilities.js      active skills: activation, cooldowns, effects
+    weapons.js        weapon requirements, durability, tooltips
+    weapon_data.js    generated weapon table (from tools/gen_weapons.py)
+    effects.js        short-lived combat state (cooldowns, stances, bleeds)
     mobs.js           mole ambush, golemite weaknesses
     bosses.js         floor guardian fights
     skills.js         skill catalogue
@@ -73,6 +109,7 @@ behavior_pack/
     lore.js           journal text
 resource_pack/        models, textures, animations, sounds, text
 tools/gen_mobs.py     generates mob files and placeholder art
+tools/gen_weapons.py  generates weapon items, icons, recipes and weapon_data.js
 tests/                run ./tests/run.sh (needs Node) to simulate gameplay against mock APIs
 ```
 

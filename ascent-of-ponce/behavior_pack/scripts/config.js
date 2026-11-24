@@ -32,16 +32,34 @@ export const STAT_EFFECTS = {
 // Weapon types. Custom Ponce weapons carry a tag like "ponce:sword".
 // Vanilla weapons are mapped so mastery works from day one.
 export const WEAPONS = {
-  sword: { name: "One-Handed Sword", icon: "textures/items/iron_sword" },
-  dagger: { name: "Dagger", icon: "textures/items/shears" },
-  rapier: { name: "Rapier", icon: "textures/items/stick" },
-  hammer: { name: "Hammer / Mace", icon: "textures/items/mace" },
-  axe: { name: "Axe", icon: "textures/items/iron_axe" },
-  spear: { name: "Spear", icon: "textures/items/trident" },
-  katana: { name: "Katana", icon: "textures/items/gold_sword" },
-  greatsword: { name: "Greatsword", icon: "textures/items/diamond_sword" },
+  sword: { name: "One-Handed Sword", icon: "textures/items/weapons/iron_longsword" },
+  dagger: { name: "Dagger", icon: "textures/items/weapons/iron_dagger" },
+  rapier: { name: "Rapier", icon: "textures/items/weapons/iron_rapier" },
+  hammer: { name: "Hammer / Mace", icon: "textures/items/weapons/iron_warhammer" },
+  axe: { name: "Axe", icon: "textures/items/weapons/iron_battleaxe" },
+  spear: { name: "Spear", icon: "textures/items/weapons/iron_spear" },
+  katana: { name: "Katana", icon: "textures/items/weapons/iron_katana" },
+  greatsword: { name: "Greatsword", icon: "textures/items/weapons/iron_greatsword" },
 };
 export const WEAPON_KEYS = Object.keys(WEAPONS);
+
+// How each weapon type handles. Bedrock has no attack cooldown, so heavy
+// weapons lose damage when swung faster than their swing time (in ticks).
+// Each type also has one built-in trait. Weapons never carry special abilities;
+// these belong to the weapon TYPE, and skills belong to the player.
+export const WEAPON_HANDLING = {
+  sword: { swingTicks: 10, trait: "Balanced. No penalties, no tricks." },
+  dagger: { swingTicks: 6, trait: "Light: Speed I while held." },
+  rapier: { swingTicks: 8, trait: "Quick thrusts: 25% chance of a follow-up thrust for 35% damage." },
+  hammer: { swingTicks: 18, trait: "Heavy: every hit staggers (slows) the target." },
+  axe: { swingTicks: 14, trait: "Wide swings: 30% splash damage to one other nearby enemy." },
+  spear: { swingTicks: 12, trait: "Reach: +25% damage when hitting from 2.5+ blocks away." },
+  katana: { swingTicks: 10, trait: "Precise: +10% critical chance." },
+  greatsword: { swingTicks: 20, trait: "Massive: knocks enemies back, but Slowness I while held." },
+};
+export const MIN_SWING_DAMAGE = 0.2; // spam-clicking a heavy weapon still does at least 20%
+export const UNMET_REQUIREMENT_DAMAGE = 0.25; // weapons you can't handle yet deal 25%
+export const SPLASH = 0.3;
 
 // Mastery is an endgame grind. Pace counts only time spent actively fighting
 // ordinary mobs with that one weapon (~2 kills/minute, nonstop):
