@@ -620,8 +620,8 @@ export const WEAPON_DEFS = {
     "req": {
       "level": 25,
       "stats": {
-        "str": 10,
-        "dex": 10
+        "str": 20,
+        "dex": 20
       }
     },
     "forge": null,
@@ -640,8 +640,8 @@ export const WEAPON_DEFS = {
     "req": {
       "level": 25,
       "stats": {
-        "dex": 14,
-        "agi": 4
+        "dex": 30,
+        "agi": 10
       }
     },
     "forge": null,
@@ -660,8 +660,8 @@ export const WEAPON_DEFS = {
     "req": {
       "level": 25,
       "stats": {
-        "dex": 14,
-        "agi": 5
+        "dex": 30,
+        "agi": 12
       }
     },
     "forge": null,
@@ -680,8 +680,8 @@ export const WEAPON_DEFS = {
     "req": {
       "level": 25,
       "stats": {
-        "str": 16,
-        "vit": 5
+        "str": 32,
+        "vit": 10
       }
     },
     "forge": null,
@@ -700,8 +700,8 @@ export const WEAPON_DEFS = {
     "req": {
       "level": 25,
       "stats": {
-        "str": 12,
-        "vit": 8
+        "str": 26,
+        "vit": 16
       }
     },
     "forge": null,
@@ -720,8 +720,8 @@ export const WEAPON_DEFS = {
     "req": {
       "level": 25,
       "stats": {
-        "agi": 12,
-        "str": 8
+        "agi": 26,
+        "str": 16
       }
     },
     "forge": null,
@@ -740,8 +740,8 @@ export const WEAPON_DEFS = {
     "req": {
       "level": 25,
       "stats": {
-        "dex": 12,
-        "agi": 10
+        "dex": 24,
+        "agi": 18
       }
     },
     "forge": null,
@@ -760,8 +760,8 @@ export const WEAPON_DEFS = {
     "req": {
       "level": 25,
       "stats": {
-        "str": 18,
-        "vit": 8
+        "str": 34,
+        "vit": 12
       }
     },
     "forge": null,

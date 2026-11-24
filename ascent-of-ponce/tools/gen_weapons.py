@@ -87,24 +87,24 @@ WEAPONS = [
      {"blade": (140, 146, 152), "edge": (255, 150, 40), "shadow": (70, 52, 44)}),
 
     # ---- Relic: Legendary quest rewards. Unbreakable, three built-in infusions. Can't be forged.
-    #      Semi-high requirements (Lv 25, about double Tier II's stats). Below them a Relic still
+    #      Semi-high requirements: Lv 25 and 40-46 stat points (of the 72 a Lv 25 player has). Below them a Relic still
     #      works at HALF strength, and even half (with its infusions) beats a Masterwork Tier II
     #      of its type. So full strength is about 2.5x a Tier II. ----
-    ("boarbane", "Boarbane", "sword", 3, 18, None, 25, {"str": 10, "dex": 10},
+    ("boarbane", "Boarbane", "sword", 3, 18, None, 25, {"str": 20, "dex": 20},
      {"relic": ["ponce:boar_tusk", "ponce:boar_king_crest", "ponce:wasp_stinger"]}, RELIC),
-    ("wasps_kiss", "Wasp's Kiss", "dagger", 3, 15, None, 25, {"dex": 14, "agi": 4},
+    ("wasps_kiss", "Wasp's Kiss", "dagger", 3, 15, None, 25, {"dex": 30, "agi": 10},
      {"relic": ["ponce:wasp_stinger", "ponce:thorn_quill", "ponce:wasp_wing"]}, RELIC),
-    ("thornwhisper", "Thornwhisper", "rapier", 3, 18, None, 25, {"dex": 14, "agi": 5},
+    ("thornwhisper", "Thornwhisper", "rapier", 3, 18, None, 25, {"dex": 30, "agi": 12},
      {"relic": ["ponce:thorn_quill", "ponce:wasp_wing", "ponce:wasp_stinger"]}, RELIC),
-    ("golemheart_maul", "Golemheart Maul", "hammer", 3, 22, None, 25, {"str": 16, "vit": 5},
+    ("golemheart_maul", "Golemheart Maul", "hammer", 3, 22, None, 25, {"str": 32, "vit": 10},
      {"relic": ["ponce:golemite_core", "ponce:boar_king_crest", "ponce:moss_clump"]}, RELIC),
-    ("tuskreaver", "Tuskreaver", "axe", 3, 21, None, 25, {"str": 12, "vit": 8},
+    ("tuskreaver", "Tuskreaver", "axe", 3, 21, None, 25, {"str": 26, "vit": 16},
      {"relic": ["ponce:boar_tusk", "ponce:boar_king_crest", "ponce:boar_hide"]}, RELIC),
-    ("molefang_pike", "Molefang Pike", "spear", 3, 19, None, 25, {"agi": 12, "str": 8},
+    ("molefang_pike", "Molefang Pike", "spear", 3, 19, None, 25, {"agi": 26, "str": 16},
      {"relic": ["ponce:mole_claw", "ponce:thorn_quill", "ponce:boar_tusk"]}, RELIC),
-    ("verdant_moon", "Verdant Moon", "katana", 3, 21, None, 25, {"dex": 12, "agi": 10},
+    ("verdant_moon", "Verdant Moon", "katana", 3, 21, None, 25, {"dex": 24, "agi": 18},
      {"relic": ["ponce:wasp_wing", "ponce:thorn_quill", "ponce:moss_clump"]}, RELIC),
-    ("kingsfall", "Kingsfall", "greatsword", 3, 26, None, 25, {"str": 18, "vit": 8},
+    ("kingsfall", "Kingsfall", "greatsword", 3, 26, None, 25, {"str": 34, "vit": 12},
      {"relic": ["ponce:boar_king_crest", "ponce:golemite_core", "ponce:boar_tusk"]}, RELIC),
 ]
 

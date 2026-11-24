@@ -867,8 +867,8 @@ console.log("forms shown:", log.length);
   const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
   assert(relics.every(([, r]) => {
     const t2 = Object.values(WEAPON_DEFS).find((w) => w.tier === 2 && w.type === r.type);
-    return r.req.level === 25 && sum(r.req.stats) >= sum(t2.req.stats) * 1.8;
-  }), "Relics need Lv 25 and roughly double Tier II's stats");
+    return r.req.level === 25 && sum(r.req.stats) >= 40 && sum(r.req.stats) <= 46 && sum(r.req.stats) > sum(t2.req.stats) * 3;
+  }), "Relics need Lv 25 and 40-46 stat points (of 72 at Lv 25)");
   let worst = Infinity;
   for (const [rid, r] of relics) {
     const [tid] = Object.entries(WEAPON_DEFS).find(([, w]) => w.tier === 2 && w.type === r.type);
@@ -882,7 +882,7 @@ console.log("forms shown:", log.length);
   Object.assign(r, { dimension: dim, location: { x: 900.5, y: 64, z: 0.5 }, isSneaking: false });
   fire("playerSpawn", { player: r, initialSpawn: true });
   const rd = getDataFor(r); rd.starter = "ponce:wayfarers_sword"; rd.level = 12;
-  Object.assign(rd.stats, { str: 18, vit: 8 }); // same stats both times; only the level requirement differs
+  Object.assign(rd.stats, { str: 34, vit: 12 }); // same stats both times; only the level requirement differs
   const realRandom = Math.random; Math.random = () => 0.99;
   const dummyHit = (item, dmg) => {
     r.setHeld(item); system.tick(30);
