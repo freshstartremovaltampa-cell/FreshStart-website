@@ -1,0 +1,34 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "ponce:thornback_hare",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/thornback_hare"
+      },
+      "geometry": {
+        "default": "geometry.ponce.thornback_hare"
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "animations": {
+        "walk": "animation.ponce.thornback_hare.walk",
+        "look_at_target": "animation.common.look_at_target"
+      },
+      "scripts": {
+        "animate": [
+          "walk",
+          "look_at_target"
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#B0865C",
+        "overlay_color": "#60904A"
+      }
+    }
+  }
+}

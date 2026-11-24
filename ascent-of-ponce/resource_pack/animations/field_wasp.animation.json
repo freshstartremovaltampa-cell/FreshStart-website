@@ -1,0 +1,38 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.ponce.field_wasp.fly": {
+      "loop": true,
+      "bones": {
+        "wing0": {
+          "rotation": [
+            0,
+            0,
+            "math.sin(query.anim_time * 2400) * 35"
+          ]
+        },
+        "wing1": {
+          "rotation": [
+            0,
+            0,
+            "-math.sin(query.anim_time * 2400) * 35"
+          ]
+        },
+        "body": {
+          "position": [
+            0,
+            "math.sin(query.anim_time * 180) * 0.6",
+            0
+          ]
+        },
+        "abdomen": {
+          "rotation": [
+            "math.sin(query.anim_time * 240) * 8",
+            0,
+            0
+          ]
+        }
+      }
+    }
+  }
+}

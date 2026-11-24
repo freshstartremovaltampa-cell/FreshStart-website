@@ -1,0 +1,22 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:item": {
+    "description": {
+      "identifier": "ponce:boar_kings_call",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "ponce_boar_kings_call",
+      "minecraft:display_name": {
+        "value": "\u00a7cBoar King's Call"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:cooldown": {
+        "category": "ponce_horn",
+        "duration": 2
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+pack.name=The Ascent of Ponce
+pack.description=Climb the tower of Ponce in search of the Fountain of Youth.
+entity.ponce:meadow_jelly.name=Meadow Jelly
+entity.ponce:tusk_boar.name=Tusk Boar
+item.spawn_egg.entity.ponce:meadow_jelly.name=Meadow Jelly Spawn Egg
+item.spawn_egg.entity.ponce:tusk_boar.name=Tusk Boar Spawn Egg
+entity.ponce:ironhide.name=Ironhide, the Boar King
+item.spawn_egg.entity.ponce:ironhide.name=Ironhide Spawn Egg
+entity.ponce:thornback_hare.name=Thornback Hare
+entity.ponce:burrow_mole.name=Burrow Mole
+entity.ponce:moss_golemite.name=Moss Golemite
+entity.ponce:field_wasp.name=Field Wasp
+item.spawn_egg.entity.ponce:thornback_hare.name=Thornback Hare Spawn Egg
+item.spawn_egg.entity.ponce:burrow_mole.name=Burrow Mole Spawn Egg
+item.spawn_egg.entity.ponce:moss_golemite.name=Moss Golemite Spawn Egg
+item.spawn_egg.entity.ponce:field_wasp.name=Field Wasp Spawn Egg

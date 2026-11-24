@@ -1,0 +1,16 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:item": {
+    "description": {
+      "identifier": "ponce:wayfarer_compass",
+      "menu_category": { "category": "equipment" }
+    },
+    "components": {
+      "minecraft:icon": "ponce_wayfarer_compass",
+      "minecraft:display_name": { "value": "§bWayfarer's Compass" },
+      "minecraft:max_stack_size": 1,
+      "minecraft:glint": true,
+      "minecraft:cooldown": { "category": "ponce_menu", "duration": 0.5 }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "ponce:meadow_jelly",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/meadow_jelly"
+      },
+      "geometry": {
+        "default": "geometry.ponce.meadow_jelly"
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "animations": {
+        "move": "animation.ponce.meadow_jelly.move"
+      },
+      "scripts": {
+        "animate": [
+          "move"
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#60D6AA",
+        "overlay_color": "#6EBE46"
+      }
+    }
+  }
+}

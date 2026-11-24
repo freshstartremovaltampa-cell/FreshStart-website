@@ -1,0 +1,35 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "ponce:burrow_mole",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/burrow_mole"
+      },
+      "geometry": {
+        "default": "geometry.ponce.burrow_mole"
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "animations": {
+        "walk": "animation.ponce.burrow_mole.walk",
+        "burrowed": "animation.ponce.burrow_mole.burrowed",
+        "emerged": "animation.ponce.burrow_mole.emerged",
+        "state": "controller.animation.ponce.burrow_mole"
+      },
+      "scripts": {
+        "animate": [
+          "state"
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#48404A",
+        "overlay_color": "#E096A2"
+      }
+    }
+  }
+}

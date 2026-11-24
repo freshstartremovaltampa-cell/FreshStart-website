@@ -1,0 +1,48 @@
+{
+  "resource_pack_name": "ascent_of_ponce",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "ponce_wayfarer_compass": {
+      "textures": "textures/items/wayfarer_compass"
+    },
+    "ponce_jelly_gel": {
+      "textures": "textures/items/jelly_gel"
+    },
+    "ponce_raw_boar": {
+      "textures": "textures/items/raw_boar"
+    },
+    "ponce_boar_hide": {
+      "textures": "textures/items/boar_hide"
+    },
+    "ponce_boar_tusk": {
+      "textures": "textures/items/boar_tusk"
+    },
+    "ponce_boar_king_crest": {
+      "textures": "textures/items/boar_king_crest"
+    },
+    "ponce_boar_kings_call": {
+      "textures": "textures/items/boar_kings_call"
+    },
+    "ponce_raw_hare": {
+      "textures": "textures/items/raw_hare"
+    },
+    "ponce_thorn_quill": {
+      "textures": "textures/items/thorn_quill"
+    },
+    "ponce_mole_claw": {
+      "textures": "textures/items/mole_claw"
+    },
+    "ponce_moss_clump": {
+      "textures": "textures/items/moss_clump"
+    },
+    "ponce_golemite_core": {
+      "textures": "textures/items/golemite_core"
+    },
+    "ponce_wasp_stinger": {
+      "textures": "textures/items/wasp_stinger"
+    },
+    "ponce_wasp_wing": {
+      "textures": "textures/items/wasp_wing"
+    }
+  }
+}
