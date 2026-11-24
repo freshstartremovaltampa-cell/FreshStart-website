@@ -154,7 +154,7 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
   - **Old Bram, the Smith**: mining and forging quests.
   - **Pip, the Cook**: cooking and ingredient quests.
 
-  For now you place them with spawn eggs or Dev Tools > "Spawn the quest givers here". Phase 5 puts them in the Floor 1 town.
+  They live in Wayfarer's Rest on Floor 1 (see below). You can also place extra ones with spawn eggs or Dev Tools > "Spawn the quest givers here".
 - **20 Floor 1 quests** across five difficulties, including three repeatables that pay steady Col. Objectives can be:
   - kill mobs, defeat a guardian, or bring items (handed over at turn-in)
   - mine nodes or forge weapons (optionally of a minimum quality)
@@ -177,8 +177,31 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
 - **Quest log** in the menu: progress, details, abandon. Progress also shows above the hotbar as it happens.
 - **Shops**: each NPC sells useful goods for Col and buys monster drops, raw ore or ingredients.
 
+## Floor 1: Wayfarer's Rest (Phase 5, part 1)
+Floor 1 is a **floating island** about 500 blocks across at y 200, centered on x 10000, z 10000 in the overworld. Bedrock add-ons can't add dimensions, so each floor is an island in the sky.
+
+- **It builds itself.** A script builds it chunk by chunk (up to 4 chunks around each nearby player) from a fixed design, so it's the same in every world. Built chunks are saved, so nothing is rebuilt. It works in existing worlds too.
+- **The town of Wayfarer's Rest** sits in the middle:
+  - a fountain plaza (a replica of the Fountain of Youth) with lantern posts and flowers
+  - Marla's Guild Hall, Bram's Smithy (with a Smithing Forge, furnaces and an anvil) and Pip's Kitchen (with a Cooking Pot)
+  - six houses, three market stalls, garden trees, four streets, and a log palisade with lit gates
+  - the quest givers move into their buildings automatically
+- **The forest** fills the rest of the island:
+  - oak, birch and spruce, with more spruce to the north
+  - meadow clearings with flowers, ponds and gentle hills
+  - winding dirt trails leaving each gate
+  - mossy boulders holding ore nodes (mostly Ember Copper, some Ironheart, rare Glimmer Silver)
+- **Getting there**:
+  - New players start in town.
+  - Menu > **Travel** goes to Wayfarer's Rest or back to world spawn.
+  - Your spawn point is set to the town.
+- **Floor 1 mobs** spawn in the forest around players (8 nearby at most), never inside town. Hares and wasps come out by day; moles and golemites come out more at night.
+- **No Minecraft mobs**: vanilla mobs that spawn on the floor are removed.
+- **Falling off the edge** brings you back to town.
+- Preview the layout with `node tools/preview_floor1.mjs <dir>`, which writes a top-down map and the town's blocks.
+
 ## Roadmap
-5. Floors 1–3 with guardians and stair gates
+5. Floors (part 2): Ironhide's arena and the stair gate on Floor 1, then Floors 2 and 3
 
 ## Layout
 ```
@@ -203,6 +226,8 @@ behavior_pack/
     starter.js        first-login starter weapon choice
     quests.js         quest engine, NPC dialogue, rewards, shops
     quests_data.js    quest givers, quests, shops (hand-edited)
+    floor1_gen.js     Floor 1 layout: island, town, forest (pure code, no game API)
+    floor1.js         builds Floor 1 in the game, travel, spawner
     inventory.js, ui.js  shared helpers
     mobs.js           mole ambush, golemite weaknesses
     bosses.js         floor guardian fights
@@ -214,6 +239,7 @@ tools/gen_mobs.py     generates mob files and placeholder art
 tools/gen_weapons.py  generates weapon items, icons and weapon_data.js (incl. forge recipes)
 tools/gen_jobs.py     generates ore nodes, forge, pot, ingots, meals, world gen and jobs_data.js
 tools/gen_npcs.py     generates the quest-giver NPC entities and skins
+tools/preview_floor1.mjs  renders Floor 1 data from the real generator for previews
 tests/                run ./tests/run.sh (needs Node) to simulate gameplay against mock APIs
 ```
 

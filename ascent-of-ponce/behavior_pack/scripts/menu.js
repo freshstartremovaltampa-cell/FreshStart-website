@@ -17,6 +17,8 @@ import { buffActive } from "./cooking.js";
 import { needsStarter, offerStarter } from "./starter.js";
 import { activeQuests, completedCount, isComplete, MAX_ACTIVE, objectiveProgress, openQuest } from "./quests.js";
 import { DIFFICULTY, NPCS } from "./quests_data.js";
+import { travelToFloor1, travelToWorldSpawn } from "./floor1.js";
+import { FLOOR1 } from "./floor1_gen.js";
 import { equippedSkill } from "./abilities.js";
 import { INFUSIONS, WEAPON_DEFS } from "./weapon_data.js";
 import { describeInfusion, describeWeaponReq } from "./weapons.js";
@@ -56,7 +58,7 @@ export async function openMainMenu(player) {
     ["Armory", "textures/items/weapons/iron_greatsword", openArmory],
     ["Jobs", "textures/items/iron_pickaxe", openJobs],
     [`Quests  §8(${activeQuests(player).length}/${MAX_ACTIVE})`, "textures/items/book_writable", openQuestLog],
-    ["Floor Map  §8(coming soon)", "textures/items/map_filled", comingSoon],
+    ["Travel", "textures/items/map_filled", openTravel],
     ["Journal", "textures/items/book_normal", openJournal],
     ["Settings", "textures/items/redstone_dust", openSettings],
   );
@@ -69,13 +71,6 @@ export async function openMainMenu(player) {
   await entries[res.selection]?.[2](player);
 }
 
-async function comingSoon(player) {
-  const res = await show(player, new ActionFormData()
-    .title("§l§6Coming Soon")
-    .body("The Floor Map comes with the tower floors in the next update.\n\nFor now, climb by fighting, questing and crafting.")
-    .button("Back"));
-  if (!res.canceled) await openMainMenu(player);
-}
 
 // ---------- Status / stats ----------
 
@@ -180,6 +175,21 @@ async function openWeaponSkills(player, weapon) {
     return openWeaponSkills(player, weapon);
   }
   return openSkills(player);
+}
+
+// ---------- Travel ----------
+
+async function openTravel(player) {
+  const res = await show(player, new ActionFormData()
+    .title("§l§6Travel")
+    .body("§7Floor 1 is a floating island far above the world. Its town is safe; the forest around it is not.\n§8More floors open as the tower is built.")
+    .button(`§f${FLOOR1.name}\n§7Floor 1 town`, "textures/items/compass_item")
+    .button("§fWorld spawn\n§7The world below the tower", "textures/items/map_empty")
+    .button("Back"));
+  if (res.canceled) return;
+  if (res.selection === 0) return travelToFloor1(player);
+  if (res.selection === 1) return travelToWorldSpawn(player);
+  return openMainMenu(player);
 }
 
 // ---------- Quests ----------

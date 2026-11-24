@@ -16,6 +16,10 @@ import { registerForging } from "./forging.js";
 import { registerCooking, buffHudText } from "./cooking.js";
 import { needsStarter, offerStarter } from "./starter.js";
 import { registerQuests } from "./quests.js";
+import { registerFloor1, travelToFloor1 } from "./floor1.js";
+
+// New players begin their climb in Wayfarer's Rest, the Floor 1 town
+const START_ON_FLOOR_1 = true;
 
 const COMPASS = "ponce:wayfarer_compass";
 
@@ -53,6 +57,7 @@ world.afterEvents.playerSpawn.subscribe(({ player }) => {
   if (!data.initialized) {
     data.initialized = true;
     markDirty(player);
+    if (START_ON_FLOOR_1) system.runTimeout(() => player.isValid && travelToFloor1(player), 10);
     system.runTimeout(() => player.isValid && welcome(player), 40);
   }
   giveCompass(player);
@@ -82,6 +87,7 @@ registerMining();
 registerForging();
 registerCooking();
 registerQuests();
+registerFloor1();
 
 // ---------- Loops ----------
 

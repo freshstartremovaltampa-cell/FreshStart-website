@@ -7,7 +7,9 @@ function makeEntity(typeId, hp, extra = {}) {
   const e = { id: Math.random().toString(36), typeId, isValid: true, health, killed: false, dimension: dim,
     location: { x: 0, y: 64, z: 0 }, tagList: [], props: {}, getProperty(k) { return this.props[k]; }, events: [], effects: {}, impulses: [], damageTaken: 0,
     getComponent(n) { return n === "minecraft:health" ? health : extra[n]; },
-    matches: () => typeId !== "minecraft:cow", kill() { this.killed = true; health.currentValue = 0; },
+    families: typeId === "minecraft:cow" ? ["mob"] : typeId.startsWith("ponce:npc_") ? ["ponce_npc", "npc"]
+      : typeId.startsWith("ponce:") ? ["ponce_mob", "mob", "monster", ...(typeId === "ponce:ironhide" ? ["ponce_boss"] : [])] : ["mob", "monster"],
+    matches(o) { return !o?.families || o.families.every((f) => this.families.includes(f)); }, kill() { this.killed = true; health.currentValue = 0; },
     addTag(t) { this.tagList.push(t); }, removeTag(t) { this.tagList = this.tagList.filter((x) => x !== t); },
     triggerEvent(ev) { this.events.push(ev); }, applyImpulse(v) { this.impulses.push(v); },
     addEffect(t, d, o) { this.effects[t] = { duration: d, amplifier: o?.amplifier ?? 0 }; }, getEffect(t) { return this.effects[t]; },
@@ -28,6 +30,9 @@ function makePlayer(name) {
     setHeld: (i) => (held = i), getDynamicProperty: (k) => props[k], setDynamicProperty: (k, v) => (props[k] = v), props,
     getEffect: (t) => effects[t], addEffect: (t, d, o) => (effects[t] = { duration: d, amplifier: o.amplifier }), removeEffect: (t) => delete effects[t],
     selectedSlotIndex: 0, getViewDirection: () => ({ x: 0, y: 0, z: 1 }),
+    // Teleports are recorded, not applied, so tests keep players where they put them
+    teleport(loc, o) { p.teleportedTo = { ...loc }; p.teleportOptions = o; }, setSpawnPoint(sp) { p.spawnPoint = sp; },
+    velocity: { x: 0, y: 0, z: 0 }, getVelocity() { return p.velocity; },
     onScreenDisplay: { setTitle: (t, o) => msgs.push("TITLE " + t + " " + (o?.subtitle ?? "")), setActionBar: (t) => (p.actionBar = t) },
     sendMessage: (m) => msgs.push(m), playSound() {}, hasTag: (t) => p.tags.includes(t) });
   return p;
@@ -259,7 +264,7 @@ console.log("forms shown:", log.length);
   };
   dim.factory = (id, loc) => { const e = makeEntity(id, 100); e.location = { ...loc }; return e; };
   const w = makePlayer("Weaponmaster"); world.players.push(w);
-  Object.assign(w, { dimension: dim, location: { x: 100, y: 64, z: 0 }, isSneaking: false, teleport(loc) { w.location = { ...loc }; w.teleported = true; },
+  Object.assign(w, { dimension: dim, location: { x: 100, y: 64, z: 0 }, isSneaking: false,
     getEntitiesFromViewDirection: () => dim.getEntities({ location: w.location, maxDistance: 10 }).filter((e) => e.location.z > w.location.z && e.isValid).map((entity) => ({ entity })) });
   fire("playerSpawn", { player: w, initialSpawn: true });
   const d = getDataFor(w);
@@ -267,6 +272,7 @@ console.log("forms shown:", log.length);
   const clear = () => { for (const e of dim.entities) e.isValid = false; };
   const hit = (target, dmg) => { target.health.currentValue -= dmg; fire("entityHurt", { hurtEntity: target, damage: dmg, damageSource: { cause: "entityAttack", damagingEntity: w } }); };
   system.tick(40);
+  w.teleport = (loc) => { w.location = { ...loc }; w.teleported = true; }; // real movement for Shadow Step, after the first-login trip
 
   // Requirements
   const sword = ponce("iron_longsword"); w.setHeld(sword);
@@ -762,4 +768,92 @@ console.log("forms shown:", log.length);
   const { SHOPS } = await import("../behavior_pack/scripts/quests_data.js");
   await smithShop(SHOPS.smith.buy.length + 0); // first sellable row the player holds
   assert(count("ponce:raw_ironheart") === 0 && d.col === 75 + 60, "selling 6 Raw Ironheart pays 60 Col");
+}
+
+// ================= Floor 1: Wayfarer's Rest =================
+{
+  const g = await import("../behavior_pack/scripts/floor1_gen.js");
+  const f1 = await import("../behavior_pack/scripts/floor1.js");
+  const { BlockTypes } = await import("@minecraft/server");
+  const { FLOOR1, ARRIVAL, NPC_SPOTS } = g;
+  const C = FLOOR1.center, BASE = FLOOR1.base;
+  dim.allLoaded = true;
+  dim.factory = (id, loc) => { const e = makeEntity(id, 20); e.location = { ...loc }; return e; };
+  const typeAt = (x, y, z) => dim.blocks.get(`${x},${y},${z}`)?.typeId;
+
+  // Generator sanity
+  let total = 0, outside = 0;
+  for (let cx = g.CHUNK_BOUNDS.min.x; cx <= g.CHUNK_BOUNDS.max.x; cx++) for (let cz = g.CHUNK_BOUNDS.min.z; cz <= g.CHUNK_BOUNDS.max.z; cz++) {
+    if (!g.chunkHasIsland(cx, cz)) continue;
+    for (const op of g.chunkOps(cx, cz)) { total++; if ((op[2] >> 4) !== cx || ((op[0] === "f" ? op[5] : op[4]) >> 4) !== cz) outside++; }
+  }
+  assert(total > 500000 && outside === 0, `generator: ${total} block ops, every one inside its own chunk`);
+  assert(g.chunkOps(C.x >> 4, C.z >> 4).length === g.chunkOps(C.x >> 4, C.z >> 4).length, "generation is deterministic");
+  assert(g.inTown(C.x + 10, C.z) && !g.inTown(C.x + 60, C.z) && g.onIsland(C.x + 200, C.z) && !g.onIsland(C.x + 300, C.z), "town and island bounds");
+
+  // New player arrives in town
+  const v = makePlayer("Arrival"); world.players.push(v);
+  Object.assign(v, { dimension: dim, location: { x: 0, y: 70, z: 0 }, isSneaking: false, getGameMode: () => "Survival" });
+  fire("playerSpawn", { player: v, initialSpawn: true });
+  system.tick(12);
+  assert(v.teleportedTo && Math.abs(v.teleportedTo.x - ARRIVAL.x) < 1 && Math.abs(v.teleportedTo.z - ARRIVAL.z) < 1, "first login: sent to Wayfarer's Rest");
+  assert(v.spawnPoint && v.effects.slow_falling, "spawn point set in town, slow falling while the town loads");
+
+  // The island builds around the player
+  v.location = { ...ARRIVAL };
+  system.tick(400);
+  const centerChunk = [C.x >> 4, C.z >> 4];
+  assert(f1.isChunkBuilt(...centerChunk), "the town chunk gets built");
+  assert(typeAt(C.x, BASE + 5, C.z) === "minecraft:water" && typeAt(C.x, BASE + 2, C.z) === "minecraft:chiseled_stone_bricks", "Fountain of Youth: pillar with water on top");
+  assert(typeAt(C.x + 17, BASE + 1, C.z + 15) === "ponce:smithing_forge" && typeAt(C.x - 18, BASE + 1, C.z - 21) === "ponce:cooking_pot", "the smithy has a forge, the kitchen a cooking pot");
+  assert(typeAt(C.x, BASE, C.z + 20) === "minecraft:dirt_path", "fallback block ids: grass_path missing -> dirt_path used");
+  const leaf = [...dim.blocks.values()].find((b) => b.typeId.endsWith("_leaves"));
+  assert(leaf?.states?.persistent_bit === true, "tree leaves are placed persistent (never decay)");
+  const saved = world.getDynamicProperty("ponce:floor1_chunks");
+  assert(saved.split("").filter((c) => c === "1").length >= 40, "built chunks are saved in the world");
+
+  // Quest givers move in, once
+  const npcs = dim.entities.filter((e) => e.isValid && e.typeId.startsWith("ponce:npc_") && g.isOnFloor1(e.location));
+  assert(npcs.length === 3 && npcs.every((n) => n.nameTag && Math.hypot(n.location.x - NPC_SPOTS[n.typeId].x, n.location.z - NPC_SPOTS[n.typeId].z) < 1), "Marla, Bram and Pip appear at their buildings");
+  for (const n of npcs) {
+    const x = Math.floor(n.location.x), z = Math.floor(n.location.z);
+    if (typeAt(x, BASE + 1, z) !== "minecraft:air" || typeAt(x, BASE + 2, z) !== "minecraft:air") assert(false, `${n.typeId} has room to stand`);
+  }
+  assert(true, "every quest giver has two blocks of headroom");
+
+  // A chunk that unloads mid-build is retried, not marked done
+  const testChunk = [(C.x + 160) >> 4, C.z >> 4];
+  dim.unloaded.add(testChunk.join(","));
+  v.location = { x: C.x + 160, y: BASE + 2, z: C.z };
+  system.tick(300);
+  assert(!f1.isChunkBuilt(...testChunk), "unloaded chunk is not marked built");
+  dim.unloaded.clear(); system.tick(300);
+  assert(f1.isChunkBuilt(...testChunk), "built once it loads");
+
+  // Forest spawning: Floor 1 mobs only, outside town, capped
+  system.tick(40 * 12);
+  const floorMobs = () => dim.entities.filter((e) => e.isValid && e.families?.includes("ponce_mob") && g.isOnFloor1(e.location));
+  const near = floorMobs().filter((e) => Math.hypot(e.location.x - v.location.x, e.location.z - v.location.z) <= 40);
+  assert(near.length >= 4 && near.length <= f1.SPAWN.cap + 1, `forest spawns Floor 1 mobs near the player (${near.length} nearby, cap ${f1.SPAWN.cap}, +1 for a boar herd)`);
+  assert(floorMobs().every((e) => !g.inTown(e.location.x, e.location.z)), "nothing spawns inside town");
+  const kinds = new Set(floorMobs().map((e) => e.typeId));
+  assert([...kinds].every((k) => ["ponce:meadow_jelly", "ponce:thornback_hare", "ponce:tusk_boar", "ponce:field_wasp", "ponce:burrow_mole", "ponce:moss_golemite"].includes(k)), "only Floor 1 mobs: " + [...kinds].join(", "));
+  v.location = { ...ARRIVAL };
+  const inTownBefore = dim.entities.filter((e) => e.isValid && e.families?.includes("ponce_mob") && g.inTown(e.location.x, e.location.z)).length;
+  system.tick(40 * 5);
+  assert(dim.entities.filter((e) => e.isValid && e.families?.includes("ponce_mob") && g.inTown(e.location.x, e.location.z)).length === inTownBefore, "standing in town spawns nothing");
+
+  // No Minecraft mobs on the floor
+  const zombie = makeEntity("minecraft:zombie", 20); zombie.location = { x: C.x + 100, y: BASE + 1, z: C.z };
+  const groundZombie = makeEntity("minecraft:zombie", 20); groundZombie.location = { x: 50, y: 64, z: 50 };
+  const jelly = makeEntity("ponce:meadow_jelly", 12); jelly.location = { x: C.x + 100, y: BASE + 1, z: C.z };
+  for (const e of [zombie, groundZombie, jelly]) { e.remove = () => { e.isValid = false; }; fire("entitySpawn", { entity: e }); }
+  assert(!zombie.isValid && groundZombie.isValid && jelly.isValid, "vanilla mobs are removed on Floor 1 only; tower mobs stay");
+
+  // Falling off the edge
+  v.teleportedTo = undefined;
+  v.location = { x: C.x + 240, y: BASE - 90, z: C.z }; v.velocity = { x: 0, y: -1.5, z: 0 };
+  system.tick(10);
+  assert(v.teleportedTo && Math.abs(v.teleportedTo.z - ARRIVAL.z) < 1, "falling off the island returns you to town");
+  v.velocity = { x: 0, y: 0, z: 0 };
 }

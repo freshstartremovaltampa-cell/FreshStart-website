@@ -9,6 +9,14 @@ export const LORE = [
       "floor stacked upon floor, each one a world of its own.",
   },
   {
+    title: "§6Wayfarer's Rest",
+    text:
+      "The first floor is an island of forest floating in open sky, and in its heart sits §fWayfarer's Rest§f, " +
+      "the town where every climber begins.\n\n" +
+      "Its fountain is carved in the shape of the one at the summit, a reminder of why you climb. " +
+      "Marla's guild, Bram's smithy and Pip's kitchen are all here. Beyond the palisade, the forest belongs to the beasts.",
+  },
+  {
     title: "§6The Fountain of Youth",
     text:
       "Every adventurer who climbs tells the same story: the Fountain of Youth waits at the very top.\n\n" +
