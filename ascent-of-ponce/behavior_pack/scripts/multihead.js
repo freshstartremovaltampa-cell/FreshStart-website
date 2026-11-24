@@ -1,5 +1,7 @@
-// Multi-head creatures (hydra-kind). The Mire Hydra on Floor 2 is the first;
-// later floors add more species to SPECIES with the same rules:
+// Multi-head creatures (hydra-kind). The Mire Hydra on Floor 2 is the first,
+// a guardian that teaches the rules. Around Floor 15 hydra-kind return as
+// regular floor mobs: add a SPECIES entry without `guardian` and put the body
+// in that floor's spawn table. The same rules apply to every species:
 //
 //  - The body carries its heads as riders. The body can't be hurt; each head
 //    has its own health pool and is fought separately.
@@ -19,25 +21,31 @@ import { addMastery, addXp, getHeldItem, weaponTypeOf } from "./progression.js";
 import { hudHoldUntil, push } from "./combat.js";
 import { rewardGuardian } from "./bosses.js";
 import { MOBS } from "./config.js";
+import { notify } from "./quests.js";
 
 const DIM = "overworld";
 const ARENA_TAG = "ponce_arena";
 
+// Species fields:
+//   heads, headNames, seats    one head entity per seat on the body
+//   regrowSeconds, warnSeconds severed heads regrow after this long (warning before)
+//   bite, acid                 attack tuning (acid only for heads whose id ends in "_acid")
+//   loot                       [item, min, max] dropped when every head is down
+//   guardian                   { floor, arena, lure, fallen, col } for floor guardians:
+//                              summoned with the lure in the arena, leashed to it, and
+//                              clearing the floor when beaten. Regular (non-guardian)
+//                              hydra-kind spawn with all heads and just drop loot + EXP.
 export const SPECIES = {
   "ponce:mire_hydra": {
     name: "Mire Hydra",
-    floor: 2,
     heads: ["ponce:hydra_head", "ponce:hydra_head_acid", "ponce:hydra_head"], // one per seat
     headNames: ["Left head", "Middle head", "Right head"],
     seats: [[-1.3, 3.5, -1.5], [0, 3.9, -2.0], [1.3, 3.5, -1.5]],
-    regrowSeconds: 30,
+    regrowSeconds: 35, // an introduction: a little room for error
     warnSeconds: 8,
     bite: { damage: 9, everyTicks: 90, windupTicks: 15, reach: 8, radius: 3 },
     acid: { damage: 4, poisonTicks: 80, everyTicks: 160, windupTicks: 25, range: 16, radius: 2.5, lingerTicks: 60 },
-    arena: F2.ARENA,
-    lure: "ponce:mire_lure",
-    fallen: "The Mire Hydra has fallen",
-    col: 250,
+    guardian: { floor: 2, arena: F2.ARENA, lure: "ponce:mire_lure", fallen: "The Mire Hydra has fallen", col: 250 },
     loot: [["ponce:hydra_fang", 1, 2], ["ponce:hydra_scale", 2, 4], ["ponce:gator_hide", 1, 2]],
   },
 };
@@ -71,18 +79,26 @@ function attachHead(body, f, i) {
 export function spawnMultihead(dim, typeId, loc) {
   const sp = SPECIES[typeId];
   const body = dim.spawnEntity(typeId, loc);
-  body.addTag(ARENA_TAG);
-  const f = { species: sp, typeId, slots: [], pools: [], lastHitter: undefined };
-  fights.set(body.id, f);
-  sp.heads.forEach((_, i) => attachHead(body, f, i));
-  return body;
+  if (sp.guardian) body.addTag(ARENA_TAG);
+  return body; // heads are grown on its first tick (fightFor)
 }
 
-/** After a reload, rebuild the fight from the riders still attached. */
+/**
+ * The fight state for a body. A brand-new body (lured guardian or a spawned
+ * floor mob) grows all its heads at once; after a reload the state is rebuilt
+ * from the riders still attached, and missing heads start regrowing.
+ */
 function fightFor(body) {
   let f = fights.get(body.id);
   if (f) return f;
   const sp = SPECIES[body.typeId];
+  if (!body.getDynamicProperty?.("ponce:heads_grown")) {
+    body.setDynamicProperty?.("ponce:heads_grown", true);
+    f = { species: sp, typeId: body.typeId, slots: [], pools: [], lastHitter: undefined };
+    fights.set(body.id, f);
+    sp.heads.forEach((_, i) => attachHead(body, f, i));
+    return f;
+  }
   f = { species: sp, typeId: body.typeId, slots: sp.heads.map(() => undefined), pools: [], lastHitter: undefined };
   const riders = body.getComponent("minecraft:rideable")?.getRiders?.() ?? [];
   for (const r of riders) {
@@ -146,7 +162,8 @@ function defeat(body, f) {
   dim.playSound("mob.enderdragon.death", loc, { volume: 1.5, pitch: 1.2 });
   try { dim.spawnParticle("minecraft:huge_explosion_emitter", loc); } catch { /* ignore */ }
   body.remove();
-  rewardGuardian(dim, loc, { floor: sp.floor, type: f.typeId, fallen: sp.fallen, col: sp.col });
+  if (sp.guardian) rewardGuardian(dim, loc, { floor: sp.guardian.floor, type: f.typeId, fallen: sp.guardian.fallen, col: sp.guardian.col });
+  else if (killer) notify(killer, "kill", f.typeId);
 }
 
 function regrowTick(body, f) {
@@ -183,8 +200,8 @@ function upkeep(body, f) {
   });
   const hp = body.getComponent("minecraft:health");
   if (hp && total > 0) hp.setCurrentValue(Math.min(hp.effectiveMax, total));
-  const A = sp.arena;
-  if (body.hasTag(ARENA_TAG) && Math.hypot(body.location.x - A.x, body.location.z - A.z) > A.radius + 3) {
+  const A = sp.guardian?.arena;
+  if (A && body.hasTag(ARENA_TAG) && Math.hypot(body.location.x - A.x, body.location.z - A.z) > A.radius + 3) {
     try { body.teleport({ x: A.x + 0.5, y: A.y, z: A.z + 0.5 }); } catch { /* ignore */ }
   }
 }
@@ -289,15 +306,16 @@ function hudTick(body, f) {
 
 export function useLure(player, typeId) {
   const sp = SPECIES[typeId];
-  const A = sp.arena;
+  const G = sp.guardian;
+  const A = G.arena;
   const d = getData(player);
-  if ((d.highestFloor ?? 1) < sp.floor) {
-    player.sendMessage(`§7[Ponce] Nothing answers. §fYou haven't reached Floor ${sp.floor} yet.`);
+  if ((d.highestFloor ?? 1) < G.floor) {
+    player.sendMessage(`§7[Ponce] Nothing answers. §fYou haven't reached Floor ${G.floor} yet.`);
     return false;
   }
   const inArena = Math.hypot(player.location.x - A.x, player.location.z - A.z) <= A.radius + 1 && Math.abs(player.location.y - A.y) <= 8;
   if (!inArena) {
-    const where = F2.isOnFloor(player.location) ? `It's ${directionText(player.location, A)}, at the end of the north boardwalk.` : `It's on Floor ${sp.floor}, at the end of the north boardwalk from town.`;
+    const where = F2.isOnFloor(player.location) ? `It's ${directionText(player.location, A)}, at the end of the north boardwalk.` : `It's on Floor ${G.floor}, at the end of the north boardwalk from town.`;
     player.sendMessage(`§7[Ponce] The lure stirs the water, but nothing rises. §fUse it in the Hydra Pool. §7${where}`);
     return false;
   }
@@ -307,10 +325,10 @@ export function useLure(player, typeId) {
   }
   spawnMultihead(player.dimension, typeId, { x: A.x + 0.5, y: A.y, z: A.z + 0.5 });
   const inv = player.getComponent("minecraft:inventory")?.container;
-  if (inv && inv.getItem(player.selectedSlotIndex)?.typeId === sp.lure) inv.setItem(player.selectedSlotIndex, undefined);
+  if (inv && inv.getItem(player.selectedSlotIndex)?.typeId === G.lure) inv.setItem(player.selectedSlotIndex, undefined);
   player.dimension.playSound("mob.enderdragon.growl", A, { volume: 3, pitch: 0.6 });
   for (const p of player.dimension.getPlayers({ location: A, maxDistance: 48 })) {
-    p.onScreenDisplay.setTitle(`§2${sp.name}`, { subtitle: `§7Guardian of Floor ${sp.floor}`, fadeInDuration: 10, stayDuration: 60, fadeOutDuration: 20 });
+    p.onScreenDisplay.setTitle(`§2${sp.name}`, { subtitle: `§7Guardian of Floor ${G.floor}`, fadeInDuration: 10, stayDuration: 60, fadeOutDuration: 20 });
     p.sendMessage(`§2[${sp.name}] §fEach head has its own life. §7Fell them all at once, or they grow back.`);
   }
   return true;
@@ -328,7 +346,7 @@ export function registerMultihead() {
   });
   world.afterEvents.itemUse.subscribe(({ source, itemStack }) => {
     if (source.typeId !== "minecraft:player") return;
-    for (const [typeId, sp] of Object.entries(SPECIES)) if (itemStack?.typeId === sp.lure) useLure(source, typeId);
+    for (const [typeId, sp] of Object.entries(SPECIES)) if (sp.guardian && itemStack?.typeId === sp.guardian.lure) useLure(source, typeId);
   });
   system.runInterval(() => {
     const dim = world.getDimension(DIM);

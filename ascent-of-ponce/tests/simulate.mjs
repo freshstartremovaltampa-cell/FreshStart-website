@@ -1007,12 +1007,12 @@ console.log("forms shown:", log.length);
 
   // Bodies get a working rideable component; heads report what they ride
   dim.factory = (id, loc) => {
-    const hp = id === "ponce:mire_hydra" ? 1800 : id.startsWith("ponce:hydra_head") ? 600 : 30;
+    const hp = id.endsWith("hydra") ? 750 : id.startsWith("ponce:hydra_head") ? 250 : 30;
     const e = makeEntity(id, hp); e.location = { ...loc };
     const riders = [];
     const rideable = { addRider(h) { riders.push(h); h.ridingOn = e; return true; }, getRiders: () => riders.filter((r) => r.isValid) };
     const riding = { get entityRidingOn() { return e.ridingOn; } };
-    e.getComponent = (n) => (n === "minecraft:health" ? e.health : n === "minecraft:rideable" && id === "ponce:mire_hydra" ? rideable : n === "minecraft:riding" ? riding : undefined);
+    e.getComponent = (n) => (n === "minecraft:health" ? e.health : n === "minecraft:rideable" && id.endsWith("hydra") ? rideable : n === "minecraft:riding" ? riding : undefined);
     e.remove = () => { e.isValid = false; };
     return e;
   };
@@ -1085,6 +1085,7 @@ console.log("forms shown:", log.length);
   assert(h.items[0] === lure && h.msgs.some((m) => m.includes("Hydra Pool")), "outside the pool the lure does nothing and points the way");
   h.location = { x: ARENA.x + 0.5, y: ARENA.y + 1, z: ARENA.z + 8.5 };
   fire("itemUse", { source: h, itemStack: lure });
+  system.tick(2); // heads grow on the body's first tick
   const body = dim.entities.find((e) => e.isValid && e.typeId === "ponce:mire_hydra");
   const heads = () => body.getComponent("minecraft:rideable").getRiders();
   assert(body && heads().length === 3 && h.items[0] === undefined, "the lure calls up the hydra with three heads riding its body");
@@ -1093,16 +1094,19 @@ console.log("forms shown:", log.length);
 
   // Body health mirrors the heads (boss bar)
   heads()[0].health.currentValue = 100; system.tick(2);
-  assert(body.health.currentValue === 100 + 600 + 600, "boss bar = combined head health");
+  assert(body.health.currentValue === 100 + 250 + 250, "boss bar = combined head health");
+  assert(heads().every((x) => x.health.effectiveMax === 250), "each head has a modest 250 HP pool (Floor 2 is the introduction)");
 
   // Severing one head starts its regrowth timer
   const killHead = (x) => { x.health.currentValue = 0; x.isValid = false; fire("entityDie", { deadEntity: x, damageSource: { cause: "entityAttack", damagingEntity: h } }); };
   killHead(heads()[0]);
   assert(heads().length === 2 && h.msgs.some((m) => m.includes("Left head severed")), "a slain head is severed");
-  system.tick(20 * 22 + 2);
-  assert(h.msgs.some((m) => m.includes("is regrowing")), "warning before it regrows");
+  system.tick(20 * 25);
+  assert(!h.msgs.some((m) => m.includes("is regrowing")), "no warning yet at 25s");
+  system.tick(20 * 2 + 4);
+  assert(h.msgs.some((m) => m.includes("is regrowing")), "warning 8s before it regrows");
   system.tick(20 * 9);
-  assert(heads().length === 3 && heads().some((x) => x.health.currentValue === 600 && x.dprops["ponce:seat"] === 0), "after 30s the head grows back at full health");
+  assert(heads().length === 3 && heads().some((x) => x.health.currentValue === 250 && x.dprops["ponce:seat"] === 0), "after 35s the head grows back at full health");
 
   // The heads attack: a bite for players in front of a head
   for (const x of heads()) x.location = { x: body.location.x, y: body.location.y + 3, z: body.location.z };
@@ -1119,7 +1123,7 @@ console.log("forms shown:", log.length);
   // Two down, then wait too long: one grows back, and the hydra stands
   killHead(heads()[0]); killHead(heads()[0]);
   assert(heads().length === 1 && h.msgs.some((m) => m.includes("frenzy")), "the last head goes into a frenzy");
-  system.tick(20 * 31);
+  system.tick(20 * 36);
   assert(heads().length === 3 && body.isValid, "too slow: the severed heads grow back");
 
   // All three within the window: the hydra falls
@@ -1135,4 +1139,17 @@ console.log("forms shown:", log.length);
   assert(Q.questStatus(h, QUESTS_BY_ID.heads_will_roll) === "ready", "\"Heads Will Roll\" is ready to turn in");
   assert(floors.useStairGate(h, 2) === "open" && h.msgs.some((m) => m.includes("Floor 3 is still being built")), "the Hydra Pool's gate opens (Floor 3 comes later)");
   assert(floors.mapText(h).includes("Floor 2") && floors.mapText(h).includes("open to you"), "the map knows you're on Floor 2");
+
+  // Regular hydra-kind (planned for around Floor 15): no lure, arena or floor clear, just a dangerous mob
+  MH.SPECIES["ponce:test_hydra"] = { ...MH.SPECIES["ponce:mire_hydra"], name: "Fen Hydra", guardian: undefined, loot: [["ponce:hydra_scale", 1, 1]] };
+  const wild = dim.spawnEntity("ponce:test_hydra", { x: FLOOR.center.x + 120.5, y: BASE + 1, z: FLOOR.center.z + 0.5 });
+  system.tick(2);
+  const wildHeads = () => wild.getComponent("minecraft:rideable").getRiders();
+  assert(wildHeads().length === 3 && !wild.tagList.includes("ponce_arena"), "a spawned hydra-kind grows all heads at once, with no arena leash");
+  const floorBefore = hd.highestFloor, drops0 = dim.drops.length;
+  wild.location = { x: FLOOR.center.x + 200, y: BASE + 1, z: FLOOR.center.z }; system.tick(2);
+  assert(wild.location.x === FLOOR.center.x + 200, "regular hydra-kind roam freely");
+  killHead(wildHeads()[0]); killHead(wildHeads()[0]); killHead(wildHeads()[0]);
+  assert(!wild.isValid && dim.drops.length > drops0 && hd.highestFloor === floorBefore, "it drops loot when every head falls, but clears no floor");
+  delete MH.SPECIES["ponce:test_hydra"];
 }

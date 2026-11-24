@@ -248,7 +248,7 @@ def marsh_gator():
 # The body carries three head entities as riders. Each head has its own
 # health; scripts/multihead.js handles severing, regrowth and defeat.
 
-HEAD_HP = 600
+HEAD_HP = 250  # kept modest: the challenge is felling all heads together, not chewing through health
 SEATS = [[-1.3, 3.5, -1.5], [0, 3.9, -2.0], [1.3, 3.5, -1.5]]
 
 

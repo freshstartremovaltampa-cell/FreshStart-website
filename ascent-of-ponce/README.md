@@ -246,10 +246,10 @@ Floor 2 is a second floating island (centered on x 10000, z -10000, water level 
 - **Quests** (Ysolde): six of them, all needing Floor 2 reached. They include Fine **Tier II** weapons for Hard quests, a Masterwork Tier II with Gator Fang and Wisp Spark for the Elite quest "Heads Will Roll", and a repeatable Marsh Patrol.
 
 ### Floor 2 guardian: the Mire Hydra (multi-head creatures)
-The hydra introduces **multi-head creatures**, which later floors will make more common (`scripts/multihead.js`, data-driven `SPECIES`).
+The hydra introduces **multi-head creatures** (`scripts/multihead.js`, data-driven `SPECIES`). Floor 2 is the gentle introduction: heads have modest health, so the challenge is the timing, not the damage. Around **Floor 15**, hydra-kind return as **regular floor mobs**: a species entry without `guardian` spawns with all its heads, roams freely, follows the same head and regrowth rules, and just drops loot and EXP.
 - **Summoning**: craft a **Mire Lure** (gator teeth, wisp essence, frog skin) and use it inside the Hydra Pool. Used elsewhere, it points the way.
-- **Separate heads**: the body carries **three heads as riders**. **Each head has its own health pool (600)**. The body can't be hurt, and its boss bar shows the heads' combined health. The on-screen display shows each head's health or regrowth countdown.
-- **Regrowth**: a slain head is **severed** and **regrows at full health after 30 seconds**, with a warning 8 seconds before.
+- **Separate heads**: the body carries **three heads as riders**. **Each head has its own health pool, a modest 250** (750 in total). The body can't be hurt, and its boss bar shows the heads' combined health. The on-screen display shows each head's health or regrowth countdown.
+- **Regrowth**: a slain head is **severed** and **regrows at full health after 35 seconds**, with a warning 8 seconds before.
 - **Winning**: the hydra only falls when **all three heads are dead at the same time**. Wear every head down, then finish them in quick succession.
 - **Attacks**:
   - Heads rear back (warning) and **bite** for 9 damage what's in front of them.
@@ -259,7 +259,7 @@ The hydra introduces **multi-head creatures**, which later floors will make more
 - **Victory**: Floor 2 is cleared (opening its Stair Gate) and you get +250 Col. The final blow earns 900 EXP and +15 mastery. Drops are Hydra Fangs, Hydra Scales and Gator Hide.
 
 ## Roadmap
-5. Floors (part 3): Floor 3, more multi-head creatures on higher floors
+5. Floors (part 3): Floor 3 and beyond; hydra-kind return as regular floor mobs around Floor 15
 
 ## Layout
 ```
