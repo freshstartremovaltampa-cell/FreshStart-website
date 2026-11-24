@@ -4,3 +4,5 @@ entity.ponce:meadow_jelly.name=Meadow Jelly
 entity.ponce:tusk_boar.name=Tusk Boar
 item.spawn_egg.entity.ponce:meadow_jelly.name=Meadow Jelly Spawn Egg
 item.spawn_egg.entity.ponce:tusk_boar.name=Tusk Boar Spawn Egg
+entity.ponce:ironhide.name=Ironhide, the Boar King
+item.spawn_egg.entity.ponce:ironhide.name=Ironhide Spawn Egg

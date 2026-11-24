@@ -108,14 +108,19 @@ def base_components(family, hp, damage, speed, box, loot):
     }
 
 
-def bp_entity(ident, components):
-    return {
-        "format_version": "1.21.40",
-        "minecraft:entity": {
-            "description": {"identifier": ident, "is_spawnable": True, "is_summonable": True},
-            "components": components,
-        },
+def bp_entity(ident, components, groups=None, events=None):
+    ent = {
+        "description": {"identifier": ident, "is_spawnable": True, "is_summonable": True},
+        "components": components,
     }
+    if groups:
+        ent["component_groups"] = groups
+    if events:
+        ent["events"] = events
+    return {"format_version": "1.21.40", "minecraft:entity": ent}
+
+
+PLAYER_TARGET = [{"filters": {"test": "is_family", "subject": "other", "value": "player"}, "max_dist": 24}]
 
 
 def rp_entity(ident, name, animations, scripts, egg, materials=None, controller="controller.render.default"):
@@ -280,7 +285,14 @@ def tusk_boar():
         "minecraft:behavior.melee_attack": {"priority": 2, "speed_multiplier": 1.7, "track_target": True},
         "minecraft:knockback_resistance": {"value": 0.3},
     })
-    write_json(f"{BP}/entities/{name}.json", bp_entity(ident, comps))
+    groups = {"ponce:hostile": {
+        "minecraft:behavior.nearest_attackable_target": {
+            "priority": 3, "must_see": False, "reselect_targets": True, "within_radius": 24,
+            "entity_types": PLAYER_TARGET},
+        "minecraft:persistent": {},
+    }}
+    events = {"ponce:enrage": {"add": {"component_groups": ["ponce:hostile"]}}}
+    write_json(f"{BP}/entities/{name}.json", bp_entity(ident, comps, groups, events))
     write_json(f"{BP}/spawn_rules/{name}.json", spawn_rules(
         ident, "animal", weight=18, herd=(2, 4), biomes=["plains", "forest", "taiga"],
         extra={"minecraft:spawns_on_block_filter": "minecraft:grass_block",
@@ -295,9 +307,25 @@ def tusk_boar():
          "entries": [{"type": "item", "name": "ponce:boar_tusk", "weight": 1}]},
     ]})
 
-    legs = [("leg0", [-4.5, 0, -7], [-3, 6, -5.5], [0, 40]), ("leg1", [1.5, 0, -7], [3, 6, -5.5], [12, 40]),
-            ("leg2", [-4.5, 0, 4], [-3, 6, 5.5], [24, 40]), ("leg3", [1.5, 0, 4], [3, 6, 5.5], [36, 40])]
-    bones = [
+    bones = boar_bones()
+    write_json(f"{RP}/models/entity/{name}.geo.json", geometry(f"geometry.ponce.{name}", 64, 64, bones, bounds=(2, 1.5)))
+    img = paint_boar((104, 72, 48), (62, 42, 28), (140, 104, 74), eye=(200, 70, 50, 255))
+    save_png(img, f"{RP}/textures/entity/{name}.png")
+    write_json(f"{RP}/animations/{name}.animation.json", boar_walk(name))
+    write_json(f"{RP}/entity/{name}.entity.json", rp_entity(
+        ident, name,
+        {"walk": f"animation.ponce.{name}.walk", "look_at_target": "animation.common.look_at_target"},
+        ["walk", "look_at_target"], ("#5E4130", "#EEE6CD")))
+    boar_items()
+
+
+LEGS = [("leg0", [-4.5, 0, -7], [-3, 6, -5.5], [0, 40]), ("leg1", [1.5, 0, -7], [3, 6, -5.5], [12, 40]),
+        ("leg2", [-4.5, 0, 4], [-3, 6, 5.5], [24, 40]), ("leg3", [1.5, 0, 4], [3, 6, 5.5], [36, 40])]
+
+
+def boar_bones():
+    legs = LEGS
+    return [
         {"name": "body", "pivot": [0, 10, 0], "cubes": [
             cube([-5, 6, -8], [10, 8, 16], [0, 0]),
             cube([-1, 14, -7], [2, 2, 12], [0, 49]),  # bristle ridge
@@ -311,10 +339,11 @@ def tusk_boar():
             cube([2.5, 13, -10], [2, 2, 1], [52, 28]),
         ]},
     ] + [{"name": n, "parent": "body", "pivot": p, "cubes": [cube(o, [3, 6, 3], uv)]} for n, o, p, uv in legs]
-    write_json(f"{RP}/models/entity/{name}.geo.json", geometry(f"geometry.ponce.{name}", 64, 64, bones, bounds=(2, 1.5)))
 
+
+def paint_boar(hide, dark, belly, eye):
+    legs = LEGS
     img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
-    hide, dark, belly = (104, 72, 48), (62, 42, 28), (140, 104, 74)
     paint_box(img, (0, 0), (10, 8, 16), {"default": hide, "top": dark, "bottom": belly}, noise=18)
     paint_box(img, (0, 49), (2, 2, 12), {"default": (40, 28, 20)}, noise=10)
     paint_box(img, (0, 24), (8, 7, 7), {"default": hide, "top": dark}, noise=16)
@@ -330,13 +359,15 @@ def tusk_boar():
     fx, fy = 7, 31  # head front face
     for ex in (fx + 1, fx + 6):
         px[ex, fy + 2] = (15, 10, 8, 255)
-        px[ex, fy + 1] = (200, 70, 50, 255)  # angry red glint
+        px[ex, fy + 1] = eye  # glint
     sx, sy = 32, 26  # snout front: nostrils
     px[sx + 1, sy + 2] = px[sx + 3, sy + 2] = (60, 30, 30, 255)
-    save_png(img, f"{RP}/textures/entity/{name}.png")
+    return img
 
+
+def boar_walk(name):
     swing = "math.cos(query.modified_distance_moved * 38.17) * 50 * query.modified_move_speed"
-    write_json(f"{RP}/animations/{name}.animation.json", {
+    return {
         "format_version": "1.8.0",
         "animations": {f"animation.ponce.{name}.walk": {
             "loop": True,
@@ -345,12 +376,10 @@ def tusk_boar():
                 "leg1": {"rotation": [f"-{swing}", 0, 0]}, "leg2": {"rotation": [f"-{swing}", 0, 0]},
             },
         }},
-    })
-    write_json(f"{RP}/entity/{name}.entity.json", rp_entity(
-        ident, name,
-        {"walk": f"animation.ponce.{name}.walk", "look_at_target": "animation.common.look_at_target"},
-        ["walk", "look_at_target"], ("#5E4130", "#EEE6CD")))
+    }
 
+
+def boar_items():
     def meat(img):
         blob(img, 7.5, 8, 6, 4.5, (190, 70, 70, 255))
         blob(img, 5, 7, 2.5, 1.5, (240, 220, 210, 255), noise=6)
@@ -375,6 +404,110 @@ def tusk_boar():
     drop_item("boar_tusk", "§eBoar Tusk", tusk)
 
 
+# ================================================================ IRONHIDE, THE BOAR KING (Floor 1 guardian)
+
+def ironhide():
+    ident, name = "ponce:ironhide", "ironhide"
+    comps = base_components(["boss_boar", "monster", "ponce_boss"], hp=300, damage=6, speed=0.24,
+                            box=(2.0, 2.0), loot=name)
+    for k in ("minecraft:despawn", "minecraft:behavior.random_stroll", "minecraft:pushable"):
+        comps.pop(k)
+    comps.update({
+        "minecraft:scale": {"value": 2.5},
+        "minecraft:boss": {"should_darken_sky": False, "hud_range": 48},
+        "minecraft:persistent": {},
+        "minecraft:knockback_resistance": {"value": 1.0},
+        "minecraft:pushable": {"is_pushable": False, "is_pushable_by_piston": False},
+        "minecraft:damage_sensor": {"triggers": [
+            {"cause": "fall", "deals_damage": "no"},
+            {"cause": "suffocation", "deals_damage": "no"},
+        ]},
+        "minecraft:experience_reward": {"on_death": "50"},
+        "minecraft:follow_range": {"value": 32, "max": 32},
+        "minecraft:behavior.hurt_by_target": {"priority": 1},
+        "minecraft:behavior.melee_attack": {"priority": 2, "speed_multiplier": 1.3, "track_target": True},
+        "minecraft:behavior.nearest_attackable_target": {
+            "priority": 3, "must_see": False, "reselect_targets": True, "within_radius": 24,
+            "entity_types": PLAYER_TARGET},
+        "minecraft:behavior.random_stroll": {"priority": 6, "speed_multiplier": 0.6},
+    })
+    groups = {"ponce:enraged": {
+        "minecraft:movement": {"value": 0.3},
+        "minecraft:attack": {"damage": 8},
+    }}
+    events = {"ponce:enrage": {"add": {"component_groups": ["ponce:enraged"]}}}
+    write_json(f"{BP}/entities/{name}.json", bp_entity(ident, comps, groups, events))
+    write_json(f"{BP}/loot_tables/entities/{name}.json", {"pools": [
+        {"rolls": 1, "entries": [{"type": "item", "name": "ponce:boar_king_crest", "weight": 1}]},
+        {"rolls": 1, "entries": [{"type": "item", "name": "ponce:raw_boar", "weight": 1,
+                                  "functions": [{"function": "set_count", "count": {"min": 3, "max": 5}}]}]},
+        {"rolls": 1, "entries": [{"type": "item", "name": "ponce:boar_hide", "weight": 1,
+                                  "functions": [{"function": "set_count", "count": {"min": 2, "max": 4}}]}]},
+        {"rolls": 1, "entries": [{"type": "item", "name": "ponce:boar_tusk", "weight": 1,
+                                  "functions": [{"function": "set_count", "count": {"min": 1, "max": 2}}]}]},
+    ]})
+
+    # Same body as the Tusk Boar, plus an iron back plate and huge forward tusks
+    bones = boar_bones()
+    bones[0]["cubes"].append(cube([-4, 14, -4], [8, 1, 9], [28, 49]))
+    bones[1]["cubes"] += [cube([-4, 9, -19], [1, 1, 2], [44, 30]), cube([3, 9, -19], [1, 1, 2], [50, 30])]
+    write_json(f"{RP}/models/entity/{name}.geo.json", geometry(f"geometry.ponce.{name}", 64, 64, bones, bounds=(5, 4)))
+
+    img = paint_boar((70, 52, 44), (38, 28, 24), (96, 74, 60), eye=(255, 150, 40, 255))
+    paint_box(img, (28, 49), (8, 1, 9), {"default": (140, 146, 152), "top": (160, 166, 172)}, noise=10)
+    px = img.load()
+    for x, y in ((38, 51), (41, 54), (45, 52), (40, 57)):  # rivets on the plate's top face
+        px[x, y] = (90, 94, 100, 255)
+    for uv in ([44, 30], [50, 30], [44, 24], [48, 24]):
+        size = (1, 1, 2) if uv[1] == 30 else (1, 3, 1)
+        paint_box(img, uv, size, {"default": (250, 244, 225)}, noise=5)
+    for x, y in ((20, 18), (21, 19), (22, 20), (23, 21), (5, 20), (6, 21), (7, 22)):  # battle scars
+        px[x, y] = (150, 110, 100, 255)
+    fx, fy = 7, 31
+    for ex in (fx + 1, fx + 6):  # glowing eyes
+        px[ex, fy + 2] = (255, 200, 80, 255)
+    save_png(img, f"{RP}/textures/entity/{name}.png")
+
+    write_json(f"{RP}/animations/{name}.animation.json", boar_walk(name))
+    write_json(f"{RP}/entity/{name}.entity.json", rp_entity(
+        ident, name,
+        {"walk": f"animation.ponce.{name}.walk", "look_at_target": "animation.common.look_at_target"},
+        ["walk", "look_at_target"], ("#2E241E", "#FF9628")))
+
+    def crest(img):
+        blob(img, 7.5, 7.5, 6, 6.5, (200, 160, 60, 255), noise=6)
+        blob(img, 7.5, 7.5, 4, 4.5, (110, 80, 60, 255), noise=6)
+        for x, y in ((5, 9), (4, 10), (10, 9), (11, 10)):
+            img.putpixel((x, y), (250, 244, 225, 255))
+    drop_item("boar_king_crest", "§6Boar King's Crest", crest)
+
+    # Summoning horn: crafted from boar parts, blown to challenge the guardian
+    def horn(img):
+        pts = [(3, 12), (4, 12), (4, 11), (5, 11), (5, 10), (6, 10), (6, 9), (7, 9), (7, 8), (8, 8), (8, 7),
+               (9, 7), (9, 6), (10, 6), (10, 5), (11, 5), (11, 4), (12, 4), (12, 3)]
+        for i, (x, y) in enumerate(pts):
+            img.putpixel((x, y), (240, 232, 205, 255) if i > 4 else (200, 190, 160, 255))
+            img.putpixel((x, y + 1), (210, 200, 170, 255))
+        for x, y in ((6, 9), (6, 10), (7, 10), (9, 7), (9, 8), (10, 7)):
+            img.putpixel((x, y), (110, 76, 50, 255))  # hide wraps
+        img.putpixel((2, 13), (60, 50, 40, 255))
+    drop_item("boar_kings_call", "§cBoar King's Call", horn, extra={
+        "minecraft:max_stack_size": 1,
+        "minecraft:cooldown": {"category": "ponce_horn", "duration": 2},
+    })
+    write_json(f"{BP}/recipes/boar_kings_call.json", {
+        "format_version": "1.20.10",
+        "minecraft:recipe_shaped": {
+            "description": {"identifier": "ponce:boar_kings_call"},
+            "tags": ["crafting_table"],
+            "pattern": [" T ", "THT", " H "],
+            "key": {"T": {"item": "ponce:boar_tusk"}, "H": {"item": "ponce:boar_hide"}},
+            "unlock": [{"item": "ponce:boar_tusk"}],
+            "result": {"item": "ponce:boar_kings_call"},
+        },
+    })
+
+
 # ================================================================ shared resource files
 
 def resources():
@@ -387,6 +520,9 @@ def resources():
         "ponce:meadow_jelly": {"volume": 0.8, "pitch": [1.1, 1.4], "events": {
             "hurt": "mob.slime.small", "death": "mob.slime.small", "attack": "mob.slime.attack",
             "step": {"sound": "mob.slime.small", "volume": 0.25}}},
+        "ponce:ironhide": {"volume": 1.6, "pitch": [0.5, 0.6], "events": {
+            "ambient": "mob.hoglin.ambient", "hurt": "mob.hoglin.hurt", "death": "mob.hoglin.death",
+            "attack": "mob.hoglin.attack", "step": {"sound": "mob.ravager.step", "volume": 0.6}}},
         "ponce:tusk_boar": {"volume": 1.0, "pitch": [0.9, 1.1], "events": {
             "ambient": "mob.hoglin.ambient", "hurt": "mob.hoglin.hurt", "death": "mob.hoglin.death",
             "attack": "mob.hoglin.attack", "step": {"sound": "mob.pig.step", "volume": 0.2}}},
@@ -396,5 +532,6 @@ def resources():
 if __name__ == "__main__":
     meadow_jelly()
     tusk_boar()
+    ironhide()
     resources()
-    print("Generated mobs:", "meadow_jelly, tusk_boar")
+    print("Generated mobs:", "meadow_jelly, tusk_boar, ironhide")

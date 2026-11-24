@@ -80,6 +80,36 @@
       "minecraft:knockback_resistance": {
         "value": 0.3
       }
+    },
+    "component_groups": {
+      "ponce:hostile": {
+        "minecraft:behavior.nearest_attackable_target": {
+          "priority": 3,
+          "must_see": false,
+          "reselect_targets": true,
+          "within_radius": 24,
+          "entity_types": [
+            {
+              "filters": {
+                "test": "is_family",
+                "subject": "other",
+                "value": "player"
+              },
+              "max_dist": 24
+            }
+          ]
+        },
+        "minecraft:persistent": {}
+      }
+    },
+    "events": {
+      "ponce:enrage": {
+        "add": {
+          "component_groups": [
+            "ponce:hostile"
+          ]
+        }
+      }
     }
   }
 }

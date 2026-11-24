@@ -16,6 +16,12 @@
     },
     "ponce_boar_tusk": {
       "textures": "textures/items/boar_tusk"
+    },
+    "ponce_boar_king_crest": {
+      "textures": "textures/items/boar_king_crest"
+    },
+    "ponce_boar_kings_call": {
+      "textures": "textures/items/boar_kings_call"
     }
   }
 }

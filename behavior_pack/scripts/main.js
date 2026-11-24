@@ -6,6 +6,7 @@ import { getData, markDirty, flush, forget } from "./data.js";
 import { registerCombat, lastCombatTick, hudHoldUntil } from "./combat.js";
 import { addMastery, applyStatEffects, getHeldItem, weaponTypeOf } from "./progression.js";
 import { openMainMenu } from "./menu.js";
+import { registerBosses } from "./bosses.js";
 
 const COMPASS = "ponce:wayfarer_compass";
 
@@ -62,6 +63,7 @@ world.afterEvents.playerLeave.subscribe(({ playerId }) => {
 });
 
 registerCombat();
+registerBosses();
 
 // ---------- Loops ----------
 

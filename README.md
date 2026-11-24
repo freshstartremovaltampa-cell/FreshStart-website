@@ -18,8 +18,8 @@ For testing, run `/tag @s add ponce_dev` (cheats on) to show **Dev Tools** in th
   - AGI: dodge chance; Speed I at 15, Speed II at 30
   - VIT: +2 hearts per 5 points
 - **Weapon mastery** for 8 weapon types: sword, dagger, rapier, hammer, axe, spear, katana, greatsword. It grows slowly from kills (scaled by how tough the mob is), hits and minutes spent actively fighting with that weapon. Gains shrink as mastery rises, and it adds up to +25% damage. Vanilla swords, axes, mace and trident already count.
-  - Pace with nonstop fighting of ordinary mobs: first skill (25) in about 45 min, 200 in about 6 h, 500 in about 16 h, 800 (Dual Wield) in about 30 h.
-- **Skill catalogue**: 24 skills, unlocked by mastery plus stats. Examples: Ground Slam (hammer) and Dual Wield (sword 800 mastery, Lv 25, DEX 40, STR 20).
+  - Pace with nonstop fighting of ordinary mobs: first skill (25) in about 45 min, 150 in about 5 h, 375 in about 12 h, 600 (Dual Wield) in about 21 h. Floor guardians give +8 mastery each.
+- **Skill catalogue**: 24 skills, unlocked by mastery plus stats. Examples: Ground Slam (hammer) and Dual Wield (sword 600 mastery, Lv 25, DEX 40, STR 20).
 - **Menu**: Status and stat allocation, Skills, Mastery, Journal (lore), Settings.
 - **HUD** above the hotbar showing HP bar, level and EXP. Hitting an enemy shows its name, level and HP bar.
 
@@ -30,6 +30,16 @@ Custom RPG mobs, no vanilla reskins. They spawn in the overworld for now (plains
 |---|---|---|---|---|
 | Meadow Jelly | 1 | 12 | Hostile, slow, bouncy | Jelly Gel |
 | Tusk Boar | 3 | 24 | Neutral: grazes, charges when hit, herd defends | Raw Boar Meat, Boar Hide, Boar Tusk (rare) |
+
+### Floor 1 guardian: Ironhide, the Boar King
+Lv 8, 300 HP, 2.5x the size of a Tusk Boar. Tuned for a player around Lv 4-6 with an iron-tier weapon, their first weapon skill and some armor.
+- **Summon** with the **Boar King's Call**, crafted from 3 Boar Tusks and 2 Boar Hides (tusk, hide-tusk-tusk, hide pattern). It only works once you've unlocked a weapon skill.
+- **Thick Hide**: wood, stone and gold weapons deal only 40% damage.
+- **Charge**: a roar and a 1 s warning, then a straight-line charge for 9 damage and heavy knockback. Step sideways to dodge.
+- **Call the Herd**: at 70% and 40% HP he summons 2 hostile Tusk Boars.
+- **Enrage**: below 30% HP he gets faster, hits for 8, and charges every 6 s instead of 9.
+- **Rewards**: Boar King's Crest, meat, hides, tusks, 250 EXP, +8 weapon mastery, 100 Col, and Floor 1 marked as cleared.
+- He leaves after 60 s with no player nearby, so a failed attempt doesn't leave him roaming.
 
 Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it and re-run `python3 tools/gen_mobs.py`.
 

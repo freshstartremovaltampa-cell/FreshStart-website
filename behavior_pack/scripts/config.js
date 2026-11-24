@@ -46,9 +46,9 @@ export const WEAPON_KEYS = Object.keys(WEAPONS);
 // Mastery is an endgame grind. Pace counts only time spent actively fighting
 // ordinary mobs with that one weapon (~2 kills/minute, nonstop):
 //   25 mastery  ~ 45 minutes   (first skill)
-//   200         ~ 6 hours
-//   500         ~ 16 hours
-//   800         ~ 30 hours     (Dual Wield tier)
+//   150         ~ 5 hours      (mid skills)
+//   375         ~ 12 hours     (late skills)
+//   600         ~ 21 hours     (Dual Wield tier)
 // Real play mixes in mining, forging and travel, so it stretches far longer.
 // Tougher mobs, and floor guardians later on, speed it up.
 export const MASTERY_GAIN = {
@@ -63,9 +63,9 @@ export const MASTERY_GAIN = {
 export const MASTERY_RANKS = [
   { min: 0, name: "§7Novice" },
   { min: 50, name: "§fApprentice" },
-  { min: 200, name: "§aAdept" },
-  { min: 500, name: "§bExpert" },
-  { min: 800, name: "§dMaster" },
+  { min: 150, name: "§aAdept" },
+  { min: 375, name: "§bExpert" },
+  { min: 600, name: "§dMaster" },
   { min: 1000, name: "§6Grandmaster" },
 ];
 
@@ -73,6 +73,8 @@ export const MASTERY_RANKS = [
 export const MOBS = {
   "ponce:meadow_jelly": { name: "Meadow Jelly", level: 1, xp: 8 },
   "ponce:tusk_boar": { name: "Tusk Boar", level: 3, xp: 18 },
+  // Floor guardians give a big flat mastery boost to the weapon that lands the final blow
+  "ponce:ironhide": { name: "Ironhide, the Boar King", level: 8, xp: 250, mastery: 8, boss: true },
 };
 
 // XP from kills. Anything not listed falls back to its max health.

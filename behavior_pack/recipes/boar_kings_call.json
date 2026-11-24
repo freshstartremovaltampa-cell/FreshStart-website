@@ -1,0 +1,32 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "ponce:boar_kings_call"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " T ",
+      "THT",
+      " H "
+    ],
+    "key": {
+      "T": {
+        "item": "ponce:boar_tusk"
+      },
+      "H": {
+        "item": "ponce:boar_hide"
+      }
+    },
+    "unlock": [
+      {
+        "item": "ponce:boar_tusk"
+      }
+    ],
+    "result": {
+      "item": "ponce:boar_kings_call"
+    }
+  }
+}

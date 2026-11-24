@@ -17,6 +17,23 @@
           }
         }
       },
+      "ponce:ironhide": {
+        "volume": 1.6,
+        "pitch": [
+          0.5,
+          0.6
+        ],
+        "events": {
+          "ambient": "mob.hoglin.ambient",
+          "hurt": "mob.hoglin.hurt",
+          "death": "mob.hoglin.death",
+          "attack": "mob.hoglin.attack",
+          "step": {
+            "sound": "mob.ravager.step",
+            "volume": 0.6
+          }
+        }
+      },
       "ponce:tusk_boar": {
         "volume": 1.0,
         "pitch": [

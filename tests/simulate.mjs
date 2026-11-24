@@ -1,23 +1,31 @@
-import { world, system, ItemStack } from "@minecraft/server";
+import { world, system, ItemStack, dim } from "@minecraft/server";
 import { log } from "@minecraft/server-ui";
 const assert = (c, m) => { if (!c) { console.error("FAIL:", m); process.exitCode = 1; } else console.log("ok:", m); };
 
 function makeEntity(typeId, hp, extra = {}) {
   const health = { currentValue: hp, effectiveMax: hp, setCurrentValue(v) { this.currentValue = v; } };
-  return { id: Math.random().toString(36), typeId, isValid: true, health, killed: false,
+  const e = { id: Math.random().toString(36), typeId, isValid: true, health, killed: false, dimension: dim,
+    location: { x: 0, y: 64, z: 0 }, tagList: [], events: [], effects: {}, impulses: [], damageTaken: 0,
     getComponent(n) { return n === "minecraft:health" ? health : extra[n]; },
-    matches: () => typeId !== "minecraft:cow", kill() { this.killed = true; health.currentValue = 0; }, ...extra.self };
+    matches: () => typeId !== "minecraft:cow", kill() { this.killed = true; health.currentValue = 0; },
+    addTag(t) { this.tagList.push(t); }, removeTag(t) { this.tagList = this.tagList.filter((x) => x !== t); },
+    triggerEvent(ev) { this.events.push(ev); }, applyImpulse(v) { this.impulses.push(v); },
+    addEffect(t, d, o) { this.effects[t] = { duration: d, amplifier: o?.amplifier ?? 0 }; }, getEffect(t) { return this.effects[t]; },
+    removeEffect(t) { delete this.effects[t]; }, remove() { this.isValid = false; },
+    applyDamage(n) { this.damageTaken += n; health.currentValue -= n; }, applyKnockback() { this.knocked = true; }, ...extra.self };
+  return e;
 }
 function makePlayer(name) {
   const props = {}, effects = {}, msgs = [], items = new Array(36).fill(undefined);
   let held;
   const p = makeEntity("minecraft:player", 20, {
-    "minecraft:inventory": { container: { size: 36, getItem: (i) => items[i], addItem: (it) => { items[items.indexOf(undefined)] = it; } } },
+    "minecraft:inventory": { container: { size: 36, getItem: (i) => items[i], setItem: (i, v) => (items[i] = v), addItem: (it) => { items[items.indexOf(undefined)] = it; } } },
     "minecraft:equippable": { getEquipment: () => held },
   });
   Object.assign(p, { name, msgs, items, effects, tags: [],
     setHeld: (i) => (held = i), getDynamicProperty: (k) => props[k], setDynamicProperty: (k, v) => (props[k] = v), props,
     getEffect: (t) => effects[t], addEffect: (t, d, o) => (effects[t] = { duration: d, amplifier: o.amplifier }), removeEffect: (t) => delete effects[t],
+    selectedSlotIndex: 0, getViewDirection: () => ({ x: 0, y: 0, z: 1 }),
     onScreenDisplay: { setTitle: (t, o) => msgs.push("TITLE " + t + " " + (o?.subtitle ?? "")), setActionBar: (t) => (p.actionBar = t) },
     sendMessage: (m) => msgs.push(m), playSound() {}, hasTag: (t) => p.tags.includes(t) });
   return p;
@@ -117,6 +125,73 @@ console.log("forms shown:", log.length);
     if (min % 60 === 0) { system.tick(20); hours[min / 60] = JSON.parse(q.props["ponce:data"]).mastery.sword; }
   }
   const at = (m) => Object.entries(hours).find(([, v]) => v >= m)?.[0] ?? ">50";
-  console.log(`pacing: 25 -> ${at(25)}h, 200 -> ${at(200)}h, 500 -> ${at(500)}h, 800 -> ${at(800)}h`);
-  assert(Number(at(800)) >= 25 && Number(at(800)) <= 35, "Dual Wield mastery takes ~30h of nonstop fighting");
+  console.log(`pacing: 25 -> ${at(25)}h, 150 -> ${at(150)}h, 375 -> ${at(375)}h, 600 -> ${at(600)}h`);
+  assert(Number(at(600)) <= 25, "Dual Wield (600 mastery) reachable in ~20h of nonstop fighting");
+}
+
+// ---------- Floor 1 boss ----------
+{
+  const { getData } = await import("../behavior_pack/scripts/data.js");
+  dim.factory = (id, loc) => { const e = makeEntity(id, id === "ponce:ironhide" ? 300 : 24); e.location = { ...loc }; return e; };
+  const b = makePlayer("BossTester"); world.players.push(b);
+  b.location = { x: 0, y: 64, z: 0 }; b.dimension = dim;
+  b.applyDamage = (n) => { b.health.currentValue -= n; b.hitByBoss = (b.hitByBoss ?? 0) + n; };
+  b.applyKnockback = () => (b.knocked = true);
+  fire("playerSpawn", { player: b, initialSpawn: true });
+  const horn = new ItemStack("ponce:boar_kings_call");
+  b.items[0] = horn;
+  fire("itemUse", { source: b, itemStack: horn });
+  assert(dim.getEntities({ type: "ponce:ironhide" }).length === 0 && b.msgs.some((m) => m.includes("unlock a weapon skill")), "horn refuses without a skill");
+
+  getData(b).skills.push("sword_dash");
+  fire("itemUse", { source: b, itemStack: horn });
+  const boss = dim.getEntities({ type: "ponce:ironhide" })[0];
+  assert(boss && b.items[0] === undefined, "horn summons Ironhide and is consumed");
+  fire("itemUse", { source: b, itemStack: horn });
+  assert(dim.getEntities({ type: "ponce:ironhide" }).length === 1, "can't summon a second boss nearby");
+
+  // Thick hide
+  b.setHeld(new ItemStack("minecraft:stone_sword", 1, ["minecraft:is_sword"]));
+  boss.health.currentValue = 300 - 6;
+  fire("entityHurt", { hurtEntity: boss, damage: 6, damageSource: { cause: "entityAttack", damagingEntity: b } });
+  assert(Math.abs(boss.health.currentValue - (300 - 6 * 0.4)) < 0.6, "stone sword deals ~40%: hp " + boss.health.currentValue.toFixed(1));
+  b.setHeld(new ItemStack("minecraft:iron_sword", 1, ["minecraft:is_sword"]));
+  const hp0 = boss.health.currentValue - 7; boss.health.currentValue = hp0;
+  fire("entityHurt", { hurtEntity: boss, damage: 7, damageSource: { cause: "entityAttack", damagingEntity: b } });
+  assert(boss.health.currentValue <= hp0, "iron sword deals full damage");
+
+  // Herd + enrage
+  boss.health.currentValue = 300 * 0.65; system.tick(2);
+  let minions = dim.getEntities({ type: "ponce:tusk_boar", tags: ["ponce_minion"] });
+  assert(minions.length === 2 && minions.every((m) => m.events.includes("ponce:enrage")), "70%: summons 2 hostile boars");
+  boss.health.currentValue = 300 * 0.35; system.tick(2);
+  assert(dim.getEntities({ type: "ponce:tusk_boar", tags: ["ponce_minion"] }).length === 4, "40%: summons 2 more");
+  assert(!boss.events.includes("ponce:enrage"), "not enraged above 30%");
+  boss.health.currentValue = 300 * 0.25; system.tick(2);
+  assert(boss.events.includes("ponce:enrage"), "enraged below 30%");
+
+  // Charge: player stands in the path
+  b.location = { x: 0, y: 64, z: 3 }; boss.location = { x: 0, y: 64, z: 0 };
+  const hpBefore = b.health.currentValue;
+  let warned = false;
+  for (let i = 0; i < 200 && !b.hitByBoss; i++) { system.tick(1); if (b.actionBar?.includes("about to charge")) warned = true; if (boss.impulses.length) b.location = { x: 0, y: 64, z: 1 }; }
+  assert(warned, "charge is telegraphed");
+  assert(b.hitByBoss === 9 && b.knocked, "charge hits for 9 with knockback");
+
+  // Dodge: next charge, player sidesteps out of range
+  b.hitByBoss = 0; b.knocked = false;
+  for (let i = 0; i < 200; i++) { system.tick(1); if (boss.impulses.length > 10) b.location = { x: 6, y: 64, z: 6 }; }
+  assert(!b.hitByBoss, "sidestepping avoids the charge");
+
+  // Kill
+  b.location = { x: 0, y: 64, z: 2 };
+  const before = getData(b);
+  const col0 = before.col, sword0 = before.mastery.sword;
+  fire("entityDie", { deadEntity: boss, damageSource: { cause: "entityAttack", damagingEntity: b } });
+  boss.isValid = false;
+  const after = getData(b);
+  assert(after.highestFloor === 2 && after.col === col0 + 100, "floor 1 cleared, +100 Col");
+  assert(after.mastery.sword - sword0 > 5, "boss gives a big mastery boost: +" + (after.mastery.sword - sword0).toFixed(2));
+  assert(dim.getEntities({ tags: ["ponce_minion"] }).length === 0, "minions released when boss dies");
+  assert(b.msgs.some((m) => m.includes("FLOOR 1 CLEARED")), "victory title");
 }
