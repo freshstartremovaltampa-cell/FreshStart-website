@@ -22,6 +22,27 @@
     },
     "ponce_boar_kings_call": {
       "textures": "textures/items/boar_kings_call"
+    },
+    "ponce_raw_hare": {
+      "textures": "textures/items/raw_hare"
+    },
+    "ponce_thorn_quill": {
+      "textures": "textures/items/thorn_quill"
+    },
+    "ponce_mole_claw": {
+      "textures": "textures/items/mole_claw"
+    },
+    "ponce_moss_clump": {
+      "textures": "textures/items/moss_clump"
+    },
+    "ponce_golemite_core": {
+      "textures": "textures/items/golemite_core"
+    },
+    "ponce_wasp_stinger": {
+      "textures": "textures/items/wasp_stinger"
+    },
+    "ponce_wasp_wing": {
+      "textures": "textures/items/wasp_wing"
     }
   }
 }

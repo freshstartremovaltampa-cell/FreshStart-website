@@ -5,7 +5,7 @@ const assert = (c, m) => { if (!c) { console.error("FAIL:", m); process.exitCode
 function makeEntity(typeId, hp, extra = {}) {
   const health = { currentValue: hp, effectiveMax: hp, setCurrentValue(v) { this.currentValue = v; } };
   const e = { id: Math.random().toString(36), typeId, isValid: true, health, killed: false, dimension: dim,
-    location: { x: 0, y: 64, z: 0 }, tagList: [], events: [], effects: {}, impulses: [], damageTaken: 0,
+    location: { x: 0, y: 64, z: 0 }, tagList: [], props: {}, getProperty(k) { return this.props[k]; }, events: [], effects: {}, impulses: [], damageTaken: 0,
     getComponent(n) { return n === "minecraft:health" ? health : extra[n]; },
     matches: () => typeId !== "minecraft:cow", kill() { this.killed = true; health.currentValue = 0; },
     addTag(t) { this.tagList.push(t); }, removeTag(t) { this.tagList = this.tagList.filter((x) => x !== t); },
@@ -32,6 +32,7 @@ function makePlayer(name) {
 }
 
 await import("../behavior_pack/scripts/main.js");
+const { getData: getDataFor } = await import("../behavior_pack/scripts/data.js");
 const fire = (n, e) => world.afterEvents[n].h.forEach((f) => f(e));
 
 const p = makePlayer("Tester"); world.players.push(p);
@@ -132,7 +133,7 @@ console.log("forms shown:", log.length);
 // ---------- Floor 1 boss ----------
 {
   const { getData } = await import("../behavior_pack/scripts/data.js");
-  dim.factory = (id, loc) => { const e = makeEntity(id, id === "ponce:ironhide" ? 300 : 24); e.location = { ...loc }; return e; };
+  dim.factory = (id, loc) => { const e = makeEntity(id, id === "ponce:ironhide" ? 1800 : 24); e.location = { ...loc }; return e; };
   const b = makePlayer("BossTester"); world.players.push(b);
   b.location = { x: 0, y: 64, z: 0 }; b.dimension = dim;
   b.applyDamage = (n) => { b.health.currentValue -= n; b.hitByBoss = (b.hitByBoss ?? 0) + n; };
@@ -152,34 +153,46 @@ console.log("forms shown:", log.length);
 
   // Thick hide
   b.setHeld(new ItemStack("minecraft:stone_sword", 1, ["minecraft:is_sword"]));
-  boss.health.currentValue = 300 - 6;
+  boss.health.currentValue = 1800 - 6;
   fire("entityHurt", { hurtEntity: boss, damage: 6, damageSource: { cause: "entityAttack", damagingEntity: b } });
-  assert(Math.abs(boss.health.currentValue - (300 - 6 * 0.4)) < 0.6, "stone sword deals ~40%: hp " + boss.health.currentValue.toFixed(1));
+  assert(Math.abs(boss.health.currentValue - (1800 - 6 * 0.4)) < 0.6, "stone sword deals ~40%: hp " + boss.health.currentValue.toFixed(1));
   b.setHeld(new ItemStack("minecraft:iron_sword", 1, ["minecraft:is_sword"]));
   const hp0 = boss.health.currentValue - 7; boss.health.currentValue = hp0;
   fire("entityHurt", { hurtEntity: boss, damage: 7, damageSource: { cause: "entityAttack", damagingEntity: b } });
   assert(boss.health.currentValue <= hp0, "iron sword deals full damage");
 
-  // Herd + enrage
-  boss.health.currentValue = 300 * 0.65; system.tick(2);
-  let minions = dim.getEntities({ type: "ponce:tusk_boar", tags: ["ponce_minion"] });
-  assert(minions.length === 2 && minions.every((m) => m.events.includes("ponce:enrage")), "70%: summons 2 hostile boars");
-  boss.health.currentValue = 300 * 0.35; system.tick(2);
-  assert(dim.getEntities({ type: "ponce:tusk_boar", tags: ["ponce_minion"] }).length === 4, "40%: summons 2 more");
+  // Herd calls at 80/60/40/20%, capped at 6 minions
+  const minionCount = () => dim.getEntities({ type: "ponce:tusk_boar", tags: ["ponce_minion"] }).length;
+  boss.health.currentValue = 1800 * 0.75; system.tick(2);
+  assert(minionCount() === 2 && dim.getEntities({ tags: ["ponce_minion"] }).every((m) => m.events.includes("ponce:enrage")), "80%: summons 2 hostile boars");
+  boss.health.currentValue = 1800 * 0.55; system.tick(2);
+  assert(minionCount() === 4, "60%: summons 2 more");
+
+  // Earthshaker: player hugging the boss below 60%
+  b.location = { x: 0, y: 64, z: 3 }; boss.location = { x: 0, y: 64, z: 0 };
+  let rearWarn = false;
+  for (let i = 0; i < 60 && !b.hitByBoss; i++) { system.tick(1); if (b.actionBar?.includes("rears up")) rearWarn = true; }
+  assert(rearWarn, "stomp is telegraphed");
+  assert(b.hitByBoss === 7 && b.knocked, "stomp hits everyone within 5 blocks for 7");
+
+  boss.health.currentValue = 1800 * 0.35; system.tick(2);
+  assert(minionCount() === 6, "40%: summons 2 more");
   assert(!boss.events.includes("ponce:enrage"), "not enraged above 30%");
-  boss.health.currentValue = 300 * 0.25; system.tick(2);
+  boss.health.currentValue = 1800 * 0.25; system.tick(2);
   assert(boss.events.includes("ponce:enrage"), "enraged below 30%");
+  boss.health.currentValue = 1800 * 0.15; system.tick(2);
+  assert(minionCount() === 6, "20%: herd call respects the 6-minion cap");
 
   // Charge: player stands in the path
-  b.location = { x: 0, y: 64, z: 3 }; boss.location = { x: 0, y: 64, z: 0 };
-  const hpBefore = b.health.currentValue;
-  let warned = false;
-  for (let i = 0; i < 200 && !b.hitByBoss; i++) { system.tick(1); if (b.actionBar?.includes("about to charge")) warned = true; if (boss.impulses.length) b.location = { x: 0, y: 64, z: 1 }; }
-  assert(warned, "charge is telegraphed");
-  assert(b.hitByBoss === 9 && b.knocked, "charge hits for 9 with knockback");
-
-  // Dodge: next charge, player sidesteps out of range
   b.hitByBoss = 0; b.knocked = false;
+  b.location = { x: 0, y: 64, z: 3 };
+  let warned = false;
+  for (let i = 0; i < 300 && !b.hitByBoss; i++) { system.tick(1); if (b.actionBar?.includes("about to charge")) warned = true; if (boss.impulses.length) b.location = { x: 0, y: 64, z: 1 }; }
+  assert(warned, "charge is telegraphed");
+  assert(b.hitByBoss === 9 && b.knocked, "charge hits for 9 with knockback: " + b.hitByBoss);
+
+  // Dodge: player keeps out of the charge line
+  b.hitByBoss = 0; b.knocked = false; b.location = { x: 0, y: 64, z: 6 };
   for (let i = 0; i < 200; i++) { system.tick(1); if (boss.impulses.length > 10) b.location = { x: 6, y: 64, z: 6 }; }
   assert(!b.hitByBoss, "sidestepping avoids the charge");
 
@@ -191,7 +204,36 @@ console.log("forms shown:", log.length);
   boss.isValid = false;
   const after = getData(b);
   assert(after.highestFloor === 2 && after.col === col0 + 100, "floor 1 cleared, +100 Col");
-  assert(after.mastery.sword - sword0 > 5, "boss gives a big mastery boost: +" + (after.mastery.sword - sword0).toFixed(2));
+  assert(after.mastery.sword - sword0 > 8, "boss gives a big mastery boost: +" + (after.mastery.sword - sword0).toFixed(2));
   assert(dim.getEntities({ tags: ["ponce_minion"] }).length === 0, "minions released when boss dies");
   assert(b.msgs.some((m) => m.includes("FLOOR 1 CLEARED")), "victory title");
+}
+
+// ---------- Burrow Mole and Moss Golemite ----------
+{
+  const t = world.players.find((x) => x.name === "BossTester");
+  const mole = dim.spawnEntity("ponce:burrow_mole", { x: 20, y: 64, z: 20 });
+  mole.props["ponce:burrowed"] = true;
+  t.location = { x: 30, y: 64, z: 30 }; system.tick(10);
+  assert(!mole.events.includes("ponce:emerge"), "mole stays hidden when nobody is near");
+  t.location = { x: 22, y: 64, z: 21 }; system.tick(10);
+  assert(mole.events.includes("ponce:emerge"), "mole bursts out when a player is within 4 blocks");
+
+  const g = dim.spawnEntity("ponce:moss_golemite", { x: 0, y: 64, z: 0 });
+  g.health.effectiveMax = 40;
+  t.setHeld(new ItemStack("minecraft:mace"));
+  g.health.currentValue = 40 - 6;
+  fire("entityHurt", { hurtEntity: g, damage: 6, damageSource: { cause: "entityAttack", damagingEntity: t } });
+  assert(g.health.currentValue < 31.2 && g.health.currentValue > 30.5, "hammer deals +50% to golemite: " + g.health.currentValue.toFixed(2));
+  t.setHeld(new ItemStack("minecraft:iron_sword", 1, ["minecraft:is_sword"]));
+  const before = g.health.currentValue - 6; g.health.currentValue = before;
+  fire("entityHurt", { hurtEntity: g, damage: 6, damageSource: { cause: "entityAttack", damagingEntity: t } });
+  assert(g.health.currentValue > before + 2, "sword deals reduced damage to golemite");
+  const kills0 = getDataFor(t).kills;
+  g.health.currentValue = 0.5; // vanilla hit already landed; the +50% bonus (0.75) finishes it
+  t.setHeld(new ItemStack("minecraft:mace"));
+  fire("entityHurt", { hurtEntity: g, damage: 1.5, damageSource: { cause: "entityAttack", damagingEntity: t } });
+  assert(g.killed, "hammer bonus can finish the golemite");
+  fire("entityDie", { deadEntity: g, damageSource: { cause: "none" } });
+  assert(getDataFor(t).kills === kills0 + 1, "golemite kill credited to player");
 }

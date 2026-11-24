@@ -72,9 +72,13 @@ export const MASTERY_RANKS = [
 // Tower mobs. The level shows in the target bar when you hit one.
 export const MOBS = {
   "ponce:meadow_jelly": { name: "Meadow Jelly", level: 1, xp: 8 },
+  "ponce:thornback_hare": { name: "Thornback Hare", level: 2, xp: 10 },
+  "ponce:field_wasp": { name: "Field Wasp", level: 2, xp: 12 },
   "ponce:tusk_boar": { name: "Tusk Boar", level: 3, xp: 18 },
+  "ponce:burrow_mole": { name: "Burrow Mole", level: 3, xp: 16 },
+  "ponce:moss_golemite": { name: "Moss Golemite", level: 4, xp: 35 },
   // Floor guardians give a big flat mastery boost to the weapon that lands the final blow
-  "ponce:ironhide": { name: "Ironhide, the Boar King", level: 8, xp: 250, mastery: 8, boss: true },
+  "ponce:ironhide": { name: "Ironhide, the Boar King", level: 8, xp: 600, mastery: 12, boss: true },
 };
 
 // XP from kills. Anything not listed falls back to its max health.

@@ -1,0 +1,58 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.ponce.burrow_mole.walk": {
+      "loop": true,
+      "bones": {
+        "paw0": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.17) * 40 * query.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "leg3": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.17) * 40 * query.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "paw1": {
+          "rotation": [
+            "-math.cos(query.modified_distance_moved * 38.17) * 40 * query.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "leg2": {
+          "rotation": [
+            "-math.cos(query.modified_distance_moved * 38.17) * 40 * query.modified_move_speed",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.ponce.burrow_mole.burrowed": {
+      "loop": true,
+      "bones": {
+        "body": {
+          "position": [
+            0,
+            -6,
+            0
+          ]
+        }
+      }
+    },
+    "animation.ponce.burrow_mole.emerged": {
+      "loop": true,
+      "bones": {
+        "mound": {
+          "scale": 0
+        }
+      }
+    }
+  }
+}

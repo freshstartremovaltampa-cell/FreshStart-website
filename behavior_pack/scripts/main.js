@@ -7,6 +7,7 @@ import { registerCombat, lastCombatTick, hudHoldUntil } from "./combat.js";
 import { addMastery, applyStatEffects, getHeldItem, weaponTypeOf } from "./progression.js";
 import { openMainMenu } from "./menu.js";
 import { registerBosses } from "./bosses.js";
+import { registerMobs } from "./mobs.js";
 
 const COMPASS = "ponce:wayfarer_compass";
 
@@ -64,6 +65,7 @@ world.afterEvents.playerLeave.subscribe(({ playerId }) => {
 
 registerCombat();
 registerBosses();
+registerMobs();
 
 // ---------- Loops ----------
 
@@ -73,9 +75,9 @@ system.runInterval(() => {
     const d = getData(player);
     if (!d.settings.hud || (hudHoldUntil.get(player.id) ?? 0) > system.currentTick) continue;
     const hp = player.getComponent("minecraft:health");
-    const cur = Math.ceil(hp?.currentValue ?? 0);
     const max = Math.round(hp?.effectiveMax ?? 20);
-    const ratio = max > 0 ? cur / max : 0;
+    const cur = Math.max(0, Math.ceil(hp?.currentValue ?? 0));
+    const ratio = max > 0 ? Math.min(1, cur / max) : 0;
     const hpColor = ratio > 0.5 ? "§a" : ratio > 0.25 ? "§e" : "§c";
     const filled = Math.round(ratio * 20);
     const next = xpToNext(d.level);

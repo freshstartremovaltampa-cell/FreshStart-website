@@ -11,6 +11,12 @@ const killCredit = new Map(); // entity id -> { player, weapon }, for kills our 
 export const lastCombatTick = new Map(); // player id -> tick of last melee hit
 export const hudHoldUntil = new Map(); // player id -> tick; HUD waits so combat text stays visible
 
+/** Kill an entity from script while still giving the player XP, mastery and loot credit. */
+export function killWithCredit(target, player) {
+  killCredit.set(target.id, { player, weapon: weaponTypeOf(getHeldItem(player)) });
+  target.kill();
+}
+
 function isPlayer(entity) {
   return entity?.typeId === "minecraft:player";
 }
@@ -53,7 +59,7 @@ function displayName(entity) {
 
 /** Shows the struck enemy's name, level and HP above the hotbar for a moment. */
 function showTargetBar(player, target, hp, max, crit) {
-  const ratio = max > 0 ? Math.max(0, hp) / max : 0;
+  const ratio = max > 0 ? Math.min(1, Math.max(0, hp) / max) : 0;
   const filled = Math.ceil(ratio * 20);
   const color = ratio > 0.5 ? "§a" : ratio > 0.25 ? "§e" : "§c";
   player.onScreenDisplay.setActionBar(

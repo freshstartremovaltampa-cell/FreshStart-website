@@ -1,0 +1,38 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.ponce.moss_golemite.walk": {
+      "loop": true,
+      "bones": {
+        "leg0": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.17) * 35 * query.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "arm1": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.17) * 35 * query.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "leg1": {
+          "rotation": [
+            "-math.cos(query.modified_distance_moved * 38.17) * 35 * query.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "arm0": {
+          "rotation": [
+            "-math.cos(query.modified_distance_moved * 38.17) * 35 * query.modified_move_speed",
+            0,
+            0
+          ]
+        }
+      }
+    }
+  }
+}

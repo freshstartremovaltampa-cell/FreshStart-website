@@ -1,0 +1,18 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:item": {
+    "description": {
+      "identifier": "ponce:golemite_core",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "ponce_golemite_core",
+      "minecraft:display_name": {
+        "value": "\u00a7aGolemite Core"
+      },
+      "minecraft:max_stack_size": 64
+    }
+  }
+}

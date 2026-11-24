@@ -1,11 +1,14 @@
 // Floor guardians. Floor 1: Ironhide, the Boar King.
 //
-// The fight is tuned for a player around Lv 4-6 with an iron-tier weapon,
-// their first weapon skill, and some armor:
+// The fight is tuned to last about 5 minutes for a player around Lv 5-7 with an
+// iron-tier weapon, their first weapon skill, and some armor (1800 HP):
 //  - Thick Hide: weak weapons (wood, stone, gold, fists) deal only 40% damage.
 //  - Charge: Ironhide roars and stamps (1 s warning), then charges in a straight
 //    line. Step sideways to dodge it. A hit deals 9 damage and heavy knockback.
-//  - Call the Herd: at 70% and 40% HP he summons 2 hostile Tusk Boars.
+//  - Call the Herd: at 80%, 60%, 40% and 20% HP he summons 2 hostile Tusk Boars.
+//  - Earthshaker (below 60%): if you stay in melee range he rears up (1.25 s
+//    warning) and slams the ground. Everyone within 5 blocks takes 7 damage
+//    and is thrown back. Back off to avoid it.
 //  - Enrage: below 30% HP he gets faster, hits harder and charges more often.
 // He can only be summoned with the Boar King's Call, and only by a player who
 // has unlocked at least one weapon skill.
@@ -29,10 +32,16 @@ const TUNING = {
   chargeImpulse: 1.6,
   chargeDamage: 9,
   chargeHitRadius: 2.4,
-  herdAt: [0.7, 0.4],
+  herdAt: [0.8, 0.6, 0.4, 0.2],
   herdSize: 2,
   maxMinions: 6,
   enrageAt: 0.3,
+  stompBelow: 0.6,
+  stompTriggerRange: 4.5,
+  stompEveryTicks: 240, // 12 s
+  stompWindupTicks: 25,
+  stompRadius: 5,
+  stompDamage: 7,
   leashRange: 40,
   leashTicks: 20 * 60, // despawns after 60 s with no player nearby
   rewardRange: 48,
@@ -55,6 +64,8 @@ function stateFor(boss) {
     s = {
       nextCharge: system.currentTick + 100,
       charging: undefined, // { phase: "windup" | "dash", until, dir, hit: Set }
+      stomp: undefined, // { until }
+      nextStomp: 0,
       herdDone: [],
       enraged: false,
       lastPlayerNear: system.currentTick,
@@ -143,6 +154,39 @@ function tickBoss(boss) {
     boss.triggerEvent("ponce:enrage");
     dim.playSound("mob.ravager.roar", boss.location, { volume: 2, pitch: 0.7 });
     announce(boss, "§4[Ironhide] §cIronhide is enraged! He's faster and hits harder.");
+  }
+
+  // Earthshaker: punishes standing in melee range in the second half
+  if (s.stomp) {
+    if (now >= s.stomp.until) {
+      s.stomp = undefined;
+      s.nextStomp = now + TUNING.stompEveryTicks;
+      s.nextCharge = Math.max(s.nextCharge, now + 60);
+      dim.playSound("mob.ravager.stun", boss.location, { volume: 2, pitch: 0.5 });
+      dim.playSound("random.explode", boss.location, { volume: 1.2, pitch: 0.7 });
+      fx(dim, "minecraft:huge_explosion_emitter", boss.location);
+      for (const p of dim.getPlayers({ location: boss.location, maxDistance: TUNING.stompRadius, excludeGameModes: IGNORED_MODES })) {
+        p.applyDamage(TUNING.stompDamage, { cause: EntityDamageCause.entityAttack, damagingEntity: boss });
+        let dx = p.location.x - boss.location.x, dz = p.location.z - boss.location.z;
+        const len = Math.hypot(dx, dz) || 1;
+        knockback(p, { x: dx / len, z: dz / len }, 1.8);
+      }
+    }
+    return;
+  }
+  if (!s.charging && target && ratio <= TUNING.stompBelow && now >= s.nextStomp) {
+    const dx = target.location.x - boss.location.x, dz = target.location.z - boss.location.z;
+    if (Math.hypot(dx, dz) <= TUNING.stompTriggerRange) {
+      s.stomp = { until: now + TUNING.stompWindupTicks };
+      boss.addEffect("slowness", TUNING.stompWindupTicks, { amplifier: 10, showParticles: false });
+      dim.playSound("mob.ravager.roar", boss.location, { volume: 2, pitch: 0.9 });
+      fx(dim, "minecraft:villager_angry", { ...boss.location, y: boss.location.y + 2.8 });
+      for (const p of dim.getPlayers({ location: boss.location, maxDistance: 24 })) {
+        p.onScreenDisplay.setActionBar("§6§l! Ironhide rears up - get clear !");
+        hudHoldUntil.set(p.id, now + TUNING.stompWindupTicks + 10);
+      }
+      return;
+    }
   }
 
   // Charge attack
