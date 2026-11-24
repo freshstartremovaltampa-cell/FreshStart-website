@@ -298,6 +298,14 @@ INFUSIONS = {
     "ponce:wind_essence": {"name": "Wind Essence", "cost": 2, "swing": -0.15, "crit": 0.02},
     "ponce:hawk_feather": {"name": "Hawk Feather", "cost": 2, "crit": 0.06, "swing": -0.05},
     "ponce:thunder_horn": {"name": "Thunder Horn", "cost": 1, "damage": 3, "crit": 0.04},
+    # Floor 4 drops
+    "ponce:frost_pelt": {"name": "Frost Pelt", "cost": 3, "durability": 0.3, "swing": -0.05},
+    "ponce:wolf_fang": {"name": "Wolf Fang", "cost": 2, "damage": 1.5, "crit": 0.03},
+    "ponce:glacier_shell": {"name": "Glacier Shell", "cost": 2, "durability": 0.5, "swing": 0.05},
+    "ponce:frost_shard": {"name": "Frost Shard", "cost": 2, "damage": 1, "swing": -0.05},
+    "ponce:troll_tusk": {"name": "Troll Tusk", "cost": 1, "damage": 2.5, "swing": 0.1},
+    "ponce:frost_essence": {"name": "Frost Essence", "cost": 2, "crit": 0.07, "swing": -0.05},
+    "ponce:frozen_heart": {"name": "Frozen Heart", "cost": 1, "damage": 3.5, "crit": 0.05},
     # Relic-only (built into Hydra Relics, never forged). lifesteal = share of each hit's damage healed.
     "relic:hydras_eye": {"name": "Hydra's Eye", "relicOnly": True, "crit": 0.1},
     "relic:hydras_thirst": {"name": "Hydra's Thirst", "relicOnly": True, "lifesteal": 0.04},

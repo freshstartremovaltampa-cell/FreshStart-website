@@ -1,0 +1,83 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.ponce.frost_giant.walk": {
+      "loop": true,
+      "bones": {
+        "leg0": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.17) * 28 * query.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "leg1": {
+          "rotation": [
+            "-math.cos(query.modified_distance_moved * 38.17) * 28 * query.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "arm_l": {
+          "rotation": [
+            "-math.cos(query.modified_distance_moved * 38.17) * 18 * query.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "arm_r": {
+          "rotation": [
+            "-30 + math.cos(query.modified_distance_moved * 38.17) * 18 * query.modified_move_speed",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.ponce.frost_giant.breath": {
+      "loop": true,
+      "bones": {
+        "head": {
+          "rotation": [
+            -20,
+            0,
+            0
+          ]
+        },
+        "arm_l": {
+          "rotation": [
+            -40,
+            0,
+            -20
+          ]
+        },
+        "arm_r": {
+          "rotation": [
+            -40,
+            0,
+            20
+          ]
+        }
+      }
+    },
+    "animation.ponce.frost_giant.slam": {
+      "loop": true,
+      "bones": {
+        "arm_r": {
+          "rotation": [
+            -170,
+            0,
+            0
+          ]
+        },
+        "arm_l": {
+          "rotation": [
+            -150,
+            0,
+            0
+          ]
+        }
+      }
+    }
+  }
+}

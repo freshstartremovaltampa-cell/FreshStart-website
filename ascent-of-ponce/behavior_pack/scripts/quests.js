@@ -143,7 +143,7 @@ export function abandon(player, q) {
 // ---------- Rewards ----------
 
 function rewardWeaponDef(kind, type) {
-  const tier = { fine_t1: 1, fine_t2: 2, masterwork_t2: 2, relic: 3 }[kind];
+  const tier = { fine_t1: 1, fine_t2: 2, masterwork_t2: 2, relic: 3, masterwork_t3: 4 }[kind];
   return Object.entries(WEAPON_DEFS).find(([, d]) => d.tier === tier && d.type === type && (tier !== 3 || d.relic === "quest"));
 }
 
@@ -170,9 +170,10 @@ function rewardText(q) {
   for (const [job, xp] of Object.entries(r.jobXp ?? {})) lines.push(`${JOBS[job].color}${xp} ${JOBS[job].name} XP`);
   if (r.weapon?.kind === "fine_t1") lines.push("§aA Fine Tier I weapon §7(you choose the type)");
   if (r.weapon?.kind === "fine_t2") lines.push("§aA Fine Tier II weapon §7(you choose the type)");
-  if (r.weapon?.kind === "masterwork_t2") {
+  if (r.weapon?.kind === "masterwork_t2" || r.weapon?.kind === "masterwork_t3") {
     const inf = (r.weapon.infusions ?? []).map((id) => INFUSIONS[id].name).join(" + ");
-    lines.push(`§6A Masterwork Tier II weapon${inf ? ` with ${inf}` : ""} §7(you choose the type)`);
+    const tier = r.weapon.kind === "masterwork_t3" ? "III" : "II";
+    lines.push(`§6A Masterwork Tier ${tier} weapon${inf ? ` with ${inf}` : ""} §7(you choose the type)`);
   }
   if (r.weapon?.kind === "relic") lines.push("§d§lA Relic weapon§r§7: unbreakable, 3 built-in infusions, the best stats on the floor. Needs Lv 25 for full strength, but even at half it beats ordinary weapons (you choose the type)");
   return lines.join("\n");

@@ -1,0 +1,34 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "ponce:ice_wraith",
+      "materials": {
+        "default": "entity_emissive_alpha"
+      },
+      "textures": {
+        "default": "textures/entity/ice_wraith"
+      },
+      "geometry": {
+        "default": "geometry.ponce.ice_wraith"
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "animations": {
+        "float": "animation.ponce.ice_wraith.float",
+        "look_at_target": "animation.common.look_at_target"
+      },
+      "scripts": {
+        "animate": [
+          "float",
+          "look_at_target"
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#BEE1F5",
+        "overlay_color": "#2878C8"
+      }
+    }
+  }
+}

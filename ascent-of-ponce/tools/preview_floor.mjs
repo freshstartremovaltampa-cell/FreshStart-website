@@ -23,6 +23,7 @@ const COLORS = {
   lily: [60, 140, 60], reeds: [130, 170, 90], blue_orchid: [60, 150, 220], pot: [200, 110, 60], ember_copper_node: [214, 120, 60], ironheart_node: [170, 50, 50], glimmer_silver_node: [220, 225, 240],
   short_grass: [90, 150, 60], fern: [70, 130, 60], poppy: [200, 40, 40], dandelion: [240, 220, 40], cornflower: [80, 100, 220],
   oxeye_daisy: [240, 240, 230], azure_bluet: [220, 230, 250],
+  snow: [240, 244, 250], snow_layer: [236, 242, 250], ice: [150, 190, 240], packed_ice: [140, 180, 230],
 };
 const blocks = new Map();
 const set = (k, x, y, z) => (k === "air" ? blocks.delete(`${x},${y},${z}`) : blocks.set(`${x},${y},${z}`, k));

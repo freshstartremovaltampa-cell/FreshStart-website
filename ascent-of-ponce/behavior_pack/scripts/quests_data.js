@@ -30,6 +30,7 @@ export const DIFFICULTY = {
 export const FLOOR2_MOBS = ["ponce:bog_frog", "ponce:will_o_wisp", "ponce:mire_shambler", "ponce:marsh_gator"];
 
 export const FLOOR3_MOBS = ["ponce:highland_bull", "ponce:rock_lizard", "ponce:wind_sprite", "ponce:crag_hawk"];
+export const FLOOR4_MOBS = ["ponce:frost_wolf", "ponce:glacier_beetle", "ponce:rime_troll", "ponce:ice_wraith"];
 
 export const FLOOR1_MOBS = [
   "ponce:meadow_jelly", "ponce:thornback_hare", "ponce:field_wasp",
@@ -52,6 +53,10 @@ export const NPCS = {
   "ponce:npc_ranger": {
     key: "ranger", name: "Corra, the Highland Ranger",
     greeting: "Up here the wind tells you everything, if you listen. Right now it says the herds are restless and their king is watching from the Crown.",
+  },
+  "ponce:npc_guide": {
+    key: "guide", name: "Brenna, the Frostguide",
+    greeting: "Stay close to the fires, climber. Up here the cold kills more people than the wolves do, and the wolves kill plenty. The giant in the Cirque is worse than both.",
   },
   "ponce:npc_merchant": {
     key: "merchant", name: "Wren, the Merchant",
@@ -180,6 +185,39 @@ export const QUESTS = [
     objectives: [{ type: "kill", target: FLOOR3_MOBS, count: 20, label: "Floor 3 creatures" }],
     rewards: { xp: 250, col: 110 } },
 
+  // ---------------- Brenna: the Frozen Peaks (Floor 4) ----------------
+  { id: "wolf_winter", giver: "guide", difficulty: 2, name: "Wolf Winter",
+    desc: "The Frost Wolves hunt in threes and never alone. Thin the packs before they come down into Frosthollow.",
+    requires: { floor: 4 },
+    objectives: [{ type: "kill", target: "ponce:frost_wolf", count: 12 }],
+    rewards: { xp: 650, col: 260, items: [["ponce:warming_broth", 2], ["minecraft:mutton", 6]] } },
+  { id: "shell_game", giver: "guide", difficulty: 2, name: "Cracking Shells",
+    desc: "Glacier Beetles shrug off a blade. Bring a hammer, an axe or a greatsword, and bring me their shells.",
+    requires: { floor: 4 },
+    objectives: [{ type: "kill", target: "ponce:glacier_beetle", count: 8 }, { type: "collect", item: "ponce:glacier_shell", count: 4 }],
+    rewards: { xp: 680, col: 270, items: [["ponce:stormsteel_ingot", 3]] } },
+  { id: "troll_bridge", giver: "guide", difficulty: 3, name: "Troll Toll",
+    desc: "Rime Trolls sit on the passes and take whatever they like. Take something back: their tusks.",
+    requires: { floor: 4, level: 22, quests: ["wolf_winter"] },
+    objectives: [{ type: "kill", target: "ponce:rime_troll", count: 8 }, { type: "collect", item: "ponce:troll_tusk", count: 3 }],
+    rewards: { xp: 1200, col: 480, weapon: { kind: "masterwork_t3" } } },
+  { id: "wraith_lights", giver: "guide", difficulty: 3, name: "Lights in the Snow",
+    desc: "At night the Ice Wraiths drift down from the peaks and freeze whoever they touch. Put them out.",
+    requires: { floor: 4, level: 23 },
+    objectives: [{ type: "kill", target: "ponce:ice_wraith", count: 10 }, { type: "collect", item: "ponce:frost_essence", count: 5 }],
+    rewards: { xp: 1250, col: 500, items: [["ponce:frost_shard", 4], ["ponce:stormsteel_ingot", 4]] } },
+  { id: "giants_end", giver: "guide", difficulty: 4, name: "The Giant's Winter",
+    desc: "Rimegrasp waits in the Frozen Cirque at the end of the north trail. Craft a Frost Sigil and raise it there. " +
+      "The cold in that bowl will freeze you solid: keep near the braziers, and drink a Warming Broth first.",
+    requires: { floor: 4, level: 24, quests: ["troll_bridge", "wraith_lights"] },
+    objectives: [{ type: "boss", target: "ponce:frost_giant", count: 1 }],
+    rewards: { xp: 2800, col: 1200, weapon: { kind: "masterwork_t3", infusions: ["ponce:frost_essence", "ponce:wolf_fang"] } } },
+  { id: "peak_patrol", giver: "guide", difficulty: 1, repeatable: true, name: "Peak Patrol (repeatable)",
+    desc: "Walk the valleys and keep the passes clear.",
+    requires: { floor: 4 },
+    objectives: [{ type: "kill", target: FLOOR4_MOBS, count: 20, label: "Floor 4 creatures" }],
+    rewards: { xp: 330, col: 140 } },
+
   // ---------------- Bram: mining and smithing ----------------
   { id: "first_ore", giver: "smith", difficulty: 1, name: "Copper First",
     desc: "Every smith starts with copper. Mine some Ember Copper and bring yourself back in one piece.",
@@ -273,6 +311,11 @@ export const SHOPS = {
     buy: [["ponce:thunder_call", 600], ["ponce:highland_stew", 70]],
     sell: [["ponce:bull_horn", 12], ["ponce:highland_hide", 8], ["ponce:lizard_scale", 10], ["ponce:wind_essence", 9],
       ["ponce:hawk_feather", 9], ["ponce:thunder_horn", 120]],
+  },
+  guide: {
+    buy: [["ponce:frost_sigil", 800], ["ponce:warming_broth", 80]],
+    sell: [["ponce:frost_pelt", 10], ["ponce:wolf_fang", 12], ["ponce:glacier_shell", 14], ["ponce:frost_shard", 9],
+      ["ponce:troll_tusk", 16], ["ponce:frost_essence", 12], ["ponce:frozen_heart", 160]],
   },
   // Wren's general store, in every town. Row options: count (bundle size), cmd (given by command, e.g. potions),
   // name (shown instead of the item name), miningLevel (only sold once your Mining job is high enough).

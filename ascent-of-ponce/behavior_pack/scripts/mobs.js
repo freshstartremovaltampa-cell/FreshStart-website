@@ -49,6 +49,11 @@ function wispBlink(wisp) {
   } catch { /* blocked */ }
 }
 
+const BEETLE = "ponce:glacier_beetle";
+const WRAITH = "ponce:ice_wraith";
+// Damage taken by the Glacier Beetle per weapon type (the shell blocks 40% of other blows)
+export const BEETLE_DAMAGE = { hammer: 1.2, axe: 1.0, greatsword: 1.0, default: 0.6 };
+
 export function registerMobs() {
   system.runInterval(tickMoles, 10);
   world.afterEvents.entityHurt.subscribe(({ hurtEntity }) => {
@@ -69,5 +74,26 @@ export function registerMobs() {
     else h.setCurrentValue(Math.min(h.effectiveMax, adjusted));
     if (mult > 1) hint(attacker, "§a[Ponce] §fThe Golemite's stone body cracks under your hammer!");
     else hint(attacker, "§7[Ponce] Your blade skids off the Golemite's stone. §fBlunt weapons would work better.");
+  });
+
+  // Glacier Beetle: its ice shell turns most blows; heavy weapons crack it
+  world.afterEvents.entityHurt.subscribe(({ hurtEntity, damage, damageSource }) => {
+    if (hurtEntity.typeId !== BEETLE || !hurtEntity.isValid) return;
+    const attacker = damageSource.damagingEntity;
+    if (attacker?.typeId !== "minecraft:player") return;
+    const mult = BEETLE_DAMAGE[weaponTypeOf(getHeldItem(attacker))] ?? BEETLE_DAMAGE.default;
+    const h = hurtEntity.getComponent("minecraft:health");
+    if (!h || h.currentValue <= 0 || mult === 1) return;
+    const adjusted = h.currentValue - damage * (mult - 1);
+    if (adjusted <= 0) killWithCredit(hurtEntity, attacker);
+    else h.setCurrentValue(Math.min(h.effectiveMax, adjusted));
+    if (mult > 1) hint(attacker, "§a[Ponce] §fThe Glacier Beetle's shell cracks!");
+    else hint(attacker, "§7[Ponce] The Glacier Beetle's ice shell turns your blow. §fHammers, axes and greatswords crack it.");
+  });
+
+  // Ice Wraith: its touch chills you to the bone
+  world.afterEvents.entityHurt.subscribe(({ hurtEntity, damageSource }) => {
+    if (hurtEntity.typeId !== "minecraft:player" || damageSource.damagingEntity?.typeId !== WRAITH) return;
+    try { hurtEntity.addEffect("slowness", 60, { amplifier: 1 }); } catch { /* ignore */ }
   });
 }

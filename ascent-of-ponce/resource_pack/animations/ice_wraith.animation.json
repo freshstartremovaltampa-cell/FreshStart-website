@@ -1,0 +1,31 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.ponce.ice_wraith.float": {
+      "loop": true,
+      "bones": {
+        "body": {
+          "position": [
+            0,
+            "math.sin(query.anim_time * 100) * 1.2",
+            0
+          ]
+        },
+        "arm_l": {
+          "rotation": [
+            "-60 + math.sin(query.anim_time * 140) * 10",
+            0,
+            0
+          ]
+        },
+        "arm_r": {
+          "rotation": [
+            "-60 - math.sin(query.anim_time * 140) * 10",
+            0,
+            0
+          ]
+        }
+      }
+    }
+  }
+}

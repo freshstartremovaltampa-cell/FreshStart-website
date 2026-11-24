@@ -1,0 +1,22 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:item": {
+    "description": {
+      "identifier": "ponce:frost_sigil",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "ponce_frost_sigil",
+      "minecraft:display_name": {
+        "value": "\u00a7bFrost Sigil"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:cooldown": {
+        "category": "ponce_horn",
+        "duration": 2
+      }
+    }
+  }
+}

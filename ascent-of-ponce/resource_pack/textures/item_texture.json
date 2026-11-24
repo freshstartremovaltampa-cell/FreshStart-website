@@ -280,6 +280,33 @@
     },
     "ponce_stormsteel_greatsword": {
       "textures": "textures/items/weapons/stormsteel_greatsword"
+    },
+    "ponce_frost_pelt": {
+      "textures": "textures/items/frost_pelt"
+    },
+    "ponce_wolf_fang": {
+      "textures": "textures/items/wolf_fang"
+    },
+    "ponce_glacier_shell": {
+      "textures": "textures/items/glacier_shell"
+    },
+    "ponce_frost_shard": {
+      "textures": "textures/items/frost_shard"
+    },
+    "ponce_troll_tusk": {
+      "textures": "textures/items/troll_tusk"
+    },
+    "ponce_frost_essence": {
+      "textures": "textures/items/frost_essence"
+    },
+    "ponce_frozen_heart": {
+      "textures": "textures/items/frozen_heart"
+    },
+    "ponce_frost_sigil": {
+      "textures": "textures/items/frost_sigil"
+    },
+    "ponce_warming_broth": {
+      "textures": "textures/items/warming_broth"
     }
   }
 }

@@ -1,0 +1,38 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "ponce:frost_sigil"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "SES",
+      "PTP",
+      " S "
+    ],
+    "key": {
+      "S": {
+        "item": "ponce:frost_shard"
+      },
+      "E": {
+        "item": "ponce:frost_essence"
+      },
+      "P": {
+        "item": "ponce:frost_pelt"
+      },
+      "T": {
+        "item": "ponce:troll_tusk"
+      }
+    },
+    "unlock": [
+      {
+        "item": "ponce:frost_shard"
+      }
+    ],
+    "result": {
+      "item": "ponce:frost_sigil"
+    }
+  }
+}

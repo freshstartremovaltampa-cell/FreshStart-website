@@ -277,6 +277,81 @@
             "volume": 0.8
           }
         }
+      },
+      "ponce:frost_wolf": {
+        "volume": 1.0,
+        "pitch": [
+          0.9,
+          1.1
+        ],
+        "events": {
+          "ambient": "mob.wolf.growl",
+          "hurt": "mob.wolf.hurt",
+          "death": "mob.wolf.death",
+          "step": {
+            "sound": "mob.wolf.step",
+            "volume": 0.3
+          }
+        }
+      },
+      "ponce:glacier_beetle": {
+        "volume": 0.8,
+        "pitch": [
+          0.7,
+          0.9
+        ],
+        "events": {
+          "hurt": "mob.spider.say",
+          "death": "mob.spider.death",
+          "step": {
+            "sound": "mob.spider.step",
+            "volume": 0.3
+          }
+        }
+      },
+      "ponce:rime_troll": {
+        "volume": 1.2,
+        "pitch": [
+          0.6,
+          0.7
+        ],
+        "events": {
+          "ambient": "mob.polarbear.warning",
+          "hurt": "mob.polarbear.hurt",
+          "death": "mob.polarbear.death",
+          "step": {
+            "sound": "mob.polarbear.step",
+            "volume": 0.6
+          }
+        }
+      },
+      "ponce:ice_wraith": {
+        "volume": 0.8,
+        "pitch": [
+          1.2,
+          1.4
+        ],
+        "events": {
+          "ambient": "mob.vex.ambient",
+          "hurt": "mob.vex.hurt",
+          "death": "mob.vex.death"
+        }
+      },
+      "ponce:frost_giant": {
+        "volume": 2.0,
+        "pitch": [
+          0.4,
+          0.5
+        ],
+        "events": {
+          "ambient": "mob.irongolem.say",
+          "hurt": "mob.irongolem.hit",
+          "death": "mob.irongolem.death",
+          "step": {
+            "sound": "mob.irongolem.walk",
+            "volume": 1.0
+          }
+        }
       }
     }
   }

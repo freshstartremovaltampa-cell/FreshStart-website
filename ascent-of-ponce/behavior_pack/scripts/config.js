@@ -113,6 +113,12 @@ export const MOBS = {
   "ponce:wind_sprite": { name: "Wind Sprite", level: 18, xp: 60 },
   "ponce:crag_hawk": { name: "Crag Hawk", level: 19, xp: 64 },
   "ponce:thunderhoof": { name: "Thunderhoof, the Centaur King", level: 22, xp: 1500, mastery: 18, boss: true },
+  // Floor 4: the Frozen Peaks
+  "ponce:frost_wolf": { name: "Frost Wolf", level: 22, xp: 78 },
+  "ponce:glacier_beetle": { name: "Glacier Beetle", level: 23, xp: 90 },
+  "ponce:rime_troll": { name: "Rime Troll", level: 24, xp: 140 },
+  "ponce:ice_wraith": { name: "Ice Wraith", level: 25, xp: 85 },
+  "ponce:frost_giant": { name: "Rimegrasp, the Frost Giant", level: 28, xp: 2200, mastery: 22, boss: true },
 };
 
 // XP from kills. Anything not listed falls back to its max health.

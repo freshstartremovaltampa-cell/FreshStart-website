@@ -40,6 +40,9 @@ FOODS = [
     # Floor 3
     ("highland_stew", "Highland Stew", 12, 0.9, {"str": 4, "vit": 2}, 300, 18, 60,
      [("minecraft:beef", 2), ("minecraft:potato", 1), ("minecraft:carrot", 1), ("minecraft:bowl", 1)], ((150, 80, 50), (200, 150, 90))),
+    # Floor 4: also keeps the Frost Giant's chill at bay (it builds half as fast while the buff lasts)
+    ("warming_broth", "Warming Broth", 12, 0.9, {"vit": 4, "str": 2}, 300, 22, 75,
+     [("minecraft:mutton", 2), ("minecraft:potato", 1), ("minecraft:bowl", 1)], ((190, 110, 60), (230, 170, 90))),
 ]
 
 

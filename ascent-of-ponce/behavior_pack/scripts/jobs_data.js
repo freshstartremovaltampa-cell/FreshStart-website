@@ -92,6 +92,14 @@ export const FOODS = {
       "vit": 2
     },
     "seconds": 300
+  },
+  "ponce:warming_broth": {
+    "name": "Warming Broth",
+    "stats": {
+      "vit": 4,
+      "str": 2
+    },
+    "seconds": 300
   }
 };
 
@@ -204,6 +212,26 @@ export const COOK_RECIPES = [
       },
       {
         "item": "minecraft:carrot",
+        "count": 1
+      },
+      {
+        "item": "minecraft:bowl",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "result": "ponce:warming_broth",
+    "name": "Warming Broth",
+    "level": 22,
+    "xp": 75,
+    "ingredients": [
+      {
+        "item": "minecraft:mutton",
+        "count": 2
+      },
+      {
+        "item": "minecraft:potato",
         "count": 1
       },
       {

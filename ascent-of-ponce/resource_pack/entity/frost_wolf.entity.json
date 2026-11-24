@@ -1,0 +1,34 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "ponce:frost_wolf",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/frost_wolf"
+      },
+      "geometry": {
+        "default": "geometry.ponce.frost_wolf"
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "animations": {
+        "walk": "animation.ponce.frost_wolf.walk",
+        "look_at_target": "animation.common.look_at_target"
+      },
+      "scripts": {
+        "animate": [
+          "walk",
+          "look_at_target"
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#E2EAF2",
+        "overlay_color": "#6EC8FF"
+      }
+    }
+  }
+}

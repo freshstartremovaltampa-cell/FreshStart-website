@@ -7,6 +7,7 @@ import { world, system, BlockPermutation, BlockTypes, BlockVolume, GameMode } fr
 import * as F1 from "./floor1_gen.js";
 import * as F2 from "./floor2_gen.js";
 import * as F3 from "./floor3_gen.js";
+import * as F4 from "./floor4_gen.js";
 import { directionText } from "./floor1_gen.js";
 import { NPCS } from "./quests_data.js";
 import { getData } from "./data.js";
@@ -41,6 +42,13 @@ export const FLOORS = [
     spawn: {
       day: [["ponce:highland_bull", 30, "land", 3], ["ponce:rock_lizard", 20, "land"], ["ponce:wind_sprite", 15, "air"], ["ponce:crag_hawk", 20, "air"]],
       night: [["ponce:highland_bull", 15, "land", 2], ["ponce:rock_lizard", 30, "land"], ["ponce:wind_sprite", 30, "air"], ["ponce:crag_hawk", 5, "air"]],
+    },
+  },
+  {
+    gen: F4, fog: undefined,
+    spawn: {
+      day: [["ponce:frost_wolf", 35, "land", 3], ["ponce:glacier_beetle", 25, "land"], ["ponce:rime_troll", 15, "land"], ["ponce:ice_wraith", 5, "air"]],
+      night: [["ponce:frost_wolf", 30, "land", 3], ["ponce:glacier_beetle", 15, "land"], ["ponce:rime_troll", 20, "land"], ["ponce:ice_wraith", 30, "air"]],
     },
   },
 ];
@@ -89,6 +97,7 @@ const BLOCKS = {
   forge: ["ponce:smithing_forge"], pot: ["ponce:cooking_pot"], stair_gate: ["ponce:stair_gate"],
   ember_copper_node: ["ponce:ember_copper_node"], ironheart_node: ["ponce:ironheart_node"], glimmer_silver_node: ["ponce:glimmer_silver_node"],
   stormsteel_node: ["ponce:stormsteel_node"],
+  snow: ["minecraft:snow"], snow_layer: ["minecraft:snow_layer"], ice: ["minecraft:ice"], packed_ice: ["minecraft:packed_ice"],
 };
 const LEAVES = new Set(["oak_leaves", "birch_leaves", "spruce_leaves", "mangrove_leaves"]);
 const resolved = new Map();
@@ -361,7 +370,7 @@ function spawnTick() {
       const at = dim.getBlock({ x, y, z }), below = dim.getBlock({ x, y: y - 1, z });
       if (!at || !below) continue;
       const wet = at.typeId.includes("water");
-      const open = at.isAir || at.typeId.includes("grass") || at.typeId.includes("fern") || at.typeId.includes("flower") || at.typeId.includes("carpet");
+      const open = at.isAir || at.typeId.includes("grass") || at.typeId.includes("fern") || at.typeId.includes("flower") || at.typeId.includes("carpet") || at.typeId.includes("snow_layer");
       const solidBelow = !below.typeId.includes("water") && !below.typeId.includes("leaves");
       let spawnY = y;
       if (habitat === "land" && !(open && solidBelow)) continue;

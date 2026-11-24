@@ -1,0 +1,38 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "ponce:frost_giant",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/frost_giant"
+      },
+      "geometry": {
+        "default": "geometry.ponce.frost_giant"
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "animations": {
+        "walk": "animation.ponce.frost_giant.walk",
+        "breath": "animation.ponce.frost_giant.breath",
+        "slam": "animation.ponce.frost_giant.slam",
+        "pose": "controller.animation.ponce.frost_giant",
+        "look_at_target": "animation.common.look_at_target"
+      },
+      "scripts": {
+        "animate": [
+          "walk",
+          "pose",
+          "look_at_target"
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#96BED6",
+        "overlay_color": "#E6F0FA"
+      }
+    }
+  }
+}

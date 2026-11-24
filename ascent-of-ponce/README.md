@@ -342,12 +342,41 @@ Lv 22, 2600 HP, a towering centaur archer. Tuned for a fight of about 5 minutes 
 - **Enrage** (below 25%): faster, hits for 15, shoots, sweeps and charges more often.
 - **Rewards**: Floor 3 cleared (opening its Stair Gate), +400 Col, 1500 EXP and +18 mastery to the killer, plus a Thunder Horn, hawk feathers, wind essence and hides.
 
+## Floor 4: the Frozen Peaks
+Unlocked by beating Thunderhoof (the Crown of Stones' gate now leads here). Recommended level: about 22-28.
+- **The land**: snow-capped ridges that rise toward the rim, spruce forests in the valleys, frozen tarns, and an **Old Watchtower** (on the map page) with a fire burning on top. The four trails follow the valley floors, so they stay walkable.
+- **Frosthollow**: a walled valley town of snow-roofed lodges around a great town fire. Every lodge keeps a campfire going.
+  - **Brenna, the Frostguide** (new quest giver and shop: Frost Sigils, Warming Broth, and she buys Floor 4 drops)
+  - Bram (forge), Pip (cooking pot) and Wren (general store) are here too.
+- **Creatures** (spawned by the floor, no Minecraft mobs):
+
+  | Creature | Lv | Notes | Drops |
+  |---|---|---|---|
+  | Frost Wolf | 22 | packs of three; hurt one and the pack comes | Frost Pelt, Wolf Fang, mutton |
+  | Glacier Beetle | 23 | ice shell: blades and light weapons deal 40% less, hammers +20%, axes and greatswords full | Glacier Shell, Frost Shard |
+  | Rime Troll | 24 | 180 HP, hits for 13, barely flinches | Troll Tusk, Frost Shard |
+  | Ice Wraith | 25 | flies, mostly at night; its touch slows you | Frost Essence |
+
+- **New infusions** from Floor 4 drops: Frost Pelt, Wolf Fang, Glacier Shell, Frost Shard, Troll Tusk, Frost Essence, and the guardian's Frozen Heart.
+- **New meal: Warming Broth** (Cooking 22: 2 mutton, a potato, a bowl): +4 VIT, +2 STR, and it halves how fast the Frost Giant's Chill builds.
+- **Quests** (Brenna): six, all needing Floor 4. The Hard ones give a **Masterwork Tier III** weapon (new reward tier). The Elite quest "The Giant's Winter" gives a Masterwork Tier III with Frost Essence and Wolf Fang. There's also a repeatable Peak Patrol.
+
+### Floor 4 guardian: Rimegrasp, the Frost Giant
+Lv 28, 3400 HP, a towering giant with a frosted beard and an ice-headed club. Tuned for a fight of about 5-6 minutes around Lv 23-26 (estimated). The fight is about managing the cold as much as the giant.
+- **Summon** with a **Frost Sigil** (frost shards, frost essence, frost pelts and a troll tusk) inside the **Frozen Cirque**, a bowl of ice at the end of the north trail. He's leashed to the Cirque.
+- **Chill**: while he lives, the cold builds on everyone in the Cirque, one stack every 3 s (shown on screen). Stand within a few blocks of one of the **four braziers** to thaw out (one stack a second). At 5 stacks you **freeze solid**: heavy slowness and 6 damage. A Warming Broth halves how fast it builds.
+- **Icicle Fall**: he raises his club and slams the ice, and icicles crack loose over every fighter, plus two at random (circles marked, 1.5 s warning): 10 damage. Move out of the circle.
+- **Frost Breath**: he rears back with his arms raised (1.25 s warning) and breathes a cone of frost in front of him: 8 damage and +2 Chill. Get behind or beside him.
+- **Club**: he fights up close for 14.
+- **Below 50%**: he calls **two Frost Wolves**, and from then on he **stamps out a brazier every 20 s**, always the one nearest you (each relights after 30 s; he always leaves at least one).
+- **Enrage** (below 25%): faster, hits for 18, icicles and breath come more often.
+- **Rewards**: Floor 4 cleared (opening its Stair Gate), +550 Col, 2200 EXP and +22 mastery to the killer, plus a **Frozen Heart** (the strongest infusion yet), frost shards, essence and pelts. After the fight the braziers relight and the Chill lifts.
+
 ## Roadmap
-5. Floors (part 4):
-   - Floor 4: the Frozen Peaks
+5. Floors (part 5):
    - Floor 5: the Canyon Badlands, the toughest so far, with a high-defense, high-health, poisonous scorpion guardian
    - hydra-kind return as regular floor mobs around Floor 15
-6. A Tier IV metal around Floors 4-5
+6. A Tier IV metal around Floors 4-5 (the diamond pickaxe unlocks with it, at Mining 20)
 
 ## Layout
 ```
@@ -377,6 +406,8 @@ behavior_pack/
     floors.js         builds every floor in the game; travel, gates, fog, spawners
     multihead.js      multi-head creatures (the Mire Hydra): heads, regrowth, attacks
     floor3_gen.js     Floor 3 layout: highlands, Cairnhold, Crown of Stones (pure code)
+    floor4_gen.js     Floor 4 layout: frozen peaks, Frosthollow, the Frozen Cirque (pure code)
+    frostgiant.js     Floor 4 guardian fight (Chill, braziers, icicles, breath)
     thunderhoof.js    Floor 3 guardian fight
     inventory.js, ui.js  shared helpers
     mobs.js           mole ambush, golemite weaknesses
@@ -391,6 +422,7 @@ tools/gen_jobs.py     generates ore nodes, forge, pot, ingots, meals, world gen 
 tools/gen_npcs.py     generates the quest-giver NPC entities and skins
 tools/gen_floor2_mobs.py  generates the Floor 2 creatures, the hydra, drops, lure and marsh fog
 tools/gen_floor3_mobs.py  generates the Floor 3 creatures, Thunderhoof, drops and the Thunder Call
+tools/gen_floor4_mobs.py  generates the Floor 4 creatures, the Frost Giant, drops and the Frost Sigil
 tools/preview_floor.mjs   renders a floor's data from the real generator for previews
 tests/                run ./tests/run.sh (needs Node) to simulate gameplay against mock APIs
 ```

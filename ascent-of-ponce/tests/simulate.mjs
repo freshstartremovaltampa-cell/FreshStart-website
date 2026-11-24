@@ -28,7 +28,7 @@ function makeEntity(typeId, hp, extra = {}) {
     addTag(t) { this.tagList.push(t); }, removeTag(t) { this.tagList = this.tagList.filter((x) => x !== t); }, hasTag(t) { return this.tagList.includes(t); },
     teleport(loc) { this.location = { ...loc }; },
     dprops: {}, getDynamicProperty(k) { return this.dprops[k]; }, setDynamicProperty(k, v) { this.dprops[k] = v; },
-    triggerEvent(ev) { this.events.push(ev); }, applyImpulse(v) { this.impulses.push(v); },
+    triggerEvent(ev) { this.events.push(ev); }, setProperty(k, v) { this.props[k] = v; }, applyImpulse(v) { this.impulses.push(v); },
     addEffect(t, d, o) { this.effects[t] = { duration: d, amplifier: o?.amplifier ?? 0 }; }, getEffect(t) { return this.effects[t]; },
     removeEffect(t) { delete this.effects[t]; }, remove() { this.isValid = false; },
     getViewDirection() { return this.view ?? { x: 0, y: 0, z: 1 }; },
@@ -1409,11 +1409,193 @@ console.log("forms shown:", log.length);
   boss.isValid = false;
   assert(td.highestFloor === 4 && td.col >= col0 + TH.TUNING.col, "Floor 3 cleared: +400 Col and the gate opens");
   assert(Q.questStatus(t, QUESTS_BY_ID.king_of_the_hills) === "ready", "\"King of the Hills\" is ready to turn in");
-  assert(floors.useStairGate(t, 3) === "open" && t.msgs.some((m) => m.includes("Floor 4 is still being built")), "the Crown's gate opens (Floor 4 comes next)");
+  const F4a = await import("../behavior_pack/scripts/floor4_gen.js");
+  assert(floors.useStairGate(t, 3) === "travel" && Math.abs(t.teleportedTo.x - F4a.ARRIVAL.x) < 1, "the Crown's gate takes you up to Floor 4");
 
   // Rewards keep scaling with difficulty across all floors
   const avg = (diff, k) => { const qs = QUESTS.filter((x) => x.difficulty === diff && !x.repeatable); return qs.reduce((s2, x) => s2 + x.rewards[k], 0) / qs.length; };
   assert([2, 3, 4].every((n) => avg(n, "xp") > avg(n - 1, "xp")), "quest EXP still rises with difficulty");
+}
+
+// ================= Floor 4: the Frozen Peaks and Rimegrasp =================
+{
+  const g4 = await import("../behavior_pack/scripts/floor4_gen.js");
+  const floors = await import("../behavior_pack/scripts/floors.js");
+  const FG = await import("../behavior_pack/scripts/frostgiant.js");
+  const Q = await import("../behavior_pack/scripts/quests.js");
+  const { QUESTS_BY_ID } = await import("../behavior_pack/scripts/quests_data.js");
+  const { BEETLE_DAMAGE } = await import("../behavior_pack/scripts/mobs.js");
+  const { FLOOR, ARENA, GATE, ARRIVAL, BRAZIERS } = g4;
+  const typeAt = (x, y, z) => dim.blocks.get(`${x},${y},${z}`)?.typeId;
+  dim.allLoaded = true;
+  dim.factory = (id, loc) => {
+    const e = makeEntity(id, id === "ponce:frost_giant" ? 3400 : 90); e.location = { ...loc }; e.remove = () => { e.isValid = false; }; return e;
+  };
+
+  // ---- Generator ----
+  let total = 0, outside = 0, hmin = 1e9, hmax = -1e9, ice = 0, n = 0;
+  for (let cx = g4.CHUNK_BOUNDS.min.x; cx <= g4.CHUNK_BOUNDS.max.x; cx++) for (let cz = g4.CHUNK_BOUNDS.min.z; cz <= g4.CHUNK_BOUNDS.max.z; cz++) {
+    if (!g4.chunkHasIsland(cx, cz)) continue;
+    for (const op of g4.chunkOps(cx, cz)) { total++; if ((op[2] >> 4) !== cx || ((op[0] === "f" ? op[5] : op[4]) >> 4) !== cz) outside++; }
+  }
+  for (let i = 0; i < 4000; i++) {
+    const a = Math.random() * Math.PI * 2, r = 60 + Math.random() * 160;
+    const x = Math.floor(FLOOR.center.x + Math.cos(a) * r), z = Math.floor(FLOOR.center.z + Math.sin(a) * r);
+    if (!g4.onIsland(x, z)) continue;
+    n++; if (g4.isIce(x, z)) ice++;
+    const y = g4.surfaceY(x, z); hmin = Math.min(hmin, y); hmax = Math.max(hmax, y);
+  }
+  assert(total > 400000 && outside === 0, `frozen peaks generator: ${total} block ops, all inside their chunks`);
+  assert(hmax - hmin >= 35, `snowy peaks: ${hmax - hmin} blocks from valley floor to summit`);
+  assert(ice > 0 && ice / n < 0.15, `some frozen tarns (${(100 * ice / n).toFixed(1)}% of the land)`);
+  let steepest = 0;
+  for (let k = 0; k < 4; k++) {
+    let prev;
+    for (let d = 42; d < (k === 0 ? 150 : 210); d++) {
+      const p = g4.trailPoint(k, d);
+      if (!g4.onIsland(p.x, p.z)) break;
+      const y = g4.surfaceY(p.x, p.z);
+      if (prev !== undefined) steepest = Math.max(steepest, Math.abs(y - prev));
+      prev = y;
+    }
+  }
+  assert(steepest <= 3, `the trails follow the valleys (steepest step ${steepest})`);
+
+  // ---- Town, quest givers, spawns ----
+  const t = makePlayer("Mountaineer"); world.players.push(t);
+  Object.assign(t, { dimension: dim, location: { x: 0, y: 64, z: 0 }, isSneaking: false, getGameMode: () => "Survival", isOnGround: true });
+  fire("playerSpawn", { player: t, initialSpawn: true });
+  const td = getDataFor(t); td.starter = "ponce:wayfarers_sword";
+  system.tick(20);
+  td.highestFloor = 3;
+  assert(Q.questStatus(t, QUESTS_BY_ID.wolf_winter) === "locked", "Floor 4 quests are locked until you reach Floor 4");
+  td.highestFloor = 4;
+  assert(floors.unlockedFloors(t).length === 4 && Q.questStatus(t, QUESTS_BY_ID.wolf_winter) === "available", "after Thunderhoof: Floor 4 travel and quests unlock");
+  t.location = { ...ARRIVAL };
+  system.tick(500);
+  assert(floors.isChunkBuilt(4, FLOOR.center.x >> 4, FLOOR.center.z >> 4), "Frosthollow gets built");
+  const npcs = dim.entities.filter((e) => e.isValid && e.typeId.startsWith("ponce:npc_") && g4.isOnFloor(e.location));
+  assert(npcs.length === 4 && ["guide", "smith", "cook", "merchant"].every((k) => npcs.some((e) => e.typeId === `ponce:npc_${k}`)),
+    "Brenna, Bram, Pip and Wren set up in Frosthollow");
+  t.location = { x: FLOOR.center.x + 0.5, y: g4.surfaceY(FLOOR.center.x, FLOOR.center.z + 100) + 1, z: FLOOR.center.z + 100.5 };
+  system.tick(400);
+  world.timeOfDay = 18000; system.tick(40 * 12); world.timeOfDay = 6000; system.tick(40 * 12);
+  const f4mobs = dim.entities.filter((e) => e.isValid && e.families?.includes("ponce_mob") && g4.isOnFloor(e.location));
+  const kinds = new Set(f4mobs.map((e) => e.typeId));
+  assert(f4mobs.length >= 4 && [...kinds].every((k) => ["ponce:frost_wolf", "ponce:glacier_beetle", "ponce:rime_troll", "ponce:ice_wraith"].includes(k)),
+    "only frozen-peak creatures spawn on Floor 4: " + [...kinds].join(", "));
+  for (const e of f4mobs) e.isValid = false;
+
+  // Glacier Beetle shell: heavy weapons crack it, blades skid off
+  assert(BEETLE_DAMAGE.hammer > 1 && BEETLE_DAMAGE.default < 1, "Glacier Beetles take more from hammers, less from blades");
+
+  // ---- The Frozen Cirque ----
+  t.location = { x: ARENA.x + 0.5, y: ARENA.y + 1, z: ARENA.z + 12.5 };
+  system.tick(500);
+  assert(typeAt(GATE.x, GATE.y, GATE.z) === "ponce:stair_gate", "the Frozen Cirque has its Stair Gate");
+  assert(BRAZIERS.length === 4 && BRAZIERS.every((b) => typeAt(b.x, b.y, b.z) === "minecraft:campfire"), "four lit braziers ring the Cirque");
+  const sigil = new ItemStack("ponce:frost_sigil");
+  t.items[0] = sigil;
+  t.location = { x: ARENA.x + 70, y: ARENA.y + 1, z: ARENA.z };
+  fire("itemUse", { source: t, itemStack: sigil });
+  assert(t.items[0] === sigil && t.msgs.some((m) => m.includes("Frozen Cirque")), "outside the Cirque the sigil does nothing and points the way");
+  t.location = { x: ARENA.x + 0.5, y: ARENA.y + 1, z: ARENA.z + 6.5 };
+  fire("itemUse", { source: t, itemStack: sigil });
+  const boss = dim.entities.find((e) => e.isValid && e.typeId === "ponce:frost_giant");
+  assert(boss && t.items[0] === undefined, "the Frost Sigil summons Rimegrasp in the Cirque");
+  system.tick(1);
+  const st = FG.frostState.get(boss.id);
+  const far = () => system.currentTick + 100000;
+  st.nextIcicle = far(); st.nextBreath = far();
+
+  // Chill builds away from the fires, freezes you at 5, and thaws by a brazier
+  FG.chill.delete(t.id); t.health.currentValue = 20; delete t.effects.slowness;
+  let sawChill = false;
+  for (let i = 0; i < FG.TUNING.chillEvery * 3; i++) { system.tick(1); if ((t.actionBar ?? "").includes("Chill")) sawChill = true; }
+  assert(FG.chill.get(t.id) === 3 && sawChill, "away from the braziers, Chill builds (3 stacks after 9 s) and shows on screen");
+  system.tick(FG.TUNING.chillEvery * 2);
+  assert(FG.chill.get(t.id) === FG.TUNING.frozenResetTo && t.effects.slowness?.amplifier === 4 && t.health.currentValue <= 20 - FG.TUNING.frozenDamage + 0.01,
+    "at 5 stacks you freeze solid: heavy slowness and damage");
+  const b0 = BRAZIERS[0];
+  t.location = { x: b0.x + 1.5, y: ARENA.y + 1, z: b0.z + 0.5 };
+  system.tick(FG.TUNING.thawEvery * 2 + 1);
+  assert(FG.chill.get(t.id) === 0, "standing by a brazier thaws you out");
+  system.tick(FG.TUNING.chillEvery * 2);
+  assert(FG.chill.get(t.id) === 0, "...and no Chill builds while you're by the fire");
+  td.foodBuff = { name: "Warming Broth", stats: { vit: 4 }, until: world.getAbsoluteTime() + 100000 };
+  t.location = { x: ARENA.x + 0.5, y: ARENA.y + 1, z: ARENA.z + 6.5 };
+  system.tick(FG.TUNING.chillEvery * 4);
+  assert(FG.chill.get(t.id) === 2, "a Warming Broth halves how fast Chill builds");
+  td.foodBuff = null; FG.chill.set(t.id, 0);
+  const chillFree = () => FG.chill.set(t.id, 0);
+
+  // Icicle Fall: marked circles, then damage; stepping out avoids it
+  st.nextIcicle = 0; t.health.currentValue = 20;
+  let warned = false;
+  for (let i = 0; i < FG.TUNING.icicleWindup + 2; i++) { system.tick(1); chillFree(); if ((t.actionBar ?? "").includes("Icicles")) warned = true; }
+  assert(warned && t.health.currentValue <= 20 - FG.TUNING.icicleDamage + 0.01, "Icicle Fall is telegraphed and hits whoever stays in the circle");
+  st.nextIcicle = 0; t.health.currentValue = 20;
+  const realRandom = Math.random; Math.random = () => 0.99; // keep the two random extra icicles away from where we step
+  system.tick(1);
+  Math.random = realRandom;
+  const iciclesFrom = { ...t.location };
+  t.location = { x: iciclesFrom.x + 5, y: iciclesFrom.y, z: iciclesFrom.z };
+  for (let i = 0; i < FG.TUNING.icicleWindup + 2; i++) { system.tick(1); chillFree(); }
+  assert(t.health.currentValue === 20, "stepping out of the marked circle avoids the icicles");
+  st.nextIcicle = far();
+
+  // Frost Breath: a frontal cone that also chills; safe behind him
+  boss.view = { x: 1, y: 0, z: 0 };
+  boss.location = { x: ARENA.x + 0.5, y: ARENA.y + 1, z: ARENA.z + 0.5 };
+  t.location = { x: boss.location.x + 4, y: boss.location.y, z: boss.location.z }; t.health.currentValue = 20;
+  st.nextBreath = 0; warned = false; let posed = false;
+  for (let i = 0; i < FG.TUNING.breathWindup + 2; i++) {
+    system.tick(1); if (FG.chill.get(t.id) < 2) chillFree();
+    if ((t.actionBar ?? "").includes("breath")) warned = true; if (boss.props["ponce:pose"] === 1) posed = true;
+  }
+  assert(warned && posed && t.health.currentValue <= 20 - FG.TUNING.breathDamage + 0.01 && FG.chill.get(t.id) >= FG.TUNING.breathChill,
+    "Frost Breath: he rears back (visible pose), then the cone hits and chills you");
+  assert(boss.props["ponce:pose"] === 0, "...and he lowers his arms afterwards");
+  st.nextBreath = 0; t.health.currentValue = 20; chillFree();
+  t.location = { x: boss.location.x - 4, y: boss.location.y, z: boss.location.z };
+  for (let i = 0; i < FG.TUNING.breathWindup + 2; i++) { system.tick(1); chillFree(); }
+  assert(t.health.currentValue === 20, "standing behind him, the breath misses");
+  st.nextBreath = far();
+
+  // Below half: wolves, then braziers start going out (and relight)
+  boss.health.currentValue = 3400 * 0.49;
+  system.tick(2); chillFree();
+  const wolves = dim.entities.filter((e) => e.isValid && e.typeId === "ponce:frost_wolf" && e.tagList.includes("ponce_giant_wolf"));
+  assert(wolves.length === 2 && t.msgs.some((m) => m.includes("The Pack Answers")), "below half health he calls two Frost Wolves");
+  const lit = () => BRAZIERS.filter((b) => typeAt(b.x, b.y, b.z) === "minecraft:campfire").length;
+  st.nextSnuff = 0; system.tick(2); chillFree();
+  assert(lit() === 3, "he snuffs out a brazier");
+  for (let i = 0; i < 3; i++) { st.nextSnuff = 0; system.tick(2); }
+  assert(lit() === 1, "...but always leaves at least one burning");
+  st.nextSnuff = far();
+  for (let i = 0; i < FG.TUNING.relightTicks + 5; i++) { system.tick(1); chillFree(); }
+  assert(lit() === 4, "snuffed braziers relight after 30 s");
+
+  // Enrage and victory
+  boss.health.currentValue = 3400 * 0.24; system.tick(2);
+  assert(boss.events.includes("ponce:enrage"), "enraged below 25%");
+  st.nextSnuff = 0; system.tick(2);
+  assert(lit() === 3, "(a brazier is out when he falls)");
+  td.level = 24; td.quests.done.troll_bridge = 1; td.quests.done.wraith_lights = 1;
+  Q.accept(t, QUESTS_BY_ID.giants_end);
+  const col0 = td.col;
+  fire("entityDie", { deadEntity: boss, damageSource: { cause: "entityAttack", damagingEntity: t } });
+  boss.isValid = false;
+  assert(td.highestFloor === 5 && td.col >= col0 + FG.TUNING.col, "Floor 4 cleared: +550 Col and the gate opens");
+  assert(lit() === 4 && dim.entities.filter((e) => e.isValid && e.tagList?.includes("ponce_giant_wolf")).length === 0 && FG.chill.size === 0,
+    "after the fight the braziers relight, his wolves leave and the Chill lifts");
+  assert(Q.questStatus(t, QUESTS_BY_ID.giants_end) === "ready", "\"The Giant's Winter\" is ready to turn in");
+  assert(floors.useStairGate(t, 4) === "open" && t.msgs.some((m) => m.includes("Floor 5 is still being built")), "the Cirque's gate opens (Floor 5 comes next)");
+
+  // Masterwork Tier III rewards
+  const reward = Q.makeRewardWeapon({ kind: "masterwork_t3", infusions: ["ponce:frost_essence", "ponce:wolf_fang"] }, "sword");
+  const { WEAPON_DEFS } = await import("../behavior_pack/scripts/weapon_data.js");
+  assert(WEAPON_DEFS[reward.typeId]?.tier === 4 && reward.nameTag.includes("+2"), "Floor 4's Elite quest gives a Masterwork Tier III weapon with 2 infusions");
 }
 
 // ================= Tier III: Stormsteel =================

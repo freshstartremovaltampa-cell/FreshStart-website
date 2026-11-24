@@ -1,0 +1,34 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "ponce:glacier_beetle",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/glacier_beetle"
+      },
+      "geometry": {
+        "default": "geometry.ponce.glacier_beetle"
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "animations": {
+        "walk": "animation.ponce.glacier_beetle.walk",
+        "look_at_target": "animation.common.look_at_target"
+      },
+      "scripts": {
+        "animate": [
+          "walk",
+          "look_at_target"
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#465A78",
+        "overlay_color": "#AAD6F0"
+      }
+    }
+  }
+}

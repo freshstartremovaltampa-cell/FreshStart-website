@@ -19,6 +19,7 @@ import { registerQuests } from "./quests.js";
 import { registerFloors, travelToFloor1 } from "./floors.js";
 import { registerMultihead } from "./multihead.js";
 import { registerThunderhoof } from "./thunderhoof.js";
+import { registerFrostGiant } from "./frostgiant.js";
 
 // New players begin their climb in Wayfarer's Rest, the Floor 1 town
 const START_ON_FLOOR_1 = true;
@@ -92,6 +93,7 @@ registerQuests();
 registerFloors();
 registerMultihead();
 registerThunderhoof();
+registerFrostGiant();
 
 // ---------- Loops ----------
 

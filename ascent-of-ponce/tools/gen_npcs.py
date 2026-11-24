@@ -31,6 +31,8 @@ NPCS = [
       "eyes": (90, 60, 40), "cheeks": (235, 140, 140)}),
     ("npc_merchant", "Wren, the Merchant", ("#6E3C8C", "#E6C35A"),
      {"hair": (60, 40, 30), "shirt": (110, 60, 140), "trim": (230, 195, 90), "pants": (70, 56, 46), "boots": (46, 34, 28), "eyes": (120, 90, 50)}),
+    ("npc_guide", "Brenna, the Frostguide", ("#3C6E96", "#F0F5FA"),
+     {"hair": (235, 225, 200), "shirt": (60, 110, 150), "trim": (240, 245, 250), "pants": (80, 70, 60), "boots": (60, 46, 36), "eyes": (80, 150, 200)}),
 ]
 
 
