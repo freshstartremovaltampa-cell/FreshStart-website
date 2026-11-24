@@ -75,7 +75,7 @@ export const QUESTS = [
     objectives: [{ type: "kill", target: "ponce:moss_golemite", count: 6 }, { type: "collect", item: "ponce:golemite_core", count: 2 }],
     rewards: { xp: 450, col: 170, items: [["ponce:glimmer_silver_ingot", 2], ["ponce:hearty_roast", 2]] } },
   { id: "king_of_boars", giver: "guild", difficulty: 4, name: "The King of Boars",
-    desc: "Ironhide, the Boar King, guards the way up. Craft his Call from tusks and hides, and bring him down.",
+    desc: "Ironhide, the Boar King, guards the way up. Craft his Call from tusks and hides, blow it in the Guardian's Arena at the end of the north trail, and bring him down.",
     requires: { level: 6, quests: ["boar_trouble", "mole_menace"] },
     objectives: [{ type: "boss", target: "ponce:ironhide", count: 1 }],
     rewards: { xp: 800, col: 350, weapon: { kind: "masterwork_t2", infusions: ["ponce:boar_tusk", "ponce:boar_hide"] } } },

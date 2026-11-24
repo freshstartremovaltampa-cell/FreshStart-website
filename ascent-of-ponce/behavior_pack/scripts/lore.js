@@ -14,7 +14,9 @@ export const LORE = [
       "The first floor is an island of forest floating in open sky, and in its heart sits §fWayfarer's Rest§f, " +
       "the town where every climber begins.\n\n" +
       "Its fountain is carved in the shape of the one at the summit, a reminder of why you climb. " +
-      "Marla's guild, Bram's smithy and Pip's kitchen are all here. Beyond the palisade, the forest belongs to the beasts.",
+      "Marla's guild, Bram's smithy and Pip's kitchen are all here. Beyond the palisade, the forest belongs to the beasts.\n\n" +
+      "Follow the north trail to its end and you reach the §cGuardian's Arena§f. The Boar King answers the Call there, " +
+      "and behind him the §dStair Gate§f waits to open for whoever can beat him.",
   },
   {
     title: "§6The Fountain of Youth",

@@ -4,9 +4,11 @@
 
 import { world, system, BlockPermutation, BlockTypes, BlockVolume, GameMode } from "@minecraft/server";
 import {
+  ARENA, GATE, arenaDistance, directionText,
   ARRIVAL, CHUNK_BOUNDS, FLOOR1, NPC_SPOTS, chunkHasIsland, chunkOps, inTown, isOnFloor1, onIsland, surfaceY,
 } from "./floor1_gen.js";
 import { NPCS } from "./quests_data.js";
+import { getData } from "./data.js";
 
 const DIM = "overworld";
 const SAVE_KEY = "ponce:floor1_chunks";
@@ -37,7 +39,7 @@ const BLOCKS = {
   poppy: ["minecraft:poppy", "minecraft:red_flower"], dandelion: ["minecraft:dandelion", "minecraft:yellow_flower"],
   cornflower: ["minecraft:cornflower", "minecraft:red_flower"], oxeye_daisy: ["minecraft:oxeye_daisy", "minecraft:red_flower"],
   azure_bluet: ["minecraft:azure_bluet", "minecraft:red_flower"],
-  forge: ["ponce:smithing_forge"], pot: ["ponce:cooking_pot"],
+  forge: ["ponce:smithing_forge"], pot: ["ponce:cooking_pot"], stair_gate: ["ponce:stair_gate"],
   ember_copper_node: ["ponce:ember_copper_node"], ironheart_node: ["ponce:ironheart_node"], glimmer_silver_node: ["ponce:glimmer_silver_node"],
 };
 const LEAVES = new Set(["oak_leaves", "birch_leaves", "spruce_leaves"]);
@@ -228,6 +230,7 @@ function spawnTick() {
       const r = SPAWN.minDist + Math.random() * (SPAWN.maxDist - SPAWN.minDist);
       const x = Math.floor(p.location.x + Math.cos(a) * r), z = Math.floor(p.location.z + Math.sin(a) * r);
       if (!onIsland(x, z) || inTown(x, z) || Math.hypot(x - FLOOR1.center.x, z - FLOOR1.center.z) < FLOOR1.townRadius + 8) continue;
+      if (arenaDistance(x, z) < ARENA.radius + 10) continue; // keep the arena clear for the guardian fight
       if (!isChunkBuilt(x >> 4, z >> 4)) continue;
       const y = surfaceY(x, z) + 1;
       const at = dim.getBlock({ x, y, z }), below = dim.getBlock({ x, y: y - 1, z });
@@ -239,6 +242,42 @@ function spawnTick() {
       break;
     }
   }
+}
+
+// ---------- Stair Gate ----------
+
+// Set once Floor 2 exists: a function that sends a player there.
+export const NEXT_FLOOR = { travel: undefined };
+
+export function useStairGate(player) {
+  const d = getData(player);
+  const top = { x: GATE.x + 0.5, y: GATE.y + 2, z: GATE.z + 0.5 };
+  if ((d.highestFloor ?? 1) < 2) {
+    player.sendMessage("§7[Ponce] The Stair Gate is sealed. §fDefeat Ironhide, the Boar King, to open the way up.");
+    player.playSound("note.bass", { pitch: 0.5 });
+    return "sealed";
+  }
+  try { player.dimension.spawnParticle("minecraft:portal_reverse_particle", top); } catch { /* ignore */ }
+  player.playSound("portal.trigger", { volume: 0.5, pitch: 1.4 });
+  if (NEXT_FLOOR.travel) { NEXT_FLOOR.travel(player); return "travel"; }
+  player.sendMessage("§d[Ponce] The gate opens to you, and the stairway climbs into the clouds... §7Floor 2 is still being built. It arrives in a coming update.");
+  return "open";
+}
+
+/** "You are on Floor 1" plus directions to the landmarks, for the map page. */
+export function mapText(player) {
+  const p = player.location;
+  const onFloor = isOnFloor1(p);
+  const lines = [onFloor ? `§fYou are on §6Floor 1§f.` : "§fYou are in the world below the tower."];
+  if (onFloor) {
+    lines.push(`§6${FLOOR1.name}§7 (town): ${inTown(p.x, p.z) ? "you're in town" : directionText(p, FLOOR1.center)}`);
+    lines.push(`§cGuardian's Arena§7: ${directionText(p, ARENA)}, at the end of the north trail`);
+    const open = (getData(player).highestFloor ?? 1) >= 2;
+    lines.push(`§dStair Gate§7: in the arena's north wall, ${open ? "§aopen to you" : "§csealed until Ironhide falls"}`);
+  } else {
+    lines.push("§7Use Travel to reach Floor 1.");
+  }
+  return lines.join("\n");
 }
 
 /** No Minecraft mobs on the tower floors. */
@@ -255,4 +294,10 @@ export function registerFloor1() {
   system.runInterval(rescueFallers, 10);
   system.runInterval(spawnTick, SPAWN.everyTicks);
   world.afterEvents.entitySpawn.subscribe(onEntitySpawn);
+  world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
+    if (ev.block.typeId !== "ponce:stair_gate" || ev.isFirstEvent === false) return;
+    ev.cancel = true;
+    const { player } = ev;
+    system.run(() => player.isValid && useStairGate(player));
+  });
 }

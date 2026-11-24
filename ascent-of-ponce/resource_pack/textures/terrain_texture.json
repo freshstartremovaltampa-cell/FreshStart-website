@@ -27,6 +27,9 @@
     },
     "ponce_pot_top": {
       "textures": "textures/blocks/cooking_pot_top"
+    },
+    "ponce_stair_gate": {
+      "textures": "textures/blocks/stair_gate"
     }
   }
 }

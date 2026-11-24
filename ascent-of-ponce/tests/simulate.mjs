@@ -10,7 +10,8 @@ function makeEntity(typeId, hp, extra = {}) {
     families: typeId === "minecraft:cow" ? ["mob"] : typeId.startsWith("ponce:npc_") ? ["ponce_npc", "npc"]
       : typeId.startsWith("ponce:") ? ["ponce_mob", "mob", "monster", ...(typeId === "ponce:ironhide" ? ["ponce_boss"] : [])] : ["mob", "monster"],
     matches(o) { return !o?.families || o.families.every((f) => this.families.includes(f)); }, kill() { this.killed = true; health.currentValue = 0; },
-    addTag(t) { this.tagList.push(t); }, removeTag(t) { this.tagList = this.tagList.filter((x) => x !== t); },
+    addTag(t) { this.tagList.push(t); }, removeTag(t) { this.tagList = this.tagList.filter((x) => x !== t); }, hasTag(t) { return this.tagList.includes(t); },
+    teleport(loc) { this.location = { ...loc }; },
     triggerEvent(ev) { this.events.push(ev); }, applyImpulse(v) { this.impulses.push(v); },
     addEffect(t, d, o) { this.effects[t] = { duration: d, amplifier: o?.amplifier ?? 0 }; }, getEffect(t) { return this.effects[t]; },
     removeEffect(t) { delete this.effects[t]; }, remove() { this.isValid = false; },
@@ -143,9 +144,11 @@ console.log("forms shown:", log.length);
 // ---------- Floor 1 boss ----------
 {
   const { getData } = await import("../behavior_pack/scripts/data.js");
+  const { ARENA } = await import("../behavior_pack/scripts/floor1_gen.js");
+  const AX = ARENA.x, AZ = ARENA.z, AY = ARENA.y + 1; // the fight happens in the Guardian's Arena
   dim.factory = (id, loc) => { const e = makeEntity(id, id === "ponce:ironhide" ? 1800 : 24); e.location = { ...loc }; return e; };
   const b = makePlayer("BossTester"); world.players.push(b);
-  b.location = { x: 0, y: 64, z: 0 }; b.dimension = dim;
+  b.location = { x: AX + 0, y: AY, z: AZ + 0 }; b.dimension = dim;
   b.applyDamage = (n) => { b.health.currentValue -= n; b.hitByBoss = (b.hitByBoss ?? 0) + n; };
   b.applyKnockback = () => (b.knocked = true);
   fire("playerSpawn", { player: b, initialSpawn: true });
@@ -155,9 +158,17 @@ console.log("forms shown:", log.length);
   assert(dim.getEntities({ type: "ponce:ironhide" }).length === 0 && b.msgs.some((m) => m.includes("unlock a weapon skill")), "horn refuses without a skill");
 
   getData(b).skills.push("sword_dash");
+  b.location = { x: AX + 60, y: AY, z: AZ };
+  fire("itemUse", { source: b, itemStack: horn });
+  assert(dim.getEntities({ type: "ponce:ironhide" }).length === 0 && b.items[0] === horn && b.msgs.some((m) => m.includes("Guardian's Arena") && m.includes("west")),
+    "outside the arena the horn does nothing and points the way (west, here)");
+  b.location = { x: AX, y: AY, z: AZ };
   fire("itemUse", { source: b, itemStack: horn });
   const boss = dim.getEntities({ type: "ponce:ironhide" })[0];
   assert(boss && b.items[0] === undefined, "horn summons Ironhide and is consumed");
+  assert(Math.abs(boss.location.x - (AX + 0.5)) < 0.01 && Math.abs(boss.location.z - (AZ + 0.5)) < 0.01 && boss.tagList.includes("ponce_arena"), "Ironhide appears on the arena dais");
+  boss.location = { x: AX + 40, y: AY, z: AZ }; system.tick(2);
+  assert(Math.hypot(boss.location.x - AX, boss.location.z - AZ) < 2, "leash: dragged out of the arena, he's pulled back to the dais");
   fire("itemUse", { source: b, itemStack: horn });
   assert(dim.getEntities({ type: "ponce:ironhide" }).length === 1, "can't summon a second boss nearby");
 
@@ -180,7 +191,7 @@ console.log("forms shown:", log.length);
   assert(minionCount() === 4, "60%: summons 2 more");
 
   // Earthshaker: player hugging the boss below 60%
-  b.location = { x: 0, y: 64, z: 3 }; boss.location = { x: 0, y: 64, z: 0 };
+  b.location = { x: AX + 0, y: AY, z: AZ + 3 }; boss.location = { x: AX + 0, y: AY, z: AZ + 0 };
   let rearWarn = false;
   for (let i = 0; i < 60 && !b.hitByBoss; i++) { system.tick(1); if (b.actionBar?.includes("rears up")) rearWarn = true; }
   assert(rearWarn, "stomp is telegraphed");
@@ -196,19 +207,19 @@ console.log("forms shown:", log.length);
 
   // Charge: player stands in the path
   b.hitByBoss = 0; b.knocked = false;
-  b.location = { x: 0, y: 64, z: 3 };
+  b.location = { x: AX + 0, y: AY, z: AZ + 3 };
   let warned = false;
-  for (let i = 0; i < 300 && !b.hitByBoss; i++) { system.tick(1); if (b.actionBar?.includes("about to charge")) warned = true; if (boss.impulses.length) b.location = { x: 0, y: 64, z: 1 }; }
+  for (let i = 0; i < 300 && !b.hitByBoss; i++) { system.tick(1); if (b.actionBar?.includes("about to charge")) warned = true; if (boss.impulses.length) b.location = { x: AX + 0, y: AY, z: AZ + 1 }; }
   assert(warned, "charge is telegraphed");
   assert(b.hitByBoss === 9 && b.knocked, "charge hits for 9 with knockback: " + b.hitByBoss);
 
   // Dodge: player keeps out of the charge line
-  b.hitByBoss = 0; b.knocked = false; b.location = { x: 0, y: 64, z: 6 };
-  for (let i = 0; i < 200; i++) { system.tick(1); if (boss.impulses.length > 10) b.location = { x: 6, y: 64, z: 6 }; }
+  b.hitByBoss = 0; b.knocked = false; b.location = { x: AX + 0, y: AY, z: AZ + 6 };
+  for (let i = 0; i < 200; i++) { system.tick(1); if (boss.impulses.length > 10) b.location = { x: AX + 6, y: AY, z: AZ + 6 }; }
   assert(!b.hitByBoss, "sidestepping avoids the charge");
 
   // Kill
-  b.location = { x: 0, y: 64, z: 2 };
+  b.location = { x: AX + 0, y: AY, z: AZ + 2 };
   const before = getData(b);
   const col0 = before.col, sword0 = before.mastery.sword;
   fire("entityDie", { deadEntity: boss, damageSource: { cause: "entityAttack", damagingEntity: b } });
@@ -906,4 +917,63 @@ console.log("forms shown:", log.length);
   const iron = new ItemStack("ponce:iron_greatsword", 1, [], 450); r.setHeld(iron); rd.skills.push("great_overhead");
   useSkill(r, iron);
   assert(r.actionBar.includes("can't use skills"), "ordinary weapons still block skills below their requirements");
+}
+
+// ================= Guardian's Arena, Stair Gate, map =================
+{
+  const g = await import("../behavior_pack/scripts/floor1_gen.js");
+  const f1 = await import("../behavior_pack/scripts/floor1.js");
+  const { ARENA, GATE, FLOOR1 } = g;
+  const fireBefore = (n, e) => { world.beforeEvents[n].h.forEach((f) => f(e)); return e; };
+  const typeAt = (x, y, z) => dim.blocks.get(`${x},${y},${z}`)?.typeId;
+
+  // Layout
+  assert(Math.abs(Math.hypot(ARENA.x - FLOOR1.center.x, ARENA.z - FLOOR1.center.z) - 185) < 1 && ARENA.z < FLOOR1.center.z, "arena sits 185 blocks out, to the north");
+  let flat = true;
+  for (let dx = -16; dx <= 16; dx += 4) for (let dz = -16; dz <= 16; dz += 4) if (g.surfaceY(ARENA.x + dx, ARENA.z + dz) !== ARENA.y) flat = false;
+  assert(flat, "the arena floor is flat");
+
+  // Build it in the game
+  const a = makePlayer("Challenger"); world.players.push(a);
+  Object.assign(a, { dimension: dim, location: { x: ARENA.x, y: ARENA.y + 1, z: ARENA.z }, isSneaking: false, getGameMode: () => "Survival" });
+  fire("playerSpawn", { player: a, initialSpawn: true });
+  a.location = { x: ARENA.x + 0.5, y: ARENA.y + 1, z: ARENA.z + 0.5 };
+  system.tick(500);
+  assert(typeAt(GATE.x, GATE.y, GATE.z) === "ponce:stair_gate" && typeAt(GATE.x + 2, GATE.y + 4, GATE.z) === "ponce:stair_gate", "the Stair Gate fills the north archway");
+  assert(typeAt(ARENA.x, ARENA.y, ARENA.z) === "minecraft:chiseled_stone_bricks", "chiseled dais in the middle");
+  assert(typeAt(GATE.x, ARENA.y + 7, GATE.z - 7) === "minecraft:stone_bricks", "a stairway climbs away behind the gate");
+  let leaves = 0;
+  for (const [k, b] of dim.blocks) {
+    if (!b.typeId.endsWith("_leaves") && !b.typeId.endsWith("_log")) continue;
+    const [x, , z] = k.split(",").map(Number);
+    if (Math.hypot(x - ARENA.x, z - ARENA.z) < 17) leaves++;
+  }
+  assert(leaves === 0, "no trees inside the arena");
+
+  // Forest spawns stay out of the arena
+  system.tick(40 * 10);
+  const inArena = dim.entities.filter((e) => e.isValid && e.families?.includes("ponce_mob") && !e.families.includes("ponce_boss") && Math.hypot(e.location.x - ARENA.x, e.location.z - ARENA.z) < ARENA.radius + 6);
+  assert(inArena.length === 0, "the spawner keeps the arena (and the ground just outside its walls) clear");
+
+  // Gate: sealed until Ironhide falls, then open (Floor 2 not built yet)
+  const ad = getDataFor(a);
+  const useGate = () => { const e = fireBefore("playerInteractWithBlock", { block: { typeId: "ponce:stair_gate", location: GATE }, player: a, isFirstEvent: true, cancel: false }); system.tick(1); return e; };
+  const e1 = useGate();
+  assert(e1.cancel && a.msgs.some((m) => m.includes("Stair Gate is sealed")), "gate is sealed before beating Ironhide");
+  ad.highestFloor = 2;
+  useGate();
+  assert(a.msgs.some((m) => m.includes("Floor 2 is still being built")), "after the victory the gate opens (Floor 2 arrives later)");
+  let traveled = false;
+  f1.NEXT_FLOOR.travel = () => { traveled = true; };
+  useGate();
+  assert(traveled, "once Floor 2 exists, the open gate sends you there");
+  f1.NEXT_FLOOR.travel = undefined;
+
+  // Map text
+  a.location = { x: FLOOR1.center.x + 0.5, y: FLOOR1.base + 1, z: FLOOR1.center.z + 10.5 };
+  const t1 = f1.mapText(a);
+  assert(t1.includes("Floor 1") && t1.includes("you're in town") && /Guardian's Arena.*blocks north/.test(t1) && t1.includes("open to you"), "map: where you are, the arena's direction, gate status");
+  a.location = { x: 0, y: 64, z: 0 };
+  assert(f1.mapText(a).includes("world below"), "map off the floor says so");
+  assert(g.directionText({ x: 0, z: 0 }, { x: 0, z: -100 }) === "100 blocks north" && g.directionText({ x: 0, z: 0 }, { x: 70, z: 70 }) === "99 blocks south-east", "compass directions (north is -z)");
 }

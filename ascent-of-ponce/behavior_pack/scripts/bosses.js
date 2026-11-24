@@ -18,6 +18,14 @@ import { getData, markDirty } from "./data.js";
 import { getHeldItem } from "./progression.js";
 import { hudHoldUntil } from "./combat.js";
 import { notify } from "./quests.js";
+import { ARENA, arenaDistance, directionText, isOnFloor1 } from "./floor1_gen.js";
+
+const ARENA_TAG = "ponce_arena";
+const ARENA_SPAWN = { x: ARENA.x + 0.5, y: ARENA.y + 1, z: ARENA.z + 0.5 };
+
+export function inArena(loc) {
+  return arenaDistance(loc.x, loc.z) <= ARENA.radius + 1 && Math.abs(loc.y - ARENA_SPAWN.y) <= 8;
+}
 
 const BOSS = "ponce:ironhide";
 const HORN = "ponce:boar_kings_call";
@@ -120,6 +128,10 @@ function tickBoss(boss) {
   const target = nearestPlayer(boss, TUNING.leashRange);
 
   if (target) s.lastPlayerNear = now;
+  // Leash: the Boar King can't be dragged out of his arena
+  if (boss.hasTag(ARENA_TAG) && arenaDistance(boss.location.x, boss.location.z) > ARENA.radius + 3) {
+    try { boss.teleport(ARENA_SPAWN); } catch { /* ignore */ }
+  }
   else if (now - s.lastPlayerNear > TUNING.leashTicks) {
     for (const m of dim.getEntities({ location: boss.location, maxDistance: 48, tags: [MINION_TAG] })) m.remove();
     state.delete(boss.id);
@@ -240,13 +252,19 @@ function blowHorn(player) {
     player.sendMessage("§c[Ponce] Ironhide is already nearby.");
     return;
   }
-  const v = player.getViewDirection();
-  const len = Math.hypot(v.x, v.z) || 1;
-  const loc = { x: player.location.x + (v.x / len) * 8, y: player.location.y + 0.5, z: player.location.z + (v.z / len) * 8 };
+  if (!inArena(player.location)) {
+    const where = isOnFloor1(player.location)
+      ? `It's ${directionText(player.location, ARENA)}, at the end of the north trail.`
+      : "It's on Floor 1, at the end of the north trail from Wayfarer's Rest.";
+    player.sendMessage(`§7[Ponce] The Call echoes, but nothing answers. §fBlow it inside the Guardian's Arena. §7${where}`);
+    player.playSound("note.bass", { pitch: 0.7 });
+    return;
+  }
+  const loc = ARENA_SPAWN;
   try {
-    player.dimension.spawnEntity(BOSS, loc);
+    player.dimension.spawnEntity(BOSS, loc).addTag(ARENA_TAG);
   } catch {
-    player.sendMessage("§c[Ponce] There's no room for the Boar King here. Find open ground.");
+    player.sendMessage("§c[Ponce] The arena isn't ready yet. Try again in a moment.");
     return;
   }
   const inv = player.getComponent("minecraft:inventory")?.container;
@@ -301,7 +319,7 @@ export function registerBosses() {
         subtitle: "§fIronhide, the Boar King has fallen", fadeInDuration: 10, stayDuration: 80, fadeOutDuration: 20,
       });
       p.playSound("random.totem");
-      p.sendMessage(`§6[Ponce] §fVictory! §6+${TUNING.colReward} Col${first ? "§f. The way to the second floor is open." : "."}`);
+      p.sendMessage(`§6[Ponce] §fVictory! §6+${TUNING.colReward} Col${first ? "§f. The Stair Gate in the arena's north wall now opens for you." : "."}`);
       notify(p, "boss", BOSS);
     }
   });

@@ -38,13 +38,13 @@ Custom RPG mobs, no vanilla reskins. They spawn in the overworld for now, and mo
 
 ### Floor 1 guardian: Ironhide, the Boar King
 Lv 8, 1800 HP, 2.5x the size of a Tusk Boar. Tuned for a fight of about 5 minutes for a player around Lv 5-7 with an iron-tier weapon, their first weapon skill and some armor. The time is estimated, not yet measured in-game.
-- **Summon** with the **Boar King's Call**, crafted from 3 Boar Tusks and 2 Boar Hides (tusk, hide-tusk-tusk, hide pattern). It only works once you've unlocked a weapon skill.
+- **Summon** with the **Boar King's Call**, crafted from 3 Boar Tusks and 2 Boar Hides (tusk, hide-tusk-tusk, hide pattern). It only works once you've unlocked a weapon skill, and only inside the **Guardian's Arena** on Floor 1. Used anywhere else, it tells you the arena's direction and distance. He appears on the dais, and if he's dragged out of the arena he's pulled back.
 - **Thick Hide**: wood, stone and gold weapons deal only 40% damage.
 - **Charge**: a roar and a 1 s warning, then a straight-line charge for 9 damage and heavy knockback. Step sideways to dodge.
 - **Call the Herd**: at 80%, 60%, 40% and 20% HP he summons 2 hostile Tusk Boars (max 6 at once).
 - **Earthshaker** (below 60%): stay in melee range and he rears up (1.25 s warning) and slams the ground for 7 damage to everyone within 5 blocks. Back off.
 - **Enrage**: below 30% HP he gets faster, hits for 8, and charges every 6 s instead of 9.
-- **Rewards**: Boar King's Crest, meat, hides, tusks, 600 EXP, +12 weapon mastery, 100 Col, and Floor 1 marked as cleared.
+- **Rewards**: Boar King's Crest, meat, hides, tusks, 600 EXP, +12 weapon mastery, 100 Col, and Floor 1 marked as cleared. That opens the Stair Gate for you.
 - He leaves after 60 s with no player nearby, so a failed attempt doesn't leave him roaming.
 
 Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it and re-run `python3 tools/gen_mobs.py`.
@@ -198,13 +198,20 @@ Floor 1 is a **floating island** about 500 blocks across at y 200, centered on x
   - New players start in town.
   - Menu > **Travel** goes to Wayfarer's Rest or back to world spawn.
   - Your spawn point is set to the town.
-- **Floor 1 mobs** spawn in the forest around players (8 nearby at most), never inside town. Hares and wasps come out by day; moles and golemites come out more at night.
+- **Guardian's Arena**: at the end of the north trail, 185 blocks from town. It's a flat ring of stone with lantern pillars, a chiseled dais where Ironhide appears, and an entrance from the trail on the south side.
+- **Stair Gate**: a glowing, unbreakable gate in the arena's north wall, with a stairway climbing away behind it. It's sealed until you've beaten Ironhide, and it opens per player. Floor 2 is still being built, so for now the open gate tells you that. Once Floor 2 exists, it will take you there.
+- **Map & Travel** (menu):
+  - shows whether you're on Floor 1
+  - gives the direction and distance to the town and the arena
+  - shows whether the gate is open for you
+  - travels to town or world spawn, and gives you a locator map
+- **Floor 1 mobs** spawn in the forest around players (8 nearby at most), never inside town or the arena. Hares and wasps come out by day; moles and golemites come out more at night.
 - **No Minecraft mobs**: vanilla mobs that spawn on the floor are removed.
 - **Falling off the edge** brings you back to town.
 - Preview the layout with `node tools/preview_floor1.mjs <dir>`, which writes a top-down map and the town's blocks.
 
 ## Roadmap
-5. Floors (part 2): Ironhide's arena and the stair gate on Floor 1, then Floors 2 and 3
+5. Floors (part 3): Floor 2 (theme, town, mobs, guardian, quests), then Floor 3
 
 ## Layout
 ```

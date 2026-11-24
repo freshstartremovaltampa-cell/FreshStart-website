@@ -202,6 +202,22 @@ def main():
         "key": {"C": {"item": "ponce:ember_copper_ingot"}, "F": {"item": "minecraft:campfire"}},
         "unlock": [{"item": "ponce:ember_copper_ingot"}], "result": {"item": "ponce:cooking_pot"}}})
 
+    # Stair Gate: the sealed way up to the next floor (opened per player by script)
+    def gate_tex(img):
+        for y in range(16):
+            for x in range(16):
+                r = ((x - 7.5) ** 2 + (y - 7.5) ** 2) ** 0.5
+                band = int(r * 1.6 + (x * 0.6 - y * 0.4)) % 3
+                img.putpixel((x, y), jitter([(90, 60, 170), (130, 100, 220), (175, 150, 255)][band], 8))
+        for x, y in ((4, 5), (11, 3), (8, 11), (2, 12), (13, 10)):
+            img.putpixel((x, y), (250, 245, 255, 255))
+    terrain["ponce_stair_gate"] = {"textures": tex("stair_gate", gate_tex)}
+    gate = block("ponce:stair_gate", "ponce_stair_gate", unbreakable=True, map_color="#8C64DC", menu="items")
+    gate["minecraft:block"]["components"]["minecraft:light_emission"] = 12
+    write_json(f"{BP}/blocks/stair_gate.json", gate)
+    sounds["ponce:stair_gate"] = {"sound": "glass"}
+    lang.append("tile.ponce:stair_gate.name=Stair Gate")
+
     # Foods
     for key, name, nut, sat, stats, secs, lvl, xp, ingr, (c1, c2) in FOODS:
         def food_icon(img, a=c1, b=c2):

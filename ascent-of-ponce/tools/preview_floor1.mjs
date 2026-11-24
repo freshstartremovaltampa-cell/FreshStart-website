@@ -15,7 +15,7 @@ const COLORS = {
   glass: [190, 220, 230], fence: [150, 120, 80], lantern: [255, 200, 90], bookshelf: [120, 80, 50], furnace: [90, 90, 90],
   anvil: [60, 60, 60], chest: [160, 110, 50], barrel: [130, 95, 60], campfire: [220, 120, 40], hay: [210, 180, 60],
   red_wool: [180, 40, 40], blue_wool: [50, 70, 170], yellow_wool: [230, 200, 50],
-  forge: [150, 70, 50], pot: [200, 110, 60], ember_copper_node: [214, 120, 60], ironheart_node: [170, 50, 50], glimmer_silver_node: [220, 225, 240],
+  stair_gate: [150, 120, 240], forge: [150, 70, 50], pot: [200, 110, 60], ember_copper_node: [214, 120, 60], ironheart_node: [170, 50, 50], glimmer_silver_node: [220, 225, 240],
   short_grass: [90, 150, 60], fern: [70, 130, 60], poppy: [200, 40, 40], dandelion: [240, 220, 40], cornflower: [80, 100, 220],
   oxeye_daisy: [240, 240, 230], azure_bluet: [220, 230, 250],
 };
@@ -46,12 +46,14 @@ for (let z = C.z - R; z < C.z + R; z++) for (let x = C.x - R; x < C.x + R; x++) 
   map.push((COLORS[t[1]] ?? [255, 0, 255]).map((c) => Math.max(0, Math.min(255, Math.round(c * shade)))));
 }
 fs.writeFileSync(`${out}/floor1_map.json`, JSON.stringify({ size, map }));
-// Town blocks (above ground only, so the render stays light)
-const town = [];
-for (const [k, v] of blocks) {
-  const [x, y, z] = k.split(",").map(Number);
-  if (Math.hypot(x - C.x, z - C.z) > 56 || y < g.FLOOR1.base - 1) continue;
-  town.push([x - C.x, y - g.FLOOR1.base, z - C.z, ...(COLORS[v] ?? [255, 0, 255])]);
+// Town and arena blocks (above ground only, so the renders stay light)
+for (const [name, cx, cz, r] of [["town", C.x, C.z, 56], ["arena", g.ARENA.x, g.ARENA.z, 34]]) {
+  const list = [];
+  for (const [k, v] of blocks) {
+    const [x, y, z] = k.split(",").map(Number);
+    if (Math.hypot(x - cx, z - cz) > r || y < g.FLOOR1.base - 1) continue;
+    list.push([x - cx, y - g.FLOOR1.base, z - cz, ...(COLORS[v] ?? [255, 0, 255])]);
+  }
+  fs.writeFileSync(`${out}/floor1_${name}.json`, JSON.stringify(list));
 }
-fs.writeFileSync(`${out}/floor1_town.json`, JSON.stringify(town));
-console.log(`blocks ${blocks.size}, town blocks ${town.length}, unknown colors: ${[...new Set(blocks.values())].filter((v) => !COLORS[v]).join(",") || "none"}`);
+console.log(`blocks ${blocks.size}, unknown colors: ${[...new Set(blocks.values())].filter((v) => !COLORS[v]).join(",") || "none"}`);

@@ -21,5 +21,8 @@
   },
   "ponce:cooking_pot": {
     "sound": "metal"
+  },
+  "ponce:stair_gate": {
+    "sound": "glass"
   }
 }

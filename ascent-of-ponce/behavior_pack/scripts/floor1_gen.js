@@ -64,16 +64,33 @@ export function inTown(x, z) {
 
 const ROAD_ANGLES = [-Math.PI / 2, 0, Math.PI / 2, Math.PI]; // N, E, S, W
 
+/** Direction of trail k (0 N, 1 E, 2 S, 3 W) at distance d from the center: it winds outside town. */
+function trailAngle(k, d) {
+  const wobble = d > TOWN_R ? (valueNoise(d, k * 50, 40, 11) - 0.5) * 0.5 * Math.min(1, (d - TOWN_R) / 40) : 0;
+  return ROAD_ANGLES[k] + wobble;
+}
+
+// ---------- Guardian's Arena: where the north trail ends ----------
+
+const ARENA_D = 185;
+export const ARENA = (() => {
+  const a = trailAngle(0, ARENA_D);
+  return { x: C.x + Math.round(Math.cos(a) * ARENA_D), z: C.z + Math.round(Math.sin(a) * ARENA_D), y: BASE, radius: 16 };
+})();
+/** The Stair Gate sits in the arena's north wall. */
+export const GATE = { x: ARENA.x, y: BASE + 1, z: ARENA.z - 17 };
+export const arenaDistance = (x, z) => Math.hypot(x - ARENA.x, z - ARENA.z);
+
 /** Distance from (x, z) to the nearest trail, which leaves town through a gate and winds outward. */
 function roadDistance(x, z) {
   const d = dist(x, z);
   if (d < 11) return 99;
   let best = 99;
   ROAD_ANGLES.forEach((base, k) => {
-    const wobble = d > TOWN_R ? (valueNoise(d, k * 50, 40, 11) - 0.5) * 0.5 * Math.min(1, (d - TOWN_R) / 40) : 0;
-    const a = base + wobble;
+    const a = trailAngle(k, d);
     const along = (x - C.x) * Math.cos(a) + (z - C.z) * Math.sin(a);
     if (along <= 0) return;
+    if (k === 0 && along > ARENA_D - 14) return; // the north trail ends at the arena
     const side = Math.abs(-(x - C.x) * Math.sin(a) + (z - C.z) * Math.cos(a));
     best = Math.min(best, side);
   });
@@ -81,6 +98,7 @@ function roadDistance(x, z) {
 }
 
 function isPond(x, z) {
+  if (arenaDistance(x, z) < 30) return false;
   const d = dist(x, z);
   if (d < TOWN_R + 25 || d > edgeAt(x, z) - 12 || roadDistance(x, z) < 4) return false;
   return valueNoise(x, z, 22, 21) > 0.86;
@@ -95,6 +113,9 @@ export function surfaceY(x, z) {
   let y = BASE + Math.round(hill);
   if (roadDistance(x, z) < 2.5) y = BASE + Math.round(hill * 0.5);
   if (isPond(x, z)) y -= 2; // a pond bed two below the land around it; the water sits one below the land
+  const da = arenaDistance(x, z);
+  if (da <= 20) return BASE; // the arena is flat
+  if (da < 30) return Math.round(BASE + (y - BASE) * smooth((da - 20) / 10));
   return y;
 }
 
@@ -246,6 +267,42 @@ function buildTown() {
 }
 buildTown();
 
+function buildArena() {
+  const A = ARENA;
+  const P = (key, x, y, z) => TOWN.push(["s", key, A.x + x, BASE + y, A.z + z]);
+  // Floor: stone bricks, a chiseled dais in the middle, a mossy ring around it
+  for (let x = -18; x <= 18; x++) for (let z = -18; z <= 18; z++) {
+    const r = Math.hypot(x, z);
+    if (r <= 16.5) {
+      const key = r < 3.5 ? "chiseled" : r < 4.5 ? "mossy" : hash(A.x + x, A.z + z, 7) < 0.15 ? "mossy" : "bricks";
+      P(key, x, 0, z);
+    } else if (r <= 17.6) {
+      const southGap = z > 0 && Math.abs(x) <= 2;
+      const northGate = z < 0 && Math.abs(x) <= 3;
+      P("bricks", x, 0, z);
+      if (!southGap && !northGate) { P("bricks", x, 1, z); P("bricks", x, 2, z); }
+    }
+  }
+  // Pillars with lanterns around the ring (not over the entrances)
+  for (let deg = 0; deg < 360; deg += 30) {
+    if (deg === 90 || deg === 270) continue;
+    const rad = (deg * Math.PI) / 180;
+    const x = Math.round(Math.cos(rad) * 17), z = Math.round(Math.sin(rad) * 17);
+    for (let y = 1; y <= 4; y++) P("chiseled", x, y, z);
+    P("lantern", x, 5, z);
+  }
+  // South entrance meets the trail
+  for (let z = 16; z <= 21; z++) for (let x = -1; x <= 1; x++) P("path", x, 0, z);
+  // Stair Gate in the north wall: an archway filled with the gate
+  for (const x of [-3, 3]) for (let y = 1; y <= 6; y++) P("chiseled", x, y, -17);
+  for (let x = -3; x <= 3; x++) P("bricks", x, 7, -17);
+  P("lantern", -3, 7, -18); P("lantern", 3, 7, -18);
+  for (let x = -2; x <= 2; x++) for (let y = 1; y <= 6; y++) P(y <= 5 ? "stair_gate" : "bricks", x, y, -17);
+  // Beyond the gate, a stone stairway climbs toward the next floor
+  for (let i = 0; i < 7; i++) for (let x = -2; x <= 2; x++) for (let y = 0; y <= 1 + i; y++) P("bricks", x, y, -18 - i);
+}
+buildArena();
+
 // Absolute NPC spots and arrival point
 for (const k of Object.keys(NPC_SPOTS)) NPC_SPOTS[k] = { x: C.x + NPC_SPOTS[k].x + 0.5, y: BASE + 1, z: C.z + NPC_SPOTS[k].z + 0.5 };
 export const ARRIVAL = { x: C.x + 0.5, y: BASE + 1, z: C.z + 7.5 };
@@ -266,7 +323,7 @@ function treeInCell(gx, gz) {
   const x = gx * TREE_CELL + Math.floor(hash(gx, gz, 31) * TREE_CELL);
   const z = gz * TREE_CELL + Math.floor(hash(gx, gz, 37) * TREE_CELL);
   const d = dist(x, z);
-  if (d < TOWN_R + 5 || d > edgeAt(x, z) - 4) return undefined;
+  if (d < TOWN_R + 5 || d > edgeAt(x, z) - 4 || arenaDistance(x, z) < 25) return undefined;
   if (roadDistance(x, z) < 3.5 || isPond(x, z) || boulderAt(x, z)) return undefined;
   const density = fbm(x, z, 60, 41); // low = meadow clearing, high = deep forest
   if (hash(gx, gz, 43) > density * 1.25 - 0.1) return undefined;
@@ -310,7 +367,7 @@ function boulderInCell(bx, bz) {
   const x = bx * BOULDER_CELL + 4 + Math.floor(hash(bx, bz, 67) * (BOULDER_CELL - 8));
   const z = bz * BOULDER_CELL + 4 + Math.floor(hash(bx, bz, 71) * (BOULDER_CELL - 8));
   const d = dist(x, z);
-  if (d < TOWN_R + 12 || d > edgeAt(x, z) - 8 || roadDistance(x, z) < 5 || isPond(x, z)) return undefined;
+  if (d < TOWN_R + 12 || d > edgeAt(x, z) - 8 || roadDistance(x, z) < 5 || isPond(x, z) || arenaDistance(x, z) < 30) return undefined;
   const roll = hash(bx, bz, 73);
   const ore = roll < 0.55 ? "ember_copper_node" : roll < 0.88 ? "ironheart_node" : "glimmer_silver_node";
   return { x, z, ore, count: 1 + Math.floor(hash(bx, bz, 79) * 3) };
@@ -369,7 +426,7 @@ export function chunkOps(cx, cz) {
     if (edge - d < 2) surface = hash(x, z, 93) < 0.5 ? "stone" : "mossy";
     ops.push(["s", surface, x, top, z]);
     // ground cover in the forest
-    if (surface === "grass" && d > TOWN_R + 2 && road > 2.5) {
+    if (surface === "grass" && d > TOWN_R + 2 && road > 2.5 && arenaDistance(x, z) > 20) {
       const r = hash(x, z, 97);
       const meadow = fbm(x, z, 60, 41) < 0.45;
       if (meadow && r < 0.06) ops.push(["s", ["poppy", "dandelion", "cornflower", "oxeye_daisy", "azure_bluet"][Math.floor(hash(x, z, 101) * 5)], x, top + 1, z]);
@@ -401,6 +458,17 @@ export const CHUNK_BOUNDS = {
   min: { x: (C.x - FLOOR1.radius - 16) >> 4, z: (C.z - FLOOR1.radius - 16) >> 4 },
   max: { x: (C.x + FLOOR1.radius + 16) >> 4, z: (C.z + FLOOR1.radius + 16) >> 4 },
 };
+
+const COMPASS = ["east", "south-east", "south", "south-west", "west", "north-west", "north", "north-east"];
+
+/** "210 blocks north-west" (north is -z). */
+export function directionText(from, to) {
+  const dx = to.x - from.x, dz = to.z - from.z;
+  const d = Math.round(Math.hypot(dx, dz));
+  if (d < 8) return "right here";
+  const i = ((Math.round(Math.atan2(dz, dx) / (Math.PI / 4)) % 8) + 8) % 8;
+  return `${d} blocks ${COMPASS[i]}`;
+}
 
 /** True if a location is on (or just above/below) Floor 1. */
 export function isOnFloor1(loc) {

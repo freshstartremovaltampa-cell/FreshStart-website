@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:block": {
+    "description": {
+      "identifier": "ponce:stair_gate",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": false,
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 1200
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "ponce_stair_gate",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:map_color": "#8C64DC",
+      "minecraft:light_emission": 12
+    }
+  }
+}
