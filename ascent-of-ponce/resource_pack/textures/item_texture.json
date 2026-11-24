@@ -91,6 +91,39 @@
     },
     "ponce_ironhide_greatsword": {
       "textures": "textures/items/weapons/ironhide_greatsword"
+    },
+    "ponce_raw_ember_copper": {
+      "textures": "textures/items/raw_ember_copper"
+    },
+    "ponce_ember_copper_ingot": {
+      "textures": "textures/items/ember_copper_ingot"
+    },
+    "ponce_raw_ironheart": {
+      "textures": "textures/items/raw_ironheart"
+    },
+    "ponce_ironheart_ingot": {
+      "textures": "textures/items/ironheart_ingot"
+    },
+    "ponce_raw_glimmer_silver": {
+      "textures": "textures/items/raw_glimmer_silver"
+    },
+    "ponce_glimmer_silver_ingot": {
+      "textures": "textures/items/glimmer_silver_ingot"
+    },
+    "ponce_boar_skewer": {
+      "textures": "textures/items/boar_skewer"
+    },
+    "ponce_hare_stew": {
+      "textures": "textures/items/hare_stew"
+    },
+    "ponce_jelly_tart": {
+      "textures": "textures/items/jelly_tart"
+    },
+    "ponce_hearty_roast": {
+      "textures": "textures/items/hearty_roast"
+    },
+    "ponce_burnt_mess": {
+      "textures": "textures/items/burnt_mess"
     }
   }
 }

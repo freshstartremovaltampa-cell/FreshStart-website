@@ -1,0 +1,35 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "ponce:smithing_forge"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "CCC",
+      "BIB",
+      "BBB"
+    ],
+    "key": {
+      "C": {
+        "item": "ponce:ember_copper_ingot"
+      },
+      "B": {
+        "item": "minecraft:brick_block"
+      },
+      "I": {
+        "item": "minecraft:iron_block"
+      }
+    },
+    "unlock": [
+      {
+        "item": "ponce:ember_copper_ingot"
+      }
+    ],
+    "result": {
+      "item": "ponce:smithing_forge"
+    }
+  }
+}

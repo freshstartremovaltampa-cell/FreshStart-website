@@ -13,6 +13,20 @@ export const WEAPON_DEFS = {
         "str": 2,
         "dex": 2
       }
+    },
+    "forge": {
+      "smithing": 1,
+      "xp": 30,
+      "materials": [
+        {
+          "item": "ponce:ironheart_ingot",
+          "count": 3
+        },
+        {
+          "item": "ponce:ember_copper_ingot",
+          "count": 1
+        }
+      ]
     }
   },
   "ponce:iron_dagger": {
@@ -26,6 +40,20 @@ export const WEAPON_DEFS = {
       "stats": {
         "dex": 3
       }
+    },
+    "forge": {
+      "smithing": 1,
+      "xp": 30,
+      "materials": [
+        {
+          "item": "ponce:ironheart_ingot",
+          "count": 2
+        },
+        {
+          "item": "ponce:ember_copper_ingot",
+          "count": 1
+        }
+      ]
     }
   },
   "ponce:iron_rapier": {
@@ -39,6 +67,20 @@ export const WEAPON_DEFS = {
       "stats": {
         "dex": 4
       }
+    },
+    "forge": {
+      "smithing": 1,
+      "xp": 30,
+      "materials": [
+        {
+          "item": "ponce:ironheart_ingot",
+          "count": 3
+        },
+        {
+          "item": "ponce:ember_copper_ingot",
+          "count": 1
+        }
+      ]
     }
   },
   "ponce:iron_warhammer": {
@@ -52,6 +94,20 @@ export const WEAPON_DEFS = {
       "stats": {
         "str": 4
       }
+    },
+    "forge": {
+      "smithing": 1,
+      "xp": 30,
+      "materials": [
+        {
+          "item": "ponce:ironheart_ingot",
+          "count": 4
+        },
+        {
+          "item": "ponce:ember_copper_ingot",
+          "count": 1
+        }
+      ]
     }
   },
   "ponce:iron_battleaxe": {
@@ -65,6 +121,20 @@ export const WEAPON_DEFS = {
       "stats": {
         "str": 3
       }
+    },
+    "forge": {
+      "smithing": 1,
+      "xp": 30,
+      "materials": [
+        {
+          "item": "ponce:ironheart_ingot",
+          "count": 3
+        },
+        {
+          "item": "ponce:ember_copper_ingot",
+          "count": 1
+        }
+      ]
     }
   },
   "ponce:iron_spear": {
@@ -79,6 +149,20 @@ export const WEAPON_DEFS = {
         "agi": 2,
         "str": 2
       }
+    },
+    "forge": {
+      "smithing": 1,
+      "xp": 30,
+      "materials": [
+        {
+          "item": "ponce:ironheart_ingot",
+          "count": 2
+        },
+        {
+          "item": "ponce:ember_copper_ingot",
+          "count": 1
+        }
+      ]
     }
   },
   "ponce:iron_katana": {
@@ -93,6 +177,20 @@ export const WEAPON_DEFS = {
         "dex": 3,
         "agi": 2
       }
+    },
+    "forge": {
+      "smithing": 1,
+      "xp": 30,
+      "materials": [
+        {
+          "item": "ponce:ironheart_ingot",
+          "count": 3
+        },
+        {
+          "item": "ponce:ember_copper_ingot",
+          "count": 1
+        }
+      ]
     }
   },
   "ponce:iron_greatsword": {
@@ -107,6 +205,20 @@ export const WEAPON_DEFS = {
         "str": 5,
         "vit": 2
       }
+    },
+    "forge": {
+      "smithing": 1,
+      "xp": 30,
+      "materials": [
+        {
+          "item": "ponce:ironheart_ingot",
+          "count": 5
+        },
+        {
+          "item": "ponce:ember_copper_ingot",
+          "count": 1
+        }
+      ]
     }
   },
   "ponce:tuskfang_blade": {
@@ -121,6 +233,28 @@ export const WEAPON_DEFS = {
         "str": 4,
         "dex": 4
       }
+    },
+    "forge": {
+      "smithing": 8,
+      "xp": 80,
+      "materials": [
+        {
+          "item": "ponce:ironheart_ingot",
+          "count": 3
+        },
+        {
+          "item": "ponce:glimmer_silver_ingot",
+          "count": 1
+        },
+        {
+          "item": "ponce:boar_tusk",
+          "count": 2
+        },
+        {
+          "item": "ponce:boar_hide",
+          "count": 1
+        }
+      ]
     }
   },
   "ponce:stinger_dirk": {
@@ -134,6 +268,24 @@ export const WEAPON_DEFS = {
       "stats": {
         "dex": 6
       }
+    },
+    "forge": {
+      "smithing": 8,
+      "xp": 80,
+      "materials": [
+        {
+          "item": "ponce:ironheart_ingot",
+          "count": 2
+        },
+        {
+          "item": "ponce:glimmer_silver_ingot",
+          "count": 1
+        },
+        {
+          "item": "ponce:wasp_stinger",
+          "count": 3
+        }
+      ]
     }
   },
   "ponce:quill_rapier": {
@@ -148,6 +300,24 @@ export const WEAPON_DEFS = {
         "dex": 6,
         "agi": 2
       }
+    },
+    "forge": {
+      "smithing": 8,
+      "xp": 80,
+      "materials": [
+        {
+          "item": "ponce:ironheart_ingot",
+          "count": 3
+        },
+        {
+          "item": "ponce:glimmer_silver_ingot",
+          "count": 1
+        },
+        {
+          "item": "ponce:thorn_quill",
+          "count": 4
+        }
+      ]
     }
   },
   "ponce:golemite_maul": {
@@ -161,6 +331,28 @@ export const WEAPON_DEFS = {
       "stats": {
         "str": 7
       }
+    },
+    "forge": {
+      "smithing": 8,
+      "xp": 80,
+      "materials": [
+        {
+          "item": "ponce:ironheart_ingot",
+          "count": 4
+        },
+        {
+          "item": "ponce:glimmer_silver_ingot",
+          "count": 1
+        },
+        {
+          "item": "ponce:golemite_core",
+          "count": 1
+        },
+        {
+          "item": "ponce:moss_clump",
+          "count": 2
+        }
+      ]
     }
   },
   "ponce:boarhide_cleaver": {
@@ -175,6 +367,28 @@ export const WEAPON_DEFS = {
         "str": 5,
         "vit": 3
       }
+    },
+    "forge": {
+      "smithing": 8,
+      "xp": 80,
+      "materials": [
+        {
+          "item": "ponce:ironheart_ingot",
+          "count": 3
+        },
+        {
+          "item": "ponce:glimmer_silver_ingot",
+          "count": 1
+        },
+        {
+          "item": "ponce:boar_hide",
+          "count": 2
+        },
+        {
+          "item": "ponce:boar_tusk",
+          "count": 1
+        }
+      ]
     }
   },
   "ponce:thornpike": {
@@ -189,6 +403,28 @@ export const WEAPON_DEFS = {
         "agi": 5,
         "str": 3
       }
+    },
+    "forge": {
+      "smithing": 8,
+      "xp": 80,
+      "materials": [
+        {
+          "item": "ponce:ironheart_ingot",
+          "count": 2
+        },
+        {
+          "item": "ponce:glimmer_silver_ingot",
+          "count": 1
+        },
+        {
+          "item": "ponce:thorn_quill",
+          "count": 3
+        },
+        {
+          "item": "ponce:mole_claw",
+          "count": 1
+        }
+      ]
     }
   },
   "ponce:verdant_katana": {
@@ -203,6 +439,28 @@ export const WEAPON_DEFS = {
         "dex": 5,
         "agi": 4
       }
+    },
+    "forge": {
+      "smithing": 8,
+      "xp": 80,
+      "materials": [
+        {
+          "item": "ponce:ironheart_ingot",
+          "count": 3
+        },
+        {
+          "item": "ponce:glimmer_silver_ingot",
+          "count": 1
+        },
+        {
+          "item": "ponce:moss_clump",
+          "count": 2
+        },
+        {
+          "item": "ponce:wasp_wing",
+          "count": 1
+        }
+      ]
     }
   },
   "ponce:ironhide_greatsword": {
@@ -217,6 +475,28 @@ export const WEAPON_DEFS = {
         "str": 9,
         "vit": 4
       }
+    },
+    "forge": {
+      "smithing": 8,
+      "xp": 80,
+      "materials": [
+        {
+          "item": "ponce:ironheart_ingot",
+          "count": 5
+        },
+        {
+          "item": "ponce:glimmer_silver_ingot",
+          "count": 1
+        },
+        {
+          "item": "ponce:boar_king_crest",
+          "count": 1
+        },
+        {
+          "item": "ponce:boar_tusk",
+          "count": 2
+        }
+      ]
     }
   }
 };

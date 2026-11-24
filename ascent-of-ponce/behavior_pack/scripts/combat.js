@@ -13,7 +13,7 @@ import { getData, markDirty } from "./data.js";
 import {
   addMastery, addXp, critChance, damageMultiplier, dodgeChance, getHeldItem, weaponTypeOf,
 } from "./progression.js";
-import { getOffhand, meetsWeaponReq, wearWeapon, weaponDef } from "./weapons.js";
+import { getOffhand, meetsWeaponReq, qualityMult, wearWeapon, weaponDef } from "./weapons.js";
 import {
   armorBroken, bleeds, lastHit, lastSwing, nextHitBuffs, reduceCooldowns, skillHits, stances,
 } from "./effects.js";
@@ -67,7 +67,8 @@ export function killWithCredit(target, player) {
 
 /** Base damage of the held Ponce weapon. Skills scale from this. */
 export function heldDamage(player) {
-  return weaponDef(getHeldItem(player))?.damage ?? 5;
+  const item = getHeldItem(player);
+  return (weaponDef(item)?.damage ?? 5) * qualityMult(item);
 }
 
 /**
@@ -120,7 +121,7 @@ function resolveHit(player, target, damage, { skill = false, direct = false } = 
   lastCombatTick.set(player.id, now);
   lastHit.set(player.id, now);
 
-  let mult = damageMultiplier(data, weapon);
+  let mult = damageMultiplier(data, weapon) * qualityMult(item);
 
   if (def && !meetsWeaponReq(data, def)) {
     mult *= UNMET_REQUIREMENT_DAMAGE;

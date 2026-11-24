@@ -1,0 +1,14 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_furnace": {
+    "description": {
+      "identifier": "ponce:smelt_ember_copper"
+    },
+    "tags": [
+      "furnace",
+      "blast_furnace"
+    ],
+    "input": "ponce:raw_ember_copper",
+    "output": "ponce:ember_copper_ingot"
+  }
+}

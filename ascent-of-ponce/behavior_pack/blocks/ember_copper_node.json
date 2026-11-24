@@ -1,0 +1,27 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:block": {
+    "description": {
+      "identifier": "ponce:ember_copper_node",
+      "menu_category": {
+        "category": "nature"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2.1
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 30
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "ponce_ember_copper_node",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:map_color": "#B0703C",
+      "minecraft:loot": "loot_tables/empty.json"
+    }
+  }
+}

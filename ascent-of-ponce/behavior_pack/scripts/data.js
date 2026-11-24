@@ -21,6 +21,8 @@ function freshData() {
     weaponMinutes: Object.fromEntries(WEAPON_KEYS.map((k) => [k, 0])),
     skills: [], // unlocked skill ids
     activeSkill: {}, // weapon type -> equipped active skill id
+    jobs: { mining: { level: 1, xp: 0 }, smithing: { level: 1, xp: 0 }, cooking: { level: 1, xp: 0 } },
+    foodBuff: null, // { name, stats, until (world absolute time) }
     col: 0, // currency
     highestFloor: 1,
     kills: 0,
@@ -38,6 +40,7 @@ function migrate(raw) {
   data.weaponMinutes = { ...base.weaponMinutes, ...(raw.weaponMinutes ?? {}) };
   data.settings = { ...base.settings, ...(raw.settings ?? {}) };
   data.activeSkill = { ...(raw.activeSkill ?? {}) };
+  data.jobs = Object.fromEntries(Object.entries(base.jobs).map(([k, v]) => [k, { ...v, ...(raw.jobs?.[k] ?? {}) }]));
   data.v = SCHEMA_VERSION;
   return data;
 }

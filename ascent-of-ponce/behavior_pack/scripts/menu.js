@@ -10,21 +10,15 @@ import {
 } from "./progression.js";
 import { SKILLS, describeRequirements } from "./skills.js";
 import { LORE } from "./lore.js";
+import { show } from "./ui.js";
+import { JOBS, JOB_MAX, jobXpToNext } from "./jobs.js";
+import { ORES } from "./jobs_data.js";
+import { buffActive } from "./cooking.js";
 import { equippedSkill } from "./abilities.js";
 import { WEAPON_DEFS } from "./weapon_data.js";
 import { describeWeaponReq } from "./weapons.js";
 
 const DIV = "§8────────────────";
-
-/** Show a form, retrying while the player has chat or another screen open. */
-async function show(player, form, tries = 20) {
-  for (let i = 0; i < tries; i++) {
-    const res = await form.show(player);
-    if (res.cancelationReason !== FormCancelationReason.UserBusy) return res;
-    await new Promise((r) => system.runTimeout(r, 5));
-  }
-  return { canceled: true };
-}
 
 function bar(value, max, len = 20, on = "§a", off = "§8") {
   const filled = Math.round((Math.min(value, max) / max) * len);
@@ -52,6 +46,7 @@ export async function openMainMenu(player) {
     .button("Skills", "textures/items/book_enchanted")
     .button("Weapon Mastery", "textures/items/weapons/iron_longsword")
     .button("Armory", "textures/items/weapons/iron_greatsword")
+    .button("Jobs", "textures/items/iron_pickaxe")
     .button("Quests  §8(coming soon)", "textures/items/book_writable")
     .button("Floor Map  §8(coming soon)", "textures/items/map_filled")
     .button("Journal", "textures/items/book_normal")
@@ -63,7 +58,7 @@ export async function openMainMenu(player) {
   const res = await show(player, form);
   if (res.canceled) return;
   player.playSound("random.click");
-  const pages = [openStatus, openSkills, openMastery, openArmory, comingSoon, comingSoon, openJournal, openSettings, openDev];
+  const pages = [openStatus, openSkills, openMastery, openArmory, openJobs, comingSoon, comingSoon, openJournal, openSettings, openDev];
   await pages[res.selection]?.(player);
 }
 
@@ -86,7 +81,8 @@ async function openStatus(player) {
       `§eLv ${d.level}   §aUnspent points: ${d.statPoints}\n${DIV}\n` +
       lines.join("\n") +
       `\n${DIV}\n§7Melee bonus: §f+${pct(damageMultiplier(d) - 1)}  §7Crit: §f${pct(critChance(d))}  §7Dodge: §f${pct(dodgeChance(d))}\n` +
-      `§7Kills: §f${d.kills}   §7Deaths: §f${d.deaths}`
+      `§7Kills: §f${d.kills}   §7Deaths: §f${d.deaths}` +
+      (buffActive(d) ? `\n§eMeal: ${d.foodBuff.name} §7(${Object.entries(d.foodBuff.stats).map(([k, v]) => `+${v} ${k.toUpperCase()}`).join(", ")}, already included above)` : "")
     );
   if (d.statPoints > 0) form.button("§aAllocate Points", "textures/items/experience_bottle");
   form.button("Back");
@@ -179,6 +175,30 @@ async function openWeaponSkills(player, weapon) {
   return openSkills(player);
 }
 
+// ---------- Jobs ----------
+
+async function openJobs(player) {
+  const d = getData(player);
+  const lines = Object.entries(JOBS).map(([k, j]) => {
+    const { level, xp } = d.jobs[k];
+    const next = jobXpToNext(level);
+    const prog = level >= JOB_MAX ? "§6MAX" : `${bar(xp, next, 20, "§e")} §7${xp}/${next}`;
+    return `${j.color}${j.name} §fLv ${level}\n${prog}\n§8${j.desc}`;
+  }).join(`\n${DIV}\n`);
+  const ores = Object.values(ORES).map((o) => `§f${o.name}: §7Mining ${o.level}, ${o.pickaxe} pickaxe+, regrows in ${o.regen}s`).join("\n");
+  const res = await show(player, new ActionFormData()
+    .title("§l§6Jobs")
+    .body(
+      `${lines}\n${DIV}\n§6How it works\n` +
+      "§fMining: §7find ore nodes underground. They regrow after you mine them. Smelt raw ore in a furnace.\n" +
+      "§fSmithing: §7use a Smithing Forge, pick a weapon, then punch the forge in time to shape the blade.\n" +
+      "§fCooking: §7use a Cooking Pot, pick a recipe, then punch the pot when it's done. Meals give a temporary stat buff.\n" +
+      `${DIV}\n§6Ore nodes\n${ores}`
+    )
+    .button("Back"));
+  if (!res.canceled) return openMainMenu(player);
+}
+
 // ---------- Armory ----------
 
 async function openArmory(player) {
@@ -188,10 +208,10 @@ async function openArmory(player) {
   const res = await show(player, new ActionFormData()
     .title("§l§6Armory")
     .body(
-      "§7Ponce weapons have level and stat requirements. Below them, a weapon deals only 25% damage and can't use skills. " +
+      "§7Ponce weapons are §fforged§7 at a Smithing Forge, not crafted. They have level and stat requirements. Below them, a weapon deals only 25% damage and can't use skills. " +
       "Weapons never grant abilities; every weapon type handles differently.\n" +
-      `${DIV}\n§eTier I §7- crafted from iron at a crafting table\n${byTier(1)}\n` +
-      `${DIV}\n§bTier II §7- upgrade a Tier I weapon with Floor 1 materials\n${byTier(2)}`
+      `${DIV}\n§eTier I §7- Ironheart + Ember Copper, Smithing 1\n${byTier(1)}\n` +
+      `${DIV}\n§bTier II §7- Ironheart + Glimmer Silver + Floor 1 materials, Smithing 8\n${byTier(2)}`
     )
     .button("Back"));
   if (!res.canceled) return openMainMenu(player);
@@ -254,6 +274,8 @@ async function openDev(player) {
     .button("+10 Col")
     .button("Give all Ponce weapons")
     .button("Unlock all skills + 60 in every stat")
+    .button("Job kit: ingots, forge, pot, ingredients")
+    .button("All jobs to level 20")
     .button("§cReset my progress")
     .button("Back"));
   if (res.canceled) return;
@@ -277,7 +299,22 @@ async function openDev(player) {
       applyStatEffects(player);
       player.sendMessage("§a[Ponce] All skills unlocked, Lv 40, 60 in every stat.");
       break;
-    case 6: resetData(player); applyStatEffects(player); player.sendMessage("§c[Ponce] Progress reset."); break;
+    case 6: {
+      const kit = [["ponce:ironheart_ingot", 16], ["ponce:ember_copper_ingot", 8], ["ponce:glimmer_silver_ingot", 4],
+        ["ponce:smithing_forge", 1], ["ponce:cooking_pot", 1], ["ponce:raw_boar", 8], ["ponce:raw_hare", 4],
+        ["ponce:jelly_gel", 6], ["minecraft:stick", 8], ["minecraft:carrot", 4], ["minecraft:bowl", 4],
+        ["minecraft:wheat", 4], ["minecraft:sugar", 4], ["minecraft:potato", 8], ["minecraft:iron_pickaxe", 1]];
+      const inv = player.getComponent("minecraft:inventory")?.container;
+      for (const [id, n] of kit) inv?.addItem(new ItemStack(id, n));
+      player.sendMessage("§a[Ponce] Job kit given (needs free inventory space).");
+      break;
+    }
+    case 7:
+      for (const j of Object.values(d.jobs)) j.level = Math.max(j.level, 20);
+      markDirty(player);
+      player.sendMessage("§a[Ponce] Mining, Smithing and Cooking set to level 20.");
+      break;
+    case 8: resetData(player); applyStatEffects(player); player.sendMessage("§c[Ponce] Progress reset."); break;
     default: return openMainMenu(player);
   }
   return openDev(player);

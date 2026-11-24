@@ -4,6 +4,23 @@ import { EquipmentSlot } from "@minecraft/server";
 import { STATS, WEAPONS, WEAPON_HANDLING } from "./config.js";
 import { WEAPON_DEFS } from "./weapon_data.js";
 
+// Forged weapons carry a quality (dynamic property "ponce:quality").
+// Crafted-by-command or older weapons have none and count as Standard.
+export const QUALITIES = {
+  crude: { name: "§8Crude", damage: 0.9, wearExtra: 0.25, xp: 0.5 },
+  standard: { name: "§fStandard", damage: 1.0, xp: 1 },
+  fine: { name: "§aFine", damage: 1.1, wearSkip: 0.2, xp: 1.25 },
+  masterwork: { name: "§6Masterwork", damage: 1.2, wearSkip: 0.33, xp: 1.5 },
+};
+
+export function qualityOf(item) {
+  try { return QUALITIES[item?.getDynamicProperty("ponce:quality")]; } catch { return undefined; }
+}
+
+export function qualityMult(item) {
+  return qualityOf(item)?.damage ?? 1;
+}
+
 export function weaponDef(item) {
   return item ? WEAPON_DEFS[item.typeId] : undefined;
 }
@@ -58,12 +75,15 @@ export function wearWeapon(player, slot = EquipmentSlot.Mainhand) {
   if (!dur) return;
   const unbreaking = item.getComponent("minecraft:enchantable")?.getEnchantment?.("unbreaking")?.level ?? 0;
   if (unbreaking > 0 && Math.random() < unbreaking / (unbreaking + 1)) return;
-  if (dur.damage + 1 >= dur.maxDurability) {
+  const q = qualityOf(item);
+  if (q?.wearSkip && Math.random() < q.wearSkip) return;
+  const amount = q?.wearExtra && Math.random() < q.wearExtra ? 2 : 1;
+  if (dur.damage + amount >= dur.maxDurability) {
     eq.setEquipment(slot, undefined);
     player.playSound("random.break");
     player.sendMessage(`§c[Ponce] Your ${weaponDef(item).name} broke!`);
     return;
   }
-  dur.damage += 1;
+  dur.damage += amount;
   eq.setEquipment(slot, item);
 }

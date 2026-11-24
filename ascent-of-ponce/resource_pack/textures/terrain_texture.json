@@ -1,0 +1,32 @@
+{
+  "resource_pack_name": "ascent_of_ponce",
+  "texture_name": "atlas.terrain",
+  "padding": 8,
+  "num_mip_levels": 4,
+  "texture_data": {
+    "ponce_ember_copper_node": {
+      "textures": "textures/blocks/ember_copper_node"
+    },
+    "ponce_ironheart_node": {
+      "textures": "textures/blocks/ironheart_node"
+    },
+    "ponce_glimmer_silver_node": {
+      "textures": "textures/blocks/glimmer_silver_node"
+    },
+    "ponce_depleted_node": {
+      "textures": "textures/blocks/depleted_node"
+    },
+    "ponce_forge_side": {
+      "textures": "textures/blocks/smithing_forge_side"
+    },
+    "ponce_forge_top": {
+      "textures": "textures/blocks/smithing_forge_top"
+    },
+    "ponce_pot_side": {
+      "textures": "textures/blocks/cooking_pot_side"
+    },
+    "ponce_pot_top": {
+      "textures": "textures/blocks/cooking_pot_top"
+    }
+  }
+}

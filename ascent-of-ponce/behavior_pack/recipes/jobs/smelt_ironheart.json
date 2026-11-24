@@ -1,0 +1,14 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_furnace": {
+    "description": {
+      "identifier": "ponce:smelt_ironheart"
+    },
+    "tags": [
+      "furnace",
+      "blast_furnace"
+    ],
+    "input": "ponce:raw_ironheart",
+    "output": "ponce:ironheart_ingot"
+  }
+}

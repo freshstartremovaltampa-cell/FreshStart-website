@@ -1,0 +1,14 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_furnace": {
+    "description": {
+      "identifier": "ponce:smelt_glimmer_silver"
+    },
+    "tags": [
+      "furnace",
+      "blast_furnace"
+    ],
+    "input": "ponce:raw_glimmer_silver",
+    "output": "ponce:glimmer_silver_ingot"
+  }
+}

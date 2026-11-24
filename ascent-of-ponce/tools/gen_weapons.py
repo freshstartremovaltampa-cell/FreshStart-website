@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-"""Generates the Ponce weapons: item files, pixel-art icons, recipes, and
-behavior_pack/scripts/weapon_data.js (the table the scripts read).
+"""Generates the Ponce weapons: item files, pixel-art icons, and
+behavior_pack/scripts/weapon_data.js (the table the scripts read, including
+each weapon's forge recipe). Weapons are forged at the Smithing Forge, not
+crafted: see scripts/forging.js.
 
 Run from the add-on folder:  python3 tools/gen_weapons.py
 Edit WEAPONS below, then re-run. Weapons never carry special abilities:
@@ -168,6 +170,18 @@ def item_json(wid, name, kind, tier, damage, durability):
     }
 
 
+INGOTS = {"dagger": 2, "spear": 2, "sword": 3, "rapier": 3, "katana": 3, "axe": 3, "hammer": 4, "greatsword": 5}
+
+
+def forge_recipe(kind, tier, recipe):
+    """Tier I: Ironheart plus an Ember Copper fitting. Tier II adds Glimmer Silver and Floor 1 materials."""
+    mats = [("ponce:ironheart_ingot", INGOTS[kind]), ("ponce:ember_copper_ingot", 1)]
+    if tier == 2:
+        mats = [("ponce:ironheart_ingot", INGOTS[kind]), ("ponce:glimmer_silver_ingot", 1)] + list(recipe["with"])
+    return {"smithing": 1 if tier == 1 else 8, "xp": 30 if tier == 1 else 80,
+            "materials": [{"item": i, "count": n} for i, n in mats]}
+
+
 def recipe_json(wid, recipe):
     ident = f"ponce:{wid}"
     if "shaped" in recipe:
@@ -187,12 +201,13 @@ def main():
     textures, table = {}, {}
     for wid, name, kind, tier, damage, dur, level, stats, recipe, pal in WEAPONS:
         write_json(f"{BP}/items/weapons/{wid}.json", item_json(wid, name, kind, tier, damage, dur))
-        write_json(f"{BP}/recipes/weapons/{wid}.json", recipe_json(wid, recipe))
+
         os.makedirs(f"{RP}/textures/items/weapons", exist_ok=True)
         draw(kind, pal).save(f"{RP}/textures/items/weapons/{wid}.png")
         textures[f"ponce_{wid}"] = {"textures": f"textures/items/weapons/{wid}"}
         table[f"ponce:{wid}"] = {"name": name, "type": kind, "tier": tier, "damage": damage,
-                                 "durability": dur, "req": {"level": level, "stats": stats}}
+                                 "durability": dur, "req": {"level": level, "stats": stats},
+                                 "forge": forge_recipe(kind, tier, recipe)}
 
     path = f"{RP}/textures/item_texture.json"
     data = json.load(open(path))

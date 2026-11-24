@@ -63,7 +63,7 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
 
   The passives are Backstab, Rend (bleed), Iaido Draw, Crimson Chain, Bulwark and Dual Wield.
 - **Dual Wield**: with a Ponce sword in your offhand, each hit is followed by an offhand strike, and it unlocks **Twin Tempest** (six alternating strikes).
-- **16 Ponce weapons**, 2 tiers for each of the 8 types. Tier I is crafted from iron (Lv 3). Tier II upgrades a Tier I weapon with Floor 1 drops (Lv 5-8). The Armory page in the menu lists them with your requirements shown in green or red.
+- **16 Ponce weapons**, 2 tiers for each of the 8 types (Tier I needs Lv 3, Tier II needs Lv 5-8). Since Phase 3 they're **forged**, not crafted. The Armory page in the menu lists them with your requirements shown in green or red.
 - **Requirements**: below a weapon's level or stats it deals 25% damage and can't use skills. The tooltip shows the requirements.
 - **Each type handles differently**:
 
@@ -82,8 +82,50 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
 - **Durability**: Ponce weapons wear down per hit and per skill, can be repaired with iron ingots, and respect Unbreaking.
 - **Dev Tools** (tag `ponce_dev`): give all weapons, and unlock all skills with high stats.
 
+## Phase 3 (done): jobs
+**Mining**, **Smithing** and **Cooking** each have their own level (1-50), shown under Menu > Jobs.
+
+### Mining: regenerating ore nodes
+| Ore | Mining Lv | Pickaxe | Regrows | Found at |
+|---|---|---|---|---|
+| Ember Copper | 1 | any | 30 s | y 0 to 80 |
+| Ironheart | 5 | stone+ | 60 s | y -32 to 48 |
+| Glimmer Silver | 12 | iron+ | 120 s | y -64 to 16 |
+
+- A mined node turns into a **Depleted Node**, which can't be mined, then regrows. Timers use world time and are saved, so they survive restarts. Creative mode breaks nodes normally, for building.
+- Mining above a node's level gives up to a 30% chance of double ore.
+- Raw ore smelts into ingots in a furnace or blast furnace.
+
+### Smithing: forging minigame
+- Craft a **Smithing Forge** from 3 Ember Copper Ingots, 5 Bricks blocks and 1 Iron Block.
+- Use it (right-click / long-press), pick a weapon, and the materials go in. Then **punch the forge** whenever the sweeping marker is in the **green** zone (yellow counts as good). Finish before the metal cools (20 s). Stay within 6 blocks or the job is lost.
+- **Recipes**: Tier I is Ironheart plus 1 Ember Copper (Smithing 1). Tier II is Ironheart plus 1 Glimmer Silver plus Floor 1 drops (Smithing 8).
+- **Quality** comes from your average accuracy:
+
+  | Quality | Damage | Durability |
+  |---|---|---|
+  | Crude | 90% | starts 25% worn, wears faster |
+  | Standard | 100% | normal |
+  | Fine | 110% | 20% less wear |
+  | Masterwork | 120% | 33% less wear |
+
+  Running out of heat always gives Crude. Smithing level widens the green zone and slows the marker.
+
+### Cooking: timing minigame and meal buffs
+- Craft a **Cooking Pot** from 7 Ember Copper Ingots and 1 Campfire.
+- Use it, pick a recipe, then **punch the pot** to take the dish off the heat. Green gives 2 servings, yellow gives 1, and waiting too long gives a Burnt Mess. Cooking level widens the green window.
+
+| Meal | Ingredients | Buff | Cooking Lv |
+|---|---|---|---|
+| Boar Skewer | Raw Boar, Stick | +3 STR, 3 min | 1 |
+| Hare Stew | Raw Hare, Carrot, Bowl | +3 AGI, 3 min | 3 |
+| Jelly Tart | 2 Jelly Gel, Wheat, Sugar | +3 DEX, 3 min | 5 |
+| Hearty Roast | 2 Raw Boar, 2 Potato | +3 VIT, 5 min | 8 |
+
+- One meal buff at a time; eating another replaces it. Buffs count in combat but **not** toward weapon or skill requirements.
+- **Dev Tools**: a job kit (ingots, forge, pot, ingredients, pickaxe) and all jobs set to level 20.
+
 ## Roadmap
-3. Jobs: regenerating ore nodes, forging minigame, cooking
 4. Quests: NPCs, quest log, rewards, Col shop
 5. Floors 1–3 with guardians and stair gates
 
@@ -102,6 +144,12 @@ behavior_pack/
     weapons.js        weapon requirements, durability, tooltips
     weapon_data.js    generated weapon table (from tools/gen_weapons.py)
     effects.js        short-lived combat state (cooldowns, stances, bleeds)
+    jobs.js           Mining / Smithing / Cooking levels
+    mining.js         ore node gating, drops, regrowth
+    forging.js        Smithing Forge menu and minigame
+    cooking.js        Cooking Pot menu, minigame, meal buffs
+    jobs_data.js      generated ore / food / recipe table (from tools/gen_jobs.py)
+    inventory.js, ui.js  shared helpers
     mobs.js           mole ambush, golemite weaknesses
     bosses.js         floor guardian fights
     skills.js         skill catalogue
@@ -109,7 +157,8 @@ behavior_pack/
     lore.js           journal text
 resource_pack/        models, textures, animations, sounds, text
 tools/gen_mobs.py     generates mob files and placeholder art
-tools/gen_weapons.py  generates weapon items, icons, recipes and weapon_data.js
+tools/gen_weapons.py  generates weapon items, icons and weapon_data.js (incl. forge recipes)
+tools/gen_jobs.py     generates ore nodes, forge, pot, ingots, meals, world gen and jobs_data.js
 tests/                run ./tests/run.sh (needs Node) to simulate gameplay against mock APIs
 ```
 

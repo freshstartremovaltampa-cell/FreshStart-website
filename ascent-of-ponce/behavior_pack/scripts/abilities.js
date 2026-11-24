@@ -8,7 +8,7 @@ import { WEAPONS } from "./config.js";
 import { getData, markDirty } from "./data.js";
 import { getHeldItem } from "./progression.js";
 import { activeSkillsFor, SKILLS, SKILLS_BY_ID } from "./skills.js";
-import { getOffhand, meetsWeaponReq, wearWeapon, weaponDef } from "./weapons.js";
+import { getOffhand, meetsWeaponReq, qualityMult, wearWeapon, weaponDef } from "./weapons.js";
 import { dealSkillDamage, flash, flatDir, isTarget, push } from "./combat.js";
 import { armorBroken, cooldownLeft, nextHitBuffs, setCooldown, stances } from "./effects.js";
 
@@ -264,7 +264,7 @@ export function useSkill(player, item) {
   const left = cooldownLeft(player.id, skill.id, now);
   if (left > 0) return flash(player, `§7${skill.name} §8- ready in ${Math.ceil(left / 20)}s`, 20);
 
-  const result = IMPL[skill.id]?.(player, def.damage, data);
+  const result = IMPL[skill.id]?.(player, def.damage * qualityMult(item), data);
   if (result === false) return;
   setCooldown(player.id, skill.id, now + skill.cooldown * 20);
   wearWeapon(player);

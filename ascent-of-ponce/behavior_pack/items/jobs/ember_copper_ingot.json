@@ -1,0 +1,18 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:item": {
+    "description": {
+      "identifier": "ponce:ember_copper_ingot",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "ponce_ember_copper_ingot",
+      "minecraft:display_name": {
+        "value": "\u00a7fEmber Copper Ingot"
+      },
+      "minecraft:max_stack_size": 64
+    }
+  }
+}

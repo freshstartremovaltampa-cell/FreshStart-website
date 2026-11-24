@@ -336,12 +336,14 @@ console.log("forms shown:", log.length);
 
   // Backstab
   clear(); const dagger = ponce("iron_dagger"); w.setHeld(dagger); d.skills.push("dagger_backstab"); system.tick(20);
+  const realRand = Math.random; Math.random = () => 0.99; // no crits, so the comparison isn't random
   const facingAway = enemy(0, 2); // faces +z, away from the player
   hit(facingAway, 5); const back = 100 - facingAway.health.currentValue;
   system.tick(20);
   const facingMe = enemy(1, 2); facingMe.view = { x: 0, y: 0, z: -1 };
   hit(facingMe, 5); const front = 100 - facingMe.health.currentValue;
   assert(back > front * 1.4, `Backstab: ${back.toFixed(1)} from behind vs ${front.toFixed(1)} from the front`);
+  Math.random = realRand;
 
   // Dual Wield follow-up and Twin Tempest
   clear(); w.setHeld(sword); w.offhand = undefined; d.skills.push("dual_wield");
@@ -382,4 +384,142 @@ console.log("forms shown:", log.length);
     try { useSkill(w, item); system.tick(60); } catch (e) { errors++; console.error(s.id, e); }
   }
   assert(errors === 0, "all active skills run cleanly");
+}
+
+// ================= Phase 3: jobs =================
+{
+  const { sessions } = await import("../behavior_pack/scripts/forging.js");
+  const { pots } = await import("../behavior_pack/scripts/cooking.js");
+  const { WEAPON_DEFS } = await import("../behavior_pack/scripts/weapon_data.js");
+  const { damageMultiplier, effectiveStats } = await import("../behavior_pack/scripts/progression.js");
+  const { meetsWeaponReq } = await import("../behavior_pack/scripts/weapons.js");
+  ItemStack.registry = Object.fromEntries(Object.entries(WEAPON_DEFS).map(([id, w]) => [id, { tags: [`ponce:${w.type}`, "ponce:weapon", "ponce:tier_iron"], durability: w.durability }]));
+  const fireBefore = (n, e) => { world.beforeEvents[n].h.forEach((f) => f(e)); return e; };
+  const flush = () => new Promise((r) => setTimeout(r, 5));
+
+  const j = makePlayer("Crafter"); world.players.push(j);
+  Object.assign(j, { dimension: dim, location: { x: 300.5, y: 64, z: 0.5 }, isSneaking: false, getGameMode: () => "Survival" });
+  fire("playerSpawn", { player: j, initialSpawn: true });
+  const d = getDataFor(j);
+  const count = (id) => j.items.filter((i) => i?.typeId === id).reduce((n, i) => n + i.amount, 0);
+  const pick = (tier) => new ItemStack(`minecraft:${tier}_pickaxe`, 1, ["minecraft:is_pickaxe", `minecraft:${tier}_tier`]);
+
+  // ---- Mining ----
+  const node = dim.setBlock({ x: 300, y: 10, z: 0 }, "ponce:ironheart_node");
+  let ev = fireBefore("playerBreakBlock", { block: node, player: j, itemStack: pick("wooden"), cancel: false });
+  assert(ev.cancel, "wooden pickaxe can't mine Ironheart");
+  ev = fireBefore("playerBreakBlock", { block: node, player: j, itemStack: pick("stone"), cancel: false });
+  assert(ev.cancel, "Mining level 1 can't mine Ironheart (needs 5)");
+  system.tick(2);
+  assert(j.msgs.some((m) => m.includes("needs Mining level")), "player told which Mining level is needed");
+  d.jobs.mining.level = 5;
+  ev = fireBefore("playerBreakBlock", { block: node, player: j, itemStack: pick("stone"), cancel: false });
+  assert(!ev.cancel, "Mining 5 with a stone pickaxe can mine Ironheart");
+  const xp0 = d.jobs.mining.xp;
+  fire("playerBreakBlock", { block: node, brokenBlockPermutation: { type: { id: "ponce:ironheart_node" } }, player: j, dimension: dim });
+  assert(node.typeId === "ponce:depleted_node", "mined node becomes a Depleted Node");
+  assert(dim.drops.some((x) => x.stack.typeId === "ponce:raw_ironheart"), "drops Raw Ironheart");
+  assert(d.jobs.mining.xp > xp0 || d.jobs.mining.level > 5, "Mining XP gained");
+  assert(world.getDynamicProperty("ponce:depleted_nodes").includes("ponce:ironheart_node"), "regrow timer saved in the world");
+  system.tick(20 * 30);
+  assert(node.typeId === "ponce:depleted_node", "still depleted after 30s (Ironheart regrows in 60s)");
+  system.tick(20 * 31);
+  assert(node.typeId === "ponce:ironheart_node", "node regrows after 60s");
+
+  const copper = dim.setBlock({ x: 301, y: 10, z: 0 }, "ponce:ember_copper_node");
+  j.getGameMode = () => "Creative";
+  fire("playerBreakBlock", { block: copper, brokenBlockPermutation: { type: { id: "ponce:ember_copper_node" } }, player: j, dimension: dim });
+  assert(copper.typeId === "ponce:ember_copper_node", "creative mode breaks nodes normally (for building)");
+  j.getGameMode = () => "Survival";
+
+  // ---- Forging ----
+  const forge = dim.setBlock({ x: 300, y: 64, z: 1 }, "ponce:smithing_forge");
+  const order = Object.entries(WEAPON_DEFS).sort(([, a], [, b]) => a.tier - b.tier || a.type.localeCompare(b.type)).map(([id]) => id);
+  const giveMats = (id) => { for (const m of WEAPON_DEFS[id].forge.materials) j.items[j.items.indexOf(undefined)] = new ItemStack(m.item, m.count); };
+  const startForge = async (id) => {
+    giveMats(id);
+    globalThis.nextFormResponse = [{ canceled: false, selection: order.indexOf(id) }, { canceled: false, selection: 0 }];
+    const e = fireBefore("playerInteractWithBlock", { block: forge, player: j, isFirstEvent: true, cancel: false });
+    system.tick(1); await flush();
+    return e;
+  };
+  const punch = () => fire("entityHitBlock", { damagingEntity: j, hitBlock: forge });
+  const forged = (id) => j.items.filter((i) => i?.typeId === id);
+
+  const e1 = await startForge("ponce:iron_longsword");
+  assert(e1.cancel, "using the forge doesn't place blocks on it");
+  assert(sessions.has(j.id), "forging session started");
+  assert(count("ponce:ironheart_ingot") === 0 && count("ponce:ember_copper_ingot") === 0, "materials consumed");
+  for (let i = 0; i < 10 && sessions.has(j.id); i++) { const s = sessions.get(j.id); s.pos = s.zone; punch(); system.tick(5); }
+  let sword = forged("ponce:iron_longsword")[0];
+  assert(sword?.getDynamicProperty("ponce:quality") === "masterwork", "all-perfect strikes forge a Masterwork: " + sword?.getDynamicProperty("ponce:quality"));
+  assert(sword.nameTag.includes("Masterwork") && sword.lore[0].includes("Masterwork"), "quality shown in name and tooltip");
+  assert(d.jobs.smithing.xp > 0 || d.jobs.smithing.level > 1, "Smithing XP gained");
+
+  await startForge("ponce:iron_dagger");
+  for (let i = 0; i < 20 && sessions.has(j.id); i++) { const s = sessions.get(j.id); s.pos = s.zone > 12 ? 0 : 24; punch(); system.tick(5); }
+  assert(forged("ponce:iron_dagger")[0]?.getDynamicProperty("ponce:quality") === "crude", "sloppy strikes make a Crude weapon");
+  assert(forged("ponce:iron_dagger")[0].dur.damage > 0, "Crude weapons start worn");
+
+  await startForge("ponce:iron_spear");
+  system.tick(401);
+  assert(!sessions.has(j.id) && forged("ponce:iron_spear")[0]?.getDynamicProperty("ponce:quality") === "crude", "metal cooling ends the job as Crude");
+
+  await startForge("ponce:iron_rapier");
+  j.location = { x: 320, y: 64, z: 0 }; system.tick(1);
+  assert(!sessions.has(j.id) && forged("ponce:iron_rapier").length === 0, "walking away ruins the job");
+  j.location = { x: 300.5, y: 64, z: 0.5 };
+
+  d.jobs.smithing.level = 1;
+  giveMats("ponce:tuskfang_blade");
+  globalThis.nextFormResponse = [{ canceled: false, selection: order.indexOf("ponce:tuskfang_blade") }, { canceled: false, selection: 0 }];
+  fireBefore("playerInteractWithBlock", { block: forge, player: j, isFirstEvent: true, cancel: false });
+  system.tick(1); await flush();
+  assert(!sessions.has(j.id) && count("ponce:glimmer_silver_ingot") === 1, "Tier II needs Smithing 8: no session, materials kept");
+
+  // Quality changes damage
+  Object.assign(d, { level: 10 }); Object.assign(d.stats, { str: 5, dex: 5 });
+  const dummy = () => { const e = dim.spawnEntity("ponce:tusk_boar", { x: 300.5, y: 64, z: 2.5 }); e.health.currentValue = e.health.effectiveMax = 500; return e; };
+  const std = new ItemStack("ponce:iron_longsword", 1, ["ponce:sword", "ponce:weapon", "ponce:tier_iron"], 450);
+  const strike = (item) => { j.setHeld(item); system.tick(20); const t = dummy(); t.health.currentValue -= 7; fire("entityHurt", { hurtEntity: t, damage: 7, damageSource: { cause: "entityAttack", damagingEntity: j } }); return 500 - t.health.currentValue; };
+  const realRandom = Math.random; Math.random = () => 0.99; // no crits for this comparison
+  const lossStd = strike(std), lossMw = strike(sword);
+  Math.random = realRandom;
+  const ratio = lossMw / lossStd;
+  assert(ratio > 1.15 && ratio < 1.25, `Masterwork hits ~20% harder (ratio ${ratio.toFixed(2)})`);
+
+  // ---- Cooking ----
+  const pot = dim.setBlock({ x: 301, y: 64, z: 1 }, "ponce:cooking_pot");
+  const startCook = async (idx, mats) => {
+    for (const [id, n] of mats) j.items[j.items.indexOf(undefined)] = new ItemStack(id, n);
+    globalThis.nextFormResponse = [{ canceled: false, selection: idx }];
+    fireBefore("playerInteractWithBlock", { block: pot, player: j, isFirstEvent: true, cancel: false });
+    system.tick(1); await flush();
+  };
+  const punchPot = () => fire("entityHitBlock", { damagingEntity: j, hitBlock: pot });
+
+  await startCook(0, [["ponce:raw_boar", 1], ["minecraft:stick", 1]]);
+  assert(pots.has(j.id) && count("ponce:raw_boar") === 0, "cooking started, ingredients used");
+  punchPot();
+  assert(pots.has(j.id), "punching too early does nothing");
+  while (pots.has(j.id) && pots.get(j.id).progress < (pots.get(j.id).perfect[0] + pots.get(j.id).perfect[1]) / 2) system.tick(1);
+  punchPot();
+  assert(count("ponce:boar_skewer") === 2, "perfect timing gives 2 servings");
+  assert(d.jobs.cooking.xp > 0, "Cooking XP gained");
+
+  await startCook(0, [["ponce:raw_boar", 1], ["minecraft:stick", 1]]);
+  system.tick(200);
+  assert(!pots.has(j.id) && count("ponce:burnt_mess") === 1, "waiting too long burns it");
+
+  await startCook(3, [["ponce:raw_boar", 2], ["minecraft:potato", 2]]);
+  assert(!pots.has(j.id) && count("ponce:raw_boar") === 2, "Hearty Roast needs Cooking 8: refused, ingredients kept");
+
+  // ---- Eating ----
+  const strBefore = effectiveStats(d).str, multBefore = damageMultiplier(d);
+  fire("itemCompleteUse", { source: j, itemStack: new ItemStack("ponce:boar_skewer") });
+  assert(effectiveStats(d).str === strBefore + 3 && damageMultiplier(d) > multBefore, "Boar Skewer: +3 STR in combat");
+  d.stats.str = 1; d.stats.dex = 2;
+  assert(!meetsWeaponReq(d, WEAPON_DEFS["ponce:iron_longsword"]), "meal buffs don't count toward weapon requirements");
+  system.tick(20 * 181);
+  assert(d.foodBuff === null && j.msgs.some((m) => m.includes("wore off")), "buff wears off after 3 minutes");
 }

@@ -1,6 +1,6 @@
 // Leveling, weapon mastery, skill unlocks and stat effects.
 
-import { EquipmentSlot } from "@minecraft/server";
+import { EquipmentSlot, world } from "@minecraft/server";
 import {
   MAX_LEVEL, STAT_POINTS_PER_LEVEL, MASTERY_CAP, MASTERY_GAIN, MASTERY_RANKS,
   STAT_EFFECTS, WEAPONS, WEAPON_KEYS, xpToNext,
@@ -131,7 +131,7 @@ function ensureEffect(player, type, amplifier) {
  * (daggers add a speed level, greatswords slow you). Safe to call often.
  */
 export function applyStatEffects(player) {
-  const { stats } = getData(player);
+  const stats = effectiveStats(getData(player));
   const held = weaponTypeOf(getHeldItem(player));
   ensureEffect(player, "health_boost", Math.floor(stats.vit / STAT_EFFECTS.vitPerHealthBoost) - 1);
   const agiLevel = STAT_EFFECTS.agiSpeedThresholds.filter((t) => stats.agi >= t).length;
@@ -140,16 +140,28 @@ export function applyStatEffects(player) {
   ensureEffect(player, "slowness", held === "greatsword" ? 0 : -1);
 }
 
+/**
+ * Base stats plus any active meal buff. Combat uses these; weapon and skill
+ * requirements use base stats only, so food can't unlock gear.
+ */
+export function effectiveStats(data) {
+  const b = data.foodBuff;
+  if (!b || b.until <= world.getAbsoluteTime()) return data.stats;
+  const out = { ...data.stats };
+  for (const [k, v] of Object.entries(b.stats)) out[k] = (out[k] ?? 0) + v;
+  return out;
+}
+
 export function critChance(data) {
-  return Math.min(STAT_EFFECTS.maxCrit, data.stats.dex * STAT_EFFECTS.dexCritPerPoint);
+  return Math.min(STAT_EFFECTS.maxCrit, effectiveStats(data).dex * STAT_EFFECTS.dexCritPerPoint);
 }
 
 export function dodgeChance(data) {
-  return Math.min(STAT_EFFECTS.maxDodge, data.stats.agi * STAT_EFFECTS.agiDodgePerPoint);
+  return Math.min(STAT_EFFECTS.maxDodge, effectiveStats(data).agi * STAT_EFFECTS.agiDodgePerPoint);
 }
 
 export function damageMultiplier(data, weapon) {
-  const str = data.stats.str * STAT_EFFECTS.strDamagePerPoint;
+  const str = effectiveStats(data).str * STAT_EFFECTS.strDamagePerPoint;
   const mastery = weapon ? ((data.mastery[weapon] ?? 0) / MASTERY_CAP) * STAT_EFFECTS.masteryMaxDamageBonus : 0;
   return 1 + str + mastery;
 }

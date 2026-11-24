@@ -1,0 +1,18 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:item": {
+    "description": {
+      "identifier": "ponce:raw_ember_copper",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "ponce_raw_ember_copper",
+      "minecraft:display_name": {
+        "value": "\u00a7fRaw Ember Copper"
+      },
+      "minecraft:max_stack_size": 64
+    }
+  }
+}

@@ -11,6 +11,9 @@ import { registerMobs } from "./mobs.js";
 import { registerAbilities, skillHudText } from "./abilities.js";
 import { ensureLore } from "./weapons.js";
 import { forgetPlayer } from "./effects.js";
+import { registerMining } from "./mining.js";
+import { registerForging } from "./forging.js";
+import { registerCooking, buffHudText } from "./cooking.js";
 
 const COMPASS = "ponce:wayfarer_compass";
 
@@ -71,6 +74,9 @@ registerCombat();
 registerBosses();
 registerMobs();
 registerAbilities();
+registerMining();
+registerForging();
+registerCooking();
 
 // ---------- Loops ----------
 
@@ -88,7 +94,7 @@ system.runInterval(() => {
     const next = xpToNext(d.level);
     player.onScreenDisplay.setActionBar(
       `§f${player.name} §eLv${d.level}  ${hpColor}${"|".repeat(filled)}§8${"|".repeat(20 - filled)} §f${cur}/${max}` +
-      `  §bEXP ${Math.floor((d.xp / next) * 100)}%` + skillHudText(player)
+      `  §bEXP ${Math.floor((d.xp / next) * 100)}%` + skillHudText(player) + buffHudText(player)
     );
   }
 }, 10);

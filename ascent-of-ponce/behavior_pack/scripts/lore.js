@@ -33,6 +33,15 @@ export const LORE = [
       "But a weapon too heavy for your level or stats will barely scratch an enemy.",
   },
   {
+    title: "§6Ore, Fire and Food",
+    text:
+      "The tower's stone is threaded with strange metals: §6Ember Copper§f, §cIronheart§f and §fGlimmer Silver§f. " +
+      "Mine a vein and it slowly grows back, as if the tower heals itself.\n\n" +
+      "No climber's blade is bought. Each one is §fforged§f: heat the metal, then strike it true before it cools. " +
+      "A patient smith makes a masterwork. A careless one makes scrap.\n\n" +
+      "And a well-cooked meal before a hard floor can be the difference between climbing on and falling.",
+  },
+  {
     title: "§6Your Wayfarer's Compass",
     text:
       "The compass in your pack doesn't point north. It points up.\n\n" +
