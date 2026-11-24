@@ -59,6 +59,7 @@ export const WEAPON_HANDLING = {
 };
 export const MIN_SWING_DAMAGE = 0.2; // spam-clicking a heavy weapon still does at least 20%
 export const UNMET_REQUIREMENT_DAMAGE = 0.25; // weapons you can't handle yet deal 25%
+export const UNMET_RELIC_DAMAGE = 0.5; // Relics are forgiving: half strength, and skills still work
 export const SPLASH = 0.3;
 
 // Mastery is an endgame grind. Pace counts only time spent actively fighting

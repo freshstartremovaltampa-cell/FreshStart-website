@@ -257,7 +257,8 @@ export function useSkill(player, item) {
   const weapon = def.type;
   if (player.isSneaking) return cycle(player, data, weapon);
 
-  if (!meetsWeaponReq(data, def)) return flash(player, `§cYou can't use skills with a weapon you can't handle yet.`, 40);
+  // Relics allow skills even below their requirements (at half strength); other weapons don't
+  if (!meetsWeaponReq(data, def) && def.tier !== 3) return flash(player, `§cYou can't use skills with a weapon you can't handle yet.`, 40);
   const skill = equippedSkill(data, weapon);
   if (!skill) return flash(player, `§7No ${WEAPONS[weapon].name} skills yet.${nextSkillHint(data, weapon)}`, 50);
   const now = system.currentTick;

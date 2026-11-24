@@ -615,13 +615,13 @@ export const WEAPON_DEFS = {
     "name": "Boarbane",
     "type": "sword",
     "tier": 3,
-    "damage": 11,
+    "damage": 18,
     "durability": null,
     "req": {
-      "level": 12,
+      "level": 18,
       "stats": {
-        "str": 6,
-        "dex": 6
+        "str": 10,
+        "dex": 10
       }
     },
     "forge": null,
@@ -635,13 +635,13 @@ export const WEAPON_DEFS = {
     "name": "Wasp's Kiss",
     "type": "dagger",
     "tier": 3,
-    "damage": 9,
+    "damage": 15,
     "durability": null,
     "req": {
-      "level": 12,
+      "level": 18,
       "stats": {
-        "dex": 9,
-        "agi": 3
+        "dex": 14,
+        "agi": 4
       }
     },
     "forge": null,
@@ -655,13 +655,13 @@ export const WEAPON_DEFS = {
     "name": "Thornwhisper",
     "type": "rapier",
     "tier": 3,
-    "damage": 10,
+    "damage": 18,
     "durability": null,
     "req": {
-      "level": 12,
+      "level": 18,
       "stats": {
-        "dex": 9,
-        "agi": 3
+        "dex": 14,
+        "agi": 5
       }
     },
     "forge": null,
@@ -675,13 +675,13 @@ export const WEAPON_DEFS = {
     "name": "Golemheart Maul",
     "type": "hammer",
     "tier": 3,
-    "damage": 13,
+    "damage": 22,
     "durability": null,
     "req": {
-      "level": 12,
+      "level": 18,
       "stats": {
-        "str": 11,
-        "vit": 3
+        "str": 16,
+        "vit": 5
       }
     },
     "forge": null,
@@ -695,13 +695,13 @@ export const WEAPON_DEFS = {
     "name": "Tuskreaver",
     "type": "axe",
     "tier": 3,
-    "damage": 12,
+    "damage": 21,
     "durability": null,
     "req": {
-      "level": 12,
+      "level": 18,
       "stats": {
-        "str": 8,
-        "vit": 5
+        "str": 12,
+        "vit": 8
       }
     },
     "forge": null,
@@ -715,13 +715,13 @@ export const WEAPON_DEFS = {
     "name": "Molefang Pike",
     "type": "spear",
     "tier": 3,
-    "damage": 11,
+    "damage": 19,
     "durability": null,
     "req": {
-      "level": 12,
+      "level": 18,
       "stats": {
-        "agi": 8,
-        "str": 5
+        "agi": 12,
+        "str": 8
       }
     },
     "forge": null,
@@ -735,13 +735,13 @@ export const WEAPON_DEFS = {
     "name": "Verdant Moon",
     "type": "katana",
     "tier": 3,
-    "damage": 11,
+    "damage": 21,
     "durability": null,
     "req": {
-      "level": 12,
+      "level": 18,
       "stats": {
-        "dex": 8,
-        "agi": 6
+        "dex": 12,
+        "agi": 10
       }
     },
     "forge": null,
@@ -755,13 +755,13 @@ export const WEAPON_DEFS = {
     "name": "Kingsfall",
     "type": "greatsword",
     "tier": 3,
-    "damage": 15,
+    "damage": 26,
     "durability": null,
     "req": {
-      "level": 12,
+      "level": 18,
       "stats": {
-        "str": 14,
-        "vit": 6
+        "str": 18,
+        "vit": 8
       }
     },
     "forge": null,

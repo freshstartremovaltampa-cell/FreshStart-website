@@ -857,3 +857,53 @@ console.log("forms shown:", log.length);
   assert(v.teleportedTo && Math.abs(v.teleportedTo.z - ARRIVAL.z) < 1, "falling off the island returns you to town");
   v.velocity = { x: 0, y: 0, z: 0 };
 }
+
+// ================= Relic requirements: half strength below them =================
+{
+  const { WEAPON_DEFS } = await import("../behavior_pack/scripts/weapon_data.js");
+  const { effectiveDamage } = await import("../behavior_pack/scripts/weapons.js");
+  const { useSkill } = await import("../behavior_pack/scripts/abilities.js");
+  const relics = Object.entries(WEAPON_DEFS).filter(([, w]) => w.tier === 3);
+  const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+  assert(relics.every(([, r]) => {
+    const t2 = Object.values(WEAPON_DEFS).find((w) => w.tier === 2 && w.type === r.type);
+    return r.req.level >= 18 && sum(r.req.stats) >= sum(t2.req.stats) * 1.8;
+  }), "Relics need Lv 18 and roughly double Tier II's stats");
+  let worst = Infinity;
+  for (const [rid, r] of relics) {
+    const [tid] = Object.entries(WEAPON_DEFS).find(([, w]) => w.tier === 2 && w.type === r.type);
+    const mw = new ItemStack(tid); mw.setDynamicProperty("ponce:quality", "masterwork");
+    worst = Math.min(worst, (effectiveDamage(new ItemStack(rid)) * 0.5) / effectiveDamage(mw));
+  }
+  assert(worst > 1, `at half strength every Relic still beats a Masterwork Tier II (worst case ${worst.toFixed(2)}x)`);
+
+  // In combat: below requirements a Relic deals 50% (other weapons 25%), and its skills still work
+  const r = makePlayer("Relicbearer"); world.players.push(r);
+  Object.assign(r, { dimension: dim, location: { x: 900.5, y: 64, z: 0.5 }, isSneaking: false });
+  fire("playerSpawn", { player: r, initialSpawn: true });
+  const rd = getDataFor(r); rd.starter = "ponce:wayfarers_sword"; rd.level = 12;
+  Object.assign(rd.stats, { str: 18, vit: 8 }); // same stats both times; only the level requirement differs
+  const realRandom = Math.random; Math.random = () => 0.99;
+  const dummyHit = (item, dmg) => {
+    r.setHeld(item); system.tick(30);
+    const t = dim.spawnEntity("ponce:tusk_boar", { x: 900.5, y: 64, z: 2.5 }); t.health.currentValue = t.health.effectiveMax = 1000;
+    t.health.currentValue -= dmg; fire("entityHurt", { hurtEntity: t, damage: dmg, damageSource: { cause: "entityAttack", damagingEntity: r } });
+    return 1000 - t.health.currentValue;
+  };
+  const kingsfall = new ItemStack("ponce:kingsfall");
+  const under = dummyHit(kingsfall, 26);
+  rd.level = 18;
+  const met = dummyHit(kingsfall, 26);
+  Math.random = realRandom;
+  assert(Math.abs(under / met - 0.5) < 0.05, `below requirements: half strength (${under.toFixed(1)} vs ${met.toFixed(1)})`);
+  assert(r.msgs.some((m) => m.includes("half strength")), "player is told the Relic works at half strength");
+  Object.assign(rd, { level: 12 }); Object.assign(rd.stats, { str: 0, vit: 0 });
+  rd.skills.push("great_arc"); rd.activeSkill.greatsword = "great_arc";
+  r.setHeld(kingsfall);
+  const t = dim.spawnEntity("ponce:tusk_boar", { x: 900.5, y: 64, z: 2.5 }); t.health.currentValue = t.health.effectiveMax = 1000;
+  useSkill(r, kingsfall);
+  assert(t.health.currentValue < 1000, "Relic skills still work below its requirements");
+  const iron = new ItemStack("ponce:iron_greatsword", 1, [], 450); r.setHeld(iron); rd.skills.push("great_overhead");
+  useSkill(r, iron);
+  assert(r.actionBar.includes("can't use skills"), "ordinary weapons still block skills below their requirements");
+}

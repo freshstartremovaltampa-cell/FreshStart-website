@@ -99,7 +99,7 @@ export function weaponLore(def, { quality, infusions = def.infusions ?? [] } = {
   lines.push(stats ? `§7Requires §eLv ${def.req.level}§7 / ${stats}` : `§7Requires §eLv ${def.req.level}`);
   if (!def.durability) lines.push("§bUnbreakable");
   if (def.tier === 0) lines.push("§8Your first weapon. Can't be forged.");
-  if (def.tier === 3) lines.push("§8A Legendary quest reward. Can't be forged.");
+  if (def.tier === 3) lines.push("§8A Legendary quest reward. Can't be forged. Below its requirements it works at half strength.");
   lines.push(`§8${WEAPON_HANDLING[def.type].trait}`);
   return lines;
 }

@@ -257,10 +257,12 @@ async function openArmory(player) {
     .title("§l§6Armory")
     .body(
       "§7Ponce weapons are §fforged§7 at a Smithing Forge, not crafted. They have level and stat requirements. Below them, a weapon deals only 25% damage and can't use skills. " +
+      "§dRelics§7 are the exception: below their requirements they still work at half strength, skills included. " +
       "Weapons never grant abilities; every weapon type handles differently.\n" +
       `${DIV}\n§7Starter §8- chosen once on first login, can't be forged\n${byTier(0)}\n` +
       `${DIV}\n§eTier I §7- Ironheart + Ember Copper, Smithing 1\n${byTier(1)}\n` +
       `${DIV}\n§bTier II §7- Ironheart + Glimmer Silver + Floor 1 materials, Smithing 8\n${byTier(2)}\n` +
+      `${DIV}\n§dRelic §7- Legendary quest rewards; unbreakable, 3 built-in infusions\n${byTier(3)}\n` +
       `${DIV}\n§dInfusions §7- optional monster drops added while forging (Tier I: 1 slot, Tier II: 2)\n${infusionList()}`
     )
     .button("Back"));

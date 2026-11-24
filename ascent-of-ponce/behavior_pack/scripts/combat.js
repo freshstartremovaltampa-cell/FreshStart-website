@@ -7,7 +7,7 @@
 import { world, system, EntityDamageCause, EquipmentSlot } from "@minecraft/server";
 import {
   MASTERY_GAIN, MIN_SWING_DAMAGE, MOBS, MOB_XP, PASSIVE_XP_MULTIPLIER, SPLASH, STAT_EFFECTS,
-  UNMET_REQUIREMENT_DAMAGE, WEAPON_HANDLING,
+  UNMET_RELIC_DAMAGE, UNMET_REQUIREMENT_DAMAGE, WEAPON_HANDLING,
 } from "./config.js";
 import { getData, markDirty } from "./data.js";
 import {
@@ -126,8 +126,13 @@ function resolveHit(player, target, damage, { skill = false, direct = false } = 
   let mult = damageMultiplier(data, weapon) * (def ? effectiveDamage(item) / def.damage : 1);
 
   if (def && !meetsWeaponReq(data, def)) {
-    mult *= UNMET_REQUIREMENT_DAMAGE;
-    warn(player, "req", `§c[Ponce] You can't handle the ${def.name} yet, so it only deals 25% damage. §7Check its requirements on the tooltip.`);
+    if (def.tier === 3) {
+      mult *= UNMET_RELIC_DAMAGE;
+      warn(player, "req", `§d[Ponce] The ${def.name} answers you at half strength until you meet its requirements. §7Even so, it outclasses ordinary steel.`);
+    } else {
+      mult *= UNMET_REQUIREMENT_DAMAGE;
+      warn(player, "req", `§c[Ponce] You can't handle the ${def.name} yet, so it only deals 25% damage. §7Check its requirements on the tooltip.`);
+    }
   }
 
   if (!skill && handling) {
