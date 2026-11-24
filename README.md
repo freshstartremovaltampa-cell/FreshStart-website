@@ -17,7 +17,8 @@ For testing, run `/tag @s add ponce_dev` (cheats on) to show **Dev Tools** in th
   - DEX: +1% crit chance per point
   - AGI: dodge chance; Speed I at 15, Speed II at 30
   - VIT: +2 hearts per 5 points
-- **Weapon mastery** for 8 weapon types: sword, dagger, rapier, hammer, axe, spear, katana, greatsword. It grows from hits, kills and minutes spent actively fighting with that weapon, and adds up to +25% damage. Vanilla swords, axes, mace and trident already count.
+- **Weapon mastery** for 8 weapon types: sword, dagger, rapier, hammer, axe, spear, katana, greatsword. It grows slowly from kills (scaled by how tough the mob is), hits and minutes spent actively fighting with that weapon. Gains shrink as mastery rises, and it adds up to +25% damage. Vanilla swords, axes, mace and trident already count.
+  - Pace with nonstop fighting of ordinary mobs: first skill (25) in about 1-2 h, 200 in about 9 h, 500 in about 25 h, 800 (Dual Wield) in about 46 h.
 - **Skill catalogue**: 24 skills, unlocked by mastery plus stats. Examples: Ground Slam (hammer) and Dual Wield (sword 800 mastery, Lv 25, DEX 40, STR 20).
 - **Menu**: Status and stat allocation, Skills, Mastery, Journal (lore), Settings.
 - **HUD** above the hotbar showing HP bar, level and EXP.

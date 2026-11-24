@@ -150,7 +150,7 @@ async function openWeaponSkills(player, weapon) {
   }).join(`\n${DIV}\n`);
   const res = await show(player, new ActionFormData()
     .title(`§l§6${WEAPONS[weapon].name}`)
-    .body(`§7Mastery: §f${d.mastery[weapon]}/${MASTERY_CAP} ${masteryRank(d.mastery[weapon])}\n${DIV}\n${text}`)
+    .body(`§7Mastery: §f${Math.floor(d.mastery[weapon])}/${MASTERY_CAP} ${masteryRank(d.mastery[weapon])}\n${DIV}\n${text}`)
     .button("Back"));
   if (!res.canceled) return openSkills(player);
 }
@@ -160,11 +160,11 @@ async function openWeaponSkills(player, weapon) {
 async function openMastery(player) {
   const d = getData(player);
   const text = WEAPON_KEYS.map((k) =>
-    `§f${WEAPONS[k].name} ${masteryRank(d.mastery[k])}\n${bar(d.mastery[k], MASTERY_CAP, 25, "§b")} §7${d.mastery[k]}/${MASTERY_CAP}  §8(${d.weaponMinutes[k]} min)`
+    `§f${WEAPONS[k].name} ${masteryRank(d.mastery[k])}\n${bar(d.mastery[k], MASTERY_CAP, 25, "§b")} §7${Math.floor(d.mastery[k])}/${MASTERY_CAP}  §8(${d.weaponMinutes[k]} min)`
   ).join("\n");
   const res = await show(player, new ActionFormData()
     .title("§l§6Weapon Mastery")
-    .body(`§7Mastery grows from hits, kills and time spent fighting with a weapon type. Higher mastery means more damage and unlocks skills.\n${DIV}\n${text}`)
+    .body(`§7Mastery grows slowly from kills, hits and time spent fighting with a weapon type. Tougher enemies teach you more. True mastery takes a long climb.\n${DIV}\n${text}`)
     .button("Back"));
   if (!res.canceled) return openMainMenu(player);
 }
@@ -217,7 +217,7 @@ async function openDev(player) {
   switch (res.selection) {
     case 0: addXp(player, 1000); break;
     case 1: addXp(player, 10000); break;
-    case 2: WEAPON_KEYS.forEach((k) => addMastery(player, k, 100)); break;
+    case 2: WEAPON_KEYS.forEach((k) => addMastery(player, k, 100, true)); break;
     case 3: d.col += 10; markDirty(player); break;
     case 4: resetData(player); applyStatEffects(player); player.sendMessage("§c[Ponce] Progress reset."); break;
     default: return openMainMenu(player);

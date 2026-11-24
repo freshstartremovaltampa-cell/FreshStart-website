@@ -102,7 +102,8 @@ export function registerCombat() {
     data.kills++;
     markDirty(player);
     if (isPlayer(deadEntity)) return; // no XP farming off other players
-    addXp(player, xpFor(deadEntity));
-    if (weapon) addMastery(player, weapon, MASTERY_GAIN.kill);
+    const xp = xpFor(deadEntity);
+    addXp(player, xp);
+    if (weapon) addMastery(player, weapon, Math.min(MASTERY_GAIN.killMax, xp * MASTERY_GAIN.killPerXp));
   });
 }

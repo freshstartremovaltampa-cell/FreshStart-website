@@ -2,7 +2,7 @@
 
 import { EquipmentSlot } from "@minecraft/server";
 import {
-  MAX_LEVEL, STAT_POINTS_PER_LEVEL, MASTERY_CAP, MASTERY_RANKS,
+  MAX_LEVEL, STAT_POINTS_PER_LEVEL, MASTERY_CAP, MASTERY_GAIN, MASTERY_RANKS,
   STAT_EFFECTS, WEAPONS, WEAPON_KEYS, xpToNext,
 } from "./config.js";
 import { getData, markDirty } from "./data.js";
@@ -66,12 +66,14 @@ export function addXp(player, amount) {
 
 // ---------- Mastery ----------
 
-export function addMastery(player, weapon, amount) {
+/** Adds mastery with diminishing returns. Pass raw = true to skip them (dev tools). */
+export function addMastery(player, weapon, amount, raw = false) {
   if (!weapon || amount <= 0) return;
   const data = getData(player);
   const before = data.mastery[weapon] ?? 0;
   if (before >= MASTERY_CAP) return;
-  const after = Math.min(MASTERY_CAP, before + amount);
+  const scale = raw ? 1 : 1 - MASTERY_GAIN.diminishing * (before / MASTERY_CAP);
+  const after = Math.min(MASTERY_CAP, Math.round((before + amount * scale) * 1000) / 1000);
   data.mastery[weapon] = after;
   markDirty(player);
 

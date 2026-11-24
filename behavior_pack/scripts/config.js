@@ -43,11 +43,21 @@ export const WEAPONS = {
 };
 export const WEAPON_KEYS = Object.keys(WEAPONS);
 
+// Mastery is an endgame grind. Pace counts only time spent actively fighting
+// ordinary mobs with that one weapon (~2 kills/minute, nonstop):
+//   25 mastery  ~ 1-2 hours    (first skill)
+//   200         ~ 9 hours
+//   500         ~ 25 hours
+//   800         ~ 46 hours     (Dual Wield tier)
+// Real play mixes in mining, forging and travel, so it stretches far longer.
+// Tougher mobs, and floor guardians later on, speed it up.
 export const MASTERY_GAIN = {
-  hit: 1,
-  kill: 5,
-  perActiveMinute: 1, // holding the weapon while you've been fighting recently
+  hit: 0.01,
+  killPerXp: 0.012, // a 12-XP zombie gives ~0.14 mastery
+  killMax: 3, // most one kill can give (before diminishing returns)
+  perActiveMinute: 0.1, // holding the weapon while you've been fighting recently
   activeWindowTicks: 20 * 120, // "recently" = hit something in the last 2 minutes
+  diminishing: 0.6, // gains slow down as you climb: 100% at 0, 40% at the cap
 };
 
 export const MASTERY_RANKS = [
