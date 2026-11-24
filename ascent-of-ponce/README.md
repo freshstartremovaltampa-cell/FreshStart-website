@@ -181,6 +181,11 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
   - **Even at half strength it beats a Masterwork Tier II** of its type, so at full strength it's about 2.5x a Tier II. Base damage: Boarbane 18, Wasp's Kiss 15, Thornwhisper 18, Golemheart Maul 22, Tuskreaver 21, Molefang Pike 19, Verdant Moon 21, Kingsfall 26, plus each Relic's infusions.
 - **Quest log** in the menu: progress, details, abandon. Progress also shows above the hotbar as it happens.
 - **Shops**: each NPC sells useful goods for Col and buys monster drops, raw ore or ingredients.
+- **General store**: **Wren, the Merchant** keeps a market stall in every town (Wayfarer's Rest, Stiltwater, Cairnhold). She sells:
+  - plain food for hunger: Bread x4 (12 Col), Apples x4 (10), Baked Potatoes x4 (12), Cooked Beef x2 (14), Cooked Chicken x2 (12)
+  - healing potions at a steep price: Potion of Healing (600 Col), Potion of Healing II (1500 Col)
+  - pickaxes, each unlocked by your **Mining** level (the level its ores need): Wooden (Mining 1, 20 Col), Stone (Mining 5, 60 Col), Iron (Mining 12, 250 Col). Locked ones show the level you need. Diamond is saved for the planned Tier IV ore.
+  - Towns built in an older world get Wren the next time you visit.
 
 ## Floor 1: Wayfarer's Rest (Phase 5, part 1)
 Floor 1 is a **floating island** about 500 blocks across at y 200, centered on x 10000, z 10000 in the overworld. Bedrock add-ons can't add dimensions, so each floor is an island in the sky.
@@ -321,14 +326,21 @@ Floor 3 is centered on x -10000, z 10000. Reach it through the Hydra Pool's Stai
   - Bram's new Hard quest **Storm-Forged** has you mine Stormsteel, reach Smithing 15 and forge with it. Bram also buys raw Stormsteel and sells ingots.
 - **Quests** (Corra): six of them, all needing Floor 3 reached. Hard quests give a Masterwork Tier II weapon. The Elite quest "King of the Hills" gives a Masterwork Tier II with Wind Essence and Hawk Feather. There's also a repeatable Highland Patrol.
 
-### Floor 3 guardian: Thunderhoof, the Highland King
-Lv 22, 2600 HP, a storm-grey bull nearly three times the size of a Highland Bull. Tuned for a fight of about 5 minutes around Lv 17-20 (estimated). It's tougher than the Floor 1-2 guardians and gentler than the planned Floor 5 guardian.
+### Floor 3 guardian: Thunderhoof, the Centaur King
+Lv 22, 2600 HP, a towering centaur archer. Tuned for a fight of about 5 minutes around Lv 17-20 (estimated). It's tougher than the Floor 1-2 guardians and gentler than the planned Floor 5 guardian.
 - **Summon** with a **Thunder Call** (bull horns, wind essence, hawk feathers) inside the Crown of Stones. Used elsewhere, it points the way. He's leashed to the Crown.
-- **Charge**: a roar and a 1 s warning, then a straight charge for 12 damage and heavy knockback. Sidestep.
-- **Ground Quake**: stay close and he rears up (1.25 s warning) and slams the ground. Everyone within 8 blocks who is **on the ground** takes 9 damage and is slowed. **Jump** at the right moment, or get clear.
-- **Stampede** (below 70%): three lanes across the arena are marked (2 s warning), then a herd of bulls thunders down them for 10 damage each. **Stand between the lanes.**
-- **Enrage** (below 30%): faster, hits for 13, charges more often.
-- **Rewards**: Floor 3 cleared (opening its Stair Gate), +400 Col, 1500 EXP and +18 mastery to the killer, plus a Thunder Horn, hides, horns and beef.
+- **Phase 1, the Archer** (above 50%):
+  - **Aimed Shot**: an arrow at the nearest player every 2 s. Keep moving and use the standing stones as cover.
+  - **Arrow Rain**: a circle is marked under a player (1.5 s warning), then arrows rain into it for 9 damage. **Leave the circle.**
+  - **Kiting**: he gallops away from anyone within 7 blocks (but never out of the Crown). Pin him against the stones.
+- **At 50%** he casts the bow aside and draws a **sword and shield**.
+- **Phase 2, the Warrior**:
+  - **Melee** up close (12 damage).
+  - **Charge**: a 1 s warning, then a straight charge for 12 damage and heavy knockback. Sidestep.
+  - **Sword Sweep**: he raises the blade (1 s warning) and sweeps a 5-block arc in front of him for 11 damage. **Get behind him.**
+  - **Shield Stance**: every ~10 s he raises his shield for 3 s. Hits from the front are 80% blocked; **hits from behind land in full**.
+- **Enrage** (below 25%): faster, hits for 15, shoots, sweeps and charges more often.
+- **Rewards**: Floor 3 cleared (opening its Stair Gate), +400 Col, 1500 EXP and +18 mastery to the killer, plus a Thunder Horn, hawk feathers, wind essence and hides.
 
 ## Roadmap
 5. Floors (part 4):

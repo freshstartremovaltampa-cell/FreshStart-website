@@ -172,6 +172,11 @@ function buildTown() {
   const kitchen = hut(C.x - 21, C.z - 14, 9, 9, 4, { door: "e" });
   P("pot", C.x - 17, DECK + 1, C.z - 12); P("barrel", C.x - 20, DECK + 1, C.z - 7); P("campfire", C.x - 15, DECK + 1, C.z - 13);
   NPC_SPOTS["ponce:npc_cook"] = { ...kitchen, x: kitchen.x - 1 };
+  // Wren's stall on the deck
+  for (const [dx, dz] of [[0, 0], [3, 0], [0, 2], [3, 2]]) box("fence", C.x + 3 + dx, DECK + 1, C.z + 10 + dz, C.x + 3 + dx, DECK + 2, C.z + 10 + dz);
+  box("blue_wool", C.x + 3, DECK + 3, C.z + 10, C.x + 6, DECK + 3, C.z + 12);
+  box("barrel", C.x + 4, DECK + 1, C.z + 10, C.x + 5, DECK + 1, C.z + 10);
+  NPC_SPOTS["ponce:npc_merchant"] = { x: C.x + 4.5, y: DECK + 1, z: C.z + 11.5 };
   hut(C.x - 22, C.z + 6, 7, 7, 4, { door: "e" });
   hut(C.x - 12, C.z + 16, 7, 7, 4, { door: "n" });
   hut(C.x + 2, C.z + 17, 7, 7, 4, { wall: "spruce_planks", door: "n" });

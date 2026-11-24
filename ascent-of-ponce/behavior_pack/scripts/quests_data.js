@@ -53,6 +53,10 @@ export const NPCS = {
     key: "ranger", name: "Corra, the Highland Ranger",
     greeting: "Up here the wind tells you everything, if you listen. Right now it says the herds are restless and their king is watching from the Crown.",
   },
+  "ponce:npc_merchant": {
+    key: "merchant", name: "Wren, the Merchant",
+    greeting: "Supplies for the climb! Bread, apples, a good pickaxe once you know how to swing one. Potions too, if your purse is deep. They're hard to come by in the tower.",
+  },
   "ponce:npc_cook": {
     key: "cook", name: "Pip, the Cook",
     greeting: "Oh! Hungry? Everyone's hungry up here. A good meal before a hard fight is half the battle. The other half is the fighting, I suppose.",
@@ -165,8 +169,8 @@ export const QUESTS = [
     objectives: [{ type: "kill", target: "ponce:crag_hawk", count: 10 }, { type: "collect", item: "ponce:hawk_feather", count: 5 }],
     rewards: { xp: 950, col: 380, items: [["ponce:wind_essence", 3], ["ponce:glimmer_silver_ingot", 4]] } },
   { id: "king_of_the_hills", giver: "ranger", difficulty: 4, name: "King of the Hills",
-    desc: "Thunderhoof rules the herds from the Crown of Stones at the end of the north trail. Craft a Thunder Call and face him: " +
-      "watch his horns, jump his quakes, and never stand where the herd will run.",
+    desc: "Thunderhoof, the centaur who rules these hills, waits in the Crown of Stones at the end of the north trail. Craft a Thunder Call and face him: " +
+      "dodge his arrows, and when he draws his sword, strike from behind his shield.",
     requires: { floor: 3, level: 18, quests: ["sprite_storm", "hawk_eyes"] },
     objectives: [{ type: "boss", target: "ponce:thunderhoof", count: 1 }],
     rewards: { xp: 2000, col: 900, weapon: { kind: "masterwork_t2", infusions: ["ponce:wind_essence", "ponce:hawk_feather"] } } },
@@ -257,7 +261,7 @@ export const SHOPS = {
   },
   smith: {
     buy: [["ponce:ember_copper_ingot", 10], ["ponce:ironheart_ingot", 25], ["ponce:glimmer_silver_ingot", 60], ["ponce:stormsteel_ingot", 110],
-      ["ponce:smithing_forge", 200], ["minecraft:iron_pickaxe", 80]],
+      ["ponce:smithing_forge", 200]],
     sell: [["ponce:raw_ember_copper", 4], ["ponce:raw_ironheart", 10], ["ponce:raw_glimmer_silver", 25], ["ponce:raw_stormsteel", 40]],
   },
   warden: {
@@ -269,6 +273,19 @@ export const SHOPS = {
     buy: [["ponce:thunder_call", 600], ["ponce:highland_stew", 70]],
     sell: [["ponce:bull_horn", 12], ["ponce:highland_hide", 8], ["ponce:lizard_scale", 10], ["ponce:wind_essence", 9],
       ["ponce:hawk_feather", 9], ["ponce:thunder_horn", 120]],
+  },
+  // Wren's general store, in every town. Row options: count (bundle size), cmd (given by command, e.g. potions),
+  // name (shown instead of the item name), miningLevel (only sold once your Mining job is high enough).
+  merchant: {
+    buy: [
+      ["minecraft:bread", 12, { count: 4 }], ["minecraft:apple", 10, { count: 4 }], ["minecraft:baked_potato", 12, { count: 4 }],
+      ["minecraft:cooked_beef", 14, { count: 2 }], ["minecraft:cooked_chicken", 12, { count: 2 }],
+      ["minecraft:potion", 600, { cmd: "give @s potion 1 21", name: "Potion of Healing" }],
+      ["minecraft:potion", 1500, { cmd: "give @s potion 1 22", name: "Potion of Healing II" }],
+      ["minecraft:wooden_pickaxe", 20, { miningLevel: 1 }], ["minecraft:stone_pickaxe", 60, { miningLevel: 5 }],
+      ["minecraft:iron_pickaxe", 250, { miningLevel: 12 }],
+    ],
+    sell: [],
   },
   cook: {
     buy: [["ponce:cooking_pot", 150], ["ponce:boar_skewer", 25], ["ponce:hare_stew", 35], ["ponce:jelly_tart", 40],

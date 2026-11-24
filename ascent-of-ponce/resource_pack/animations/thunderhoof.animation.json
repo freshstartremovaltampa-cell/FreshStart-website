@@ -32,9 +32,63 @@
             0
           ]
         },
-        "head": {
+        "tail": {
           "rotation": [
-            "math.sin(query.anim_time * 60) * 3",
+            "20",
+            "math.sin(query.anim_time * 90) * 15",
+            0
+          ]
+        }
+      }
+    },
+    "animation.ponce.thunderhoof.archer": {
+      "loop": true,
+      "bones": {
+        "sword": {
+          "scale": 0
+        },
+        "shield": {
+          "scale": 0
+        },
+        "bow": {
+          "rotation": [
+            85,
+            0,
+            0
+          ]
+        },
+        "arm_l": {
+          "rotation": [
+            -85,
+            -10,
+            0
+          ]
+        },
+        "arm_r": {
+          "rotation": [
+            "-85 + math.sin(query.anim_time * 120) * 8",
+            25,
+            0
+          ]
+        }
+      }
+    },
+    "animation.ponce.thunderhoof.warrior": {
+      "loop": true,
+      "bones": {
+        "bow": {
+          "scale": 0
+        },
+        "arm_l": {
+          "rotation": [
+            -45,
+            25,
+            0
+          ]
+        },
+        "arm_r": {
+          "rotation": [
+            "-50 + math.sin(query.anim_time * 160) * 25",
             0,
             0
           ]

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Generates the Floor 3 (Rolling Highlands) creatures: Highland Bull, Rock
-Lizard, Wind Sprite, Crag Hawk, and the guardian Thunderhoof, the Highland King.
+Lizard, Wind Sprite, Crag Hawk, and the guardian Thunderhoof, the Centaur King.
 Also their drops, the Thunder Call that summons the guardian, and lang entries.
 
 Run from the add-on folder after gen_mobs.py:  python3 tools/gen_floor3_mobs.py
@@ -231,40 +231,123 @@ def crag_hawk():
 
 # ================================================================ THUNDERHOOF (Floor 3 guardian)
 
+CENTAUR_LEGS = [("leg0", [-4.5, 0, -7], [0, 27]), ("leg1", [1.5, 0, -7], [12, 27]), ("leg2", [-4.5, 0, 6], [24, 27]), ("leg3", [1.5, 0, 6], [36, 27])]
+
+
 def thunderhoof():
+    """A centaur: horse body, humanoid torso. Phase 1 fights with a bow; at half health it switches
+    to sword and shield (the synced property ponce:phase drives which weapons are shown)."""
     ident, name = "ponce:thunderhoof", "thunderhoof"
-    comps = m.base_components(["bull", "monster", "ponce_boss"], hp=2600, damage=10, speed=0.24, box=(3.2, 3.6), loot=name)
+    comps = m.base_components(["centaur", "monster", "ponce_boss"], hp=2600, damage=10, speed=0.26, box=(2.0, 5.0), loot=name)
     for k in ("minecraft:despawn", "minecraft:behavior.random_stroll", "minecraft:pushable"):
         comps.pop(k)
     comps.update({
-        "minecraft:scale": {"value": 2.8},
+        "minecraft:scale": {"value": 2.2},
         "minecraft:boss": {"should_darken_sky": True, "hud_range": 48},
         "minecraft:persistent": {},
         "minecraft:knockback_resistance": {"value": 1.0},
         "minecraft:pushable": {"is_pushable": False, "is_pushable_by_piston": False},
-        "minecraft:damage_sensor": {"triggers": [{"cause": "fall", "deals_damage": "no"}, {"cause": "suffocation", "deals_damage": "no"}]},
+        "minecraft:damage_sensor": {"triggers": [{"cause": "fall", "deals_damage": "no"}, {"cause": "suffocation", "deals_damage": "no"},
+                                                 {"cause": "projectile", "deals_damage": "no"}]},  # his own arrows never hurt him
         "minecraft:experience_reward": {"on_death": "150"},
-        "minecraft:follow_range": {"value": 32, "max": 32},
+        "minecraft:follow_range": {"value": 40, "max": 40},
         "minecraft:behavior.hurt_by_target": {"priority": 1},
-        "minecraft:behavior.melee_attack": {"priority": 2, "speed_multiplier": 1.2, "track_target": True, "cooldown_time": 1.6},
         "minecraft:behavior.nearest_attackable_target": {
-            "priority": 3, "must_see": False, "reselect_targets": True, "within_radius": 28, "entity_types": m.PLAYER_TARGET},
+            "priority": 3, "must_see": False, "reselect_targets": True, "within_radius": 32, "entity_types": m.PLAYER_TARGET},
     })
-    groups = {"ponce:enraged": {"minecraft:movement": {"value": 0.3}, "minecraft:attack": {"damage": 13}}}
-    events = {"ponce:enrage": {"add": {"component_groups": ["ponce:enraged"]}}}
-    write_json(f"{BP}/entities/{name}.json", m.bp_entity(ident, comps, groups, events))
+    comps.pop("minecraft:behavior.look_at_player")
+    comps["minecraft:behavior.look_at_player"] = {"priority": 4, "look_distance": 32}
+    groups = {
+        # Phase 2: sword and shield, fights up close
+        "ponce:warrior": {
+            "minecraft:behavior.melee_attack": {"priority": 2, "speed_multiplier": 1.3, "track_target": True, "cooldown_time": 1.4},
+            "minecraft:attack": {"damage": 12}, "minecraft:movement": {"value": 0.28}},
+        "ponce:enraged": {"minecraft:attack": {"damage": 15}, "minecraft:movement": {"value": 0.32}},
+    }
+    events = {
+        "ponce:phase2": {"set_property": {"ponce:phase": 2}, "add": {"component_groups": ["ponce:warrior"]}},
+        "ponce:enrage": {"add": {"component_groups": ["ponce:enraged"]}},
+    }
+    ent = m.bp_entity(ident, comps, groups, events)
+    ent["minecraft:entity"]["description"]["properties"] = {"ponce:phase": {"type": "int", "range": [1, 2], "default": 1, "client_sync": True}}
+    write_json(f"{BP}/entities/{name}.json", ent)
     write_json(f"{BP}/loot_tables/entities/{name}.json", m.loot(
-        ("ponce:thunder_horn", 1, 1, 1), ("ponce:highland_hide", 3, 5, 1), ("ponce:bull_horn", 2, 3, 1), ("minecraft:beef", 4, 8, 1)))
-    write_json(f"{RP}/models/entity/{name}.geo.json", m.geometry(f"geometry.ponce.{name}", 64, 64, bull_bones(), bounds=(7, 6)))
-    img = paint_bull((70, 74, 86), (40, 42, 52), (200, 220, 255), (120, 200, 255))
+        ("ponce:thunder_horn", 1, 1, 1), ("ponce:hawk_feather", 3, 5, 1), ("ponce:wind_essence", 2, 3, 1), ("ponce:highland_hide", 2, 4, 1)))
+
+    bones = [
+        {"name": "body", "pivot": [0, 14, 0], "cubes": [cube([-5, 10, -8], [10, 9, 18], [0, 0])]},
+        {"name": "tail", "parent": "body", "pivot": [0, 17, 10], "cubes": [cube([-1, 9, 10], [2, 8, 2], [48, 27])]},
+        {"name": "torso", "parent": "body", "pivot": [0, 19, -6], "cubes": [
+            cube([-4, 19, -9], [8, 12, 5], [56, 0]),
+            cube([2, 22, -4], [3, 9, 3], [20, 40]),  # quiver
+        ]},
+        {"name": "head", "parent": "torso", "pivot": [0, 31, -6.5], "cubes": [cube([-3.5, 31, -10], [7, 7, 7], [82, 0])]},
+        {"name": "arm_l", "parent": "torso", "pivot": [5.5, 29, -6.5], "cubes": [cube([4, 18, -8], [3, 11, 3], [56, 17])]},
+        {"name": "arm_r", "parent": "torso", "pivot": [-5.5, 29, -6.5], "cubes": [cube([-7, 18, -8], [3, 11, 3], [68, 17])]},
+        {"name": "bow", "parent": "arm_l", "pivot": [5.5, 19, -6.5], "cubes": [cube([5, 12, -7], [1, 14, 1], [80, 17])]},
+        {"name": "sword", "parent": "arm_r", "pivot": [-5.5, 19, -6.5], "cubes": [
+            cube([-6.5, 17.5, -8.5], [2, 3, 2], [110, 0]),  # hilt
+            cube([-6, 18, -20.5], [1, 2, 12], [84, 17]),  # blade
+        ]},
+        {"name": "shield", "parent": "arm_l", "pivot": [5.5, 19, -6.5], "cubes": [cube([7, 14, -11], [1, 10, 8], [0, 40])]},
+    ] + [{"name": n, "parent": "body", "pivot": [o[0] + 1.5, 10, o[2] + 1.5], "cubes": [cube(o, [3, 10, 3], uv)]} for n, o, uv in CENTAUR_LEGS]
+
+    img = Image.new("RGBA", (128, 64), (0, 0, 0, 0))
+    coat, dark, skin, leather = (138, 82, 46), (96, 56, 30), (214, 168, 132), (96, 66, 40)
+    paint_box(img, (0, 0), (10, 9, 18), {"default": coat, "top": coat, "bottom": dark}, noise=12)
+    for _, _, uv in CENTAUR_LEGS:
+        paint_box(img, uv, (3, 10, 3), {"default": dark}, noise=10)
+        fill(img, uv[0], uv[1] + 3 + 8, 12, 2, (230, 226, 216), noise=6)  # white socks
+    paint_box(img, (48, 27), (2, 8, 2), {"default": (50, 34, 24)}, noise=8)
+    paint_box(img, (56, 0), (8, 12, 5), {"default": leather, "top": skin}, noise=10)
     px = img.load()
-    for x, y in ((20, 3), (21, 4), (22, 5), (21, 6), (22, 7), (23, 8), (40, 4), (41, 5), (40, 6), (41, 7)):  # lightning marks
-        px[x, y] = (150, 210, 255, 255)
+    for y in range(5, 17):  # a green sash across the chest
+        x = 61 + (y - 5) // 2
+        if x < 69:
+            px[x, y] = (60, 110, 60, 255)
+    paint_box(img, (82, 0), (7, 7, 7), {"default": skin, "top": (40, 30, 26)}, noise=8)
+    for f in ((82, 7, 7, 3), (96, 7, 7, 3), (103, 7, 7, 7)):  # long dark hair on the sides and back
+        fill(img, *f, (40, 30, 26), noise=8)
+    fx, fy = 89, 7  # face (front of the head)
+    px[fx + 1, fy + 3] = px[fx + 5, fy + 3] = (120, 200, 255, 255)  # storm-blue eyes
+    for x in range(fx + 2, fx + 5):
+        px[x, fy + 5] = (150, 100, 80, 255)
+    for uv in ([56, 17], [68, 17]):
+        paint_box(img, uv, (3, 11, 3), {"default": skin}, noise=8)
+        fill(img, uv[0], uv[1] + 3, 12, 4, leather, noise=8)  # leather bracers
+    paint_box(img, (20, 40), (3, 9, 3), {"default": leather, "top": (240, 230, 200)}, noise=8)  # quiver with fletching
+    paint_box(img, (80, 17), (1, 14, 1), {"default": (120, 84, 50)}, noise=6)
+    paint_box(img, (110, 0), (2, 3, 2), {"default": (200, 160, 60)}, noise=6)
+    paint_box(img, (84, 17), (1, 2, 12), {"default": (200, 206, 214), "top": (236, 240, 245)}, noise=6)
+    paint_box(img, (0, 40), (1, 10, 8), {"default": (60, 80, 140)}, noise=8)
+    for x in range(1, 9):  # gold rim and boss on the shield face
+        px[x, 41] = px[x, 49] = (220, 180, 60, 255)
+    px[4, 45] = px[5, 45] = px[4, 46] = px[5, 46] = (230, 200, 80, 255)
     save(img, f"{RP}/textures/entity/{name}.png")
-    write_json(f"{RP}/animations/{name}.animation.json", {"format_version": "1.8.0", "animations": bull_walk(name)})
+    write_json(f"{RP}/models/entity/{name}.geo.json", m.geometry(f"geometry.ponce.{name}", 128, 64, bones, bounds=(6, 7)))
+
+    walk = {"leg0": {"rotation": [swing(45), 0, 0]}, "leg3": {"rotation": [swing(45), 0, 0]},
+            "leg1": {"rotation": [f"-{swing(45)}", 0, 0]}, "leg2": {"rotation": [f"-{swing(45)}", 0, 0]},
+            "tail": {"rotation": ["20", "math.sin(query.anim_time * 90) * 15", 0]}}
+    write_json(f"{RP}/animations/{name}.animation.json", {"format_version": "1.8.0", "animations": {
+        f"animation.ponce.{name}.walk": {"loop": True, "bones": walk},
+        f"animation.ponce.{name}.archer": {"loop": True, "bones": {
+            "sword": {"scale": 0}, "shield": {"scale": 0}, "bow": {"rotation": [85, 0, 0]},
+            "arm_l": {"rotation": [-85, -10, 0]}, "arm_r": {"rotation": ["-85 + math.sin(query.anim_time * 120) * 8", 25, 0]}}},
+        f"animation.ponce.{name}.warrior": {"loop": True, "bones": {
+            "bow": {"scale": 0},
+            "arm_l": {"rotation": [-45, 25, 0]}, "arm_r": {"rotation": ["-50 + math.sin(query.anim_time * 160) * 25", 0, 0]}}},
+    }})
+    write_json(f"{RP}/animation_controllers/{name}.animation_controllers.json", {"format_version": "1.10.0", "animation_controllers": {
+        f"controller.animation.ponce.{name}": {"initial_state": "archer", "states": {
+            "archer": {"animations": ["archer"], "transitions": [{"warrior": "query.property('ponce:phase') == 2"}]},
+            "warrior": {"animations": ["warrior"], "transitions": [{"archer": "query.property('ponce:phase') == 1"}]},
+        }}}})
     write_json(f"{RP}/entity/{name}.entity.json", m.rp_entity(
-        ident, name, {"walk": f"animation.ponce.{name}.walk", "look_at_target": "animation.common.look_at_target"},
-        ["walk", "look_at_target"], ("#464A56", "#96D2FF")))
+        ident, name,
+        {"walk": f"animation.ponce.{name}.walk", "archer": f"animation.ponce.{name}.archer", "warrior": f"animation.ponce.{name}.warrior",
+         "stance": f"controller.animation.ponce.{name}", "look_at_target": "animation.common.look_at_target"},
+        ["walk", "stance", "look_at_target"], ("#8A522E", "#3C508C")))
 
     def thunder_horn(img):
         horn(img)
@@ -307,13 +390,13 @@ def resources():
             "ambient": "mob.breeze.idle_ground", "hurt": "mob.breeze.hurt", "death": "mob.breeze.death"}},
         "ponce:crag_hawk": {"volume": 0.9, "pitch": [1.1, 1.3], "events": {
             "ambient": "mob.parrot.idle", "hurt": "mob.parrot.hurt", "death": "mob.parrot.death"}},
-        "ponce:thunderhoof": {"volume": 2.0, "pitch": [0.4, 0.5], "events": {
-            "ambient": "mob.ravager.ambient", "hurt": "mob.ravager.hurt", "death": "mob.ravager.death",
-            "attack": "mob.ravager.bite", "step": {"sound": "mob.ravager.step", "volume": 1.0}}},
+        "ponce:thunderhoof": {"volume": 1.6, "pitch": [0.7, 0.8], "events": {
+            "ambient": "mob.horse.angry", "hurt": "mob.horse.hit", "death": "mob.horse.death",
+            "step": {"sound": "mob.horse.wood", "volume": 0.8}}},
     })
     write_json(sounds_path, sounds)
     names = {"highland_bull": "Highland Bull", "rock_lizard": "Rock Lizard", "wind_sprite": "Wind Sprite",
-             "crag_hawk": "Crag Hawk", "thunderhoof": "Thunderhoof, the Highland King"}
+             "crag_hawk": "Crag Hawk", "thunderhoof": "Thunderhoof, the Centaur King"}
     langp = f"{RP}/texts/en_US.lang"
     lines = [l for l in open(langp).read().splitlines() if not any(f"ponce:{k}." in l for k in names)]
     for k, n in names.items():

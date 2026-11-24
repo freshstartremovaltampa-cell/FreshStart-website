@@ -1,0 +1,30 @@
+{
+  "format_version": "1.10.0",
+  "animation_controllers": {
+    "controller.animation.ponce.thunderhoof": {
+      "initial_state": "archer",
+      "states": {
+        "archer": {
+          "animations": [
+            "archer"
+          ],
+          "transitions": [
+            {
+              "warrior": "query.property('ponce:phase') == 2"
+            }
+          ]
+        },
+        "warrior": {
+          "animations": [
+            "warrior"
+          ],
+          "transitions": [
+            {
+              "archer": "query.property('ponce:phase') == 1"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

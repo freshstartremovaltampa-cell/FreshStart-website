@@ -185,6 +185,13 @@ function buildTown() {
   const kitchen = house(C.x - 22, C.z - 16, 9, 9, 4, { door: "e" });
   P("pot", C.x - 18, Y + 1, C.z - 14); P("barrel", C.x - 21, Y + 1, C.z - 9); P("campfire", C.x - 16, Y + 1, C.z - 15);
   NPC_SPOTS["ponce:npc_cook"] = { ...kitchen, x: kitchen.x - 1 };
+  // Market stalls on the plaza; Wren keeps the red one
+  for (const [sx, sz, wool] of [[3, 4, "red_wool"], [-7, 4, "yellow_wool"]]) {
+    for (const [dx, dz] of [[0, 0], [3, 0], [0, 2], [3, 2]]) box("fence", C.x + sx + dx, Y + 1, C.z + sz + dz, C.x + sx + dx, Y + 2, C.z + sz + dz);
+    box(wool, C.x + sx, Y + 3, C.z + sz, C.x + sx + 3, Y + 3, C.z + sz + 2);
+    box("barrel", C.x + sx + 1, Y + 1, C.z + sz, C.x + sx + 2, Y + 1, C.z + sz);
+  }
+  NPC_SPOTS["ponce:npc_merchant"] = { x: C.x + 4.5, y: Y + 1, z: C.z + 5.5 };
   house(C.x - 24, C.z + 6, 8, 7, 4, { door: "e" });
   house(C.x - 12, C.z + 18, 7, 7, 4, { wall: "birch_planks", door: "n" });
   house(C.x + 3, C.z + 20, 7, 7, 4, { door: "n" });

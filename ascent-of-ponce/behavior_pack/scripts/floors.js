@@ -230,6 +230,23 @@ function placeNpcs(f, cx, cz) {
   if (changed) world.setDynamicProperty(key, JSON.stringify(placed));
 }
 
+/** Catch-up for NPCs added in an update: towns built in older worlds get them once their chunk is loaded. */
+function catchUpNpcs() {
+  const dim = world.getDimension(DIM);
+  for (const f of FLOORS) {
+    let placed;
+    try { placed = JSON.parse(world.getDynamicProperty(`ponce:floor${f.gen.FLOOR.id}_npcs`) ?? "[]"); } catch { placed = []; }
+    for (const [id, spot] of Object.entries(f.gen.NPC_SPOTS)) {
+      if (placed.includes(id)) continue;
+      const cx = Math.floor(spot.x) >> 4, cz = Math.floor(spot.z) >> 4;
+      if (!isChunkBuilt(f.gen.FLOOR.id, cx, cz)) continue;
+      let loaded;
+      try { loaded = dim.getBlock({ x: Math.floor(spot.x), y: Math.floor(spot.y), z: Math.floor(spot.z) }); } catch { loaded = undefined; }
+      if (loaded) placeNpcs(f, cx, cz);
+    }
+  }
+}
+
 // ---------- Travel ----------
 
 export function travelToFloor(player, id) {
@@ -389,6 +406,7 @@ export function registerFloors() {
   system.runInterval(rescueFallers, 10);
   system.runInterval(spawnTick, SPAWN.everyTicks);
   system.runInterval(fogTick, 20);
+  system.runInterval(catchUpNpcs, 200);
   world.afterEvents.entitySpawn.subscribe(onEntitySpawn);
   world.afterEvents.playerLeave.subscribe(({ playerId }) => fogState.delete(playerId));
   world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {

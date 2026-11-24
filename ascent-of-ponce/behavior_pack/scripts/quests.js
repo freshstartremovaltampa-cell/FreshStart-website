@@ -8,7 +8,7 @@ import { WEAPONS, WEAPON_KEYS } from "./config.js";
 import { WEAPON_DEFS } from "./weapon_data.js";
 import { getData, markDirty } from "./data.js";
 import { addXp } from "./progression.js";
-import { addJobXp, JOBS } from "./jobs.js";
+import { addJobXp, JOBS, jobLevel } from "./jobs.js";
 import { countItem, give, itemName, takeAll } from "./inventory.js";
 import { QUALITIES, weaponLore } from "./weapons.js";
 import { INFUSIONS } from "./weapon_data.js";
@@ -298,9 +298,16 @@ export async function openShop(player, key, npcTypeId) {
   const d = getData(player);
   const form = new ActionFormData().title("§l§6Shop").body(`§6Col: §f${d.col}\n§7Buy one at a time, or sell everything of a kind.`);
   const rows = [];
-  for (const [id, price] of shop.buy) {
-    rows.push(["buy", id, price]);
-    form.button(`${d.col >= price ? "§f" : "§8"}Buy ${itemName(id)} §6${price} Col`);
+  const mining = jobLevel(d, "mining");
+  for (const [id, price, opt = {}] of shop.buy) {
+    const label = `${opt.name ?? itemName(id)}${(opt.count ?? 1) > 1 ? ` x${opt.count}` : ""}`;
+    if (opt.miningLevel && mining < opt.miningLevel) {
+      rows.push(["locked", id, price, opt]);
+      form.button(`§8[Locked] ${label}\n§8Needs Mining ${opt.miningLevel} (you: ${mining})`);
+      continue;
+    }
+    rows.push(["buy", id, price, opt]);
+    form.button(`${d.col >= price ? "§f" : "§8"}Buy ${label} §6${price} Col`);
   }
   for (const [id, price] of shop.sell) {
     const have = countItem(player, id);
@@ -313,12 +320,15 @@ export async function openShop(player, key, npcTypeId) {
   if (res.canceled || res.selection === undefined) return;
   const row = rows[res.selection];
   if (!row) return npcTypeId ? openNpc(player, npcTypeId) : undefined;
-  const [kind, id, price] = row;
-  if (kind === "buy") {
+  const [kind, id, price, opt = {}] = row;
+  if (kind === "locked") {
+    player.sendMessage(`§c[Shop] Come back at Mining ${opt.miningLevel}. §7You wouldn't know how to use that yet.`);
+  } else if (kind === "buy") {
     if (d.col < price) player.sendMessage("§c[Shop] Not enough Col.");
     else {
       d.col -= price;
-      give(player, new ItemStack(id, 1));
+      if (opt.cmd) player.runCommand(opt.cmd);
+      else give(player, new ItemStack(id, opt.count ?? 1));
       player.playSound("random.orb");
     }
   } else {

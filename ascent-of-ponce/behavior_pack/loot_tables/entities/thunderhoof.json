@@ -24,7 +24,7 @@
       "entries": [
         {
           "type": "item",
-          "name": "ponce:highland_hide",
+          "name": "ponce:hawk_feather",
           "weight": 1,
           "functions": [
             {
@@ -43,7 +43,7 @@
       "entries": [
         {
           "type": "item",
-          "name": "ponce:bull_horn",
+          "name": "ponce:wind_essence",
           "weight": 1,
           "functions": [
             {
@@ -62,14 +62,14 @@
       "entries": [
         {
           "type": "item",
-          "name": "minecraft:beef",
+          "name": "ponce:highland_hide",
           "weight": 1,
           "functions": [
             {
               "function": "set_count",
               "count": {
-                "min": 4,
-                "max": 8
+                "min": 2,
+                "max": 4
               }
             }
           ]

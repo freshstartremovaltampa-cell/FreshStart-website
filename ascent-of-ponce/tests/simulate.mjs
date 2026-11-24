@@ -218,7 +218,7 @@ console.log("forms shown:", log.length);
   assert(minionCount() === 6, "40%: summons 2 more");
   assert(!boss.events.includes("ponce:enrage"), "not enraged above 30%");
   boss.health.currentValue = 1800 * 0.25; system.tick(2);
-  assert(boss.events.includes("ponce:enrage"), "enraged below 30%");
+  assert(boss.events.includes("ponce:enrage"), "enraged at 25%");
   boss.health.currentValue = 1800 * 0.15; system.tick(2);
   assert(minionCount() === 6, "20%: herd call respects the 6-minion cap");
 
@@ -842,12 +842,49 @@ console.log("forms shown:", log.length);
 
   // Quest givers move in, once
   const npcs = dim.entities.filter((e) => e.isValid && e.typeId.startsWith("ponce:npc_") && g.isOnFloor1(e.location));
-  assert(npcs.length === 3 && npcs.every((n) => n.nameTag && Math.hypot(n.location.x - NPC_SPOTS[n.typeId].x, n.location.z - NPC_SPOTS[n.typeId].z) < 1), "Marla, Bram and Pip appear at their buildings");
+  assert(npcs.length === 4 && npcs.every((n) => n.nameTag && Math.hypot(n.location.x - NPC_SPOTS[n.typeId].x, n.location.z - NPC_SPOTS[n.typeId].z) < 1), "Marla, Bram, Pip and Wren appear at their buildings");
   for (const n of npcs) {
     const x = Math.floor(n.location.x), z = Math.floor(n.location.z);
-    if (typeAt(x, BASE + 1, z) !== "minecraft:air" || typeAt(x, BASE + 2, z) !== "minecraft:air") assert(false, `${n.typeId} has room to stand`);
+    const open = (y) => [undefined, "minecraft:air"].includes(typeAt(x, y, z));
+    if (!open(BASE + 1) || !open(BASE + 2)) assert(false, `${n.typeId} has room to stand`);
   }
   assert(true, "every quest giver has two blocks of headroom");
+
+  // Towns built before Wren existed still get her (catch-up placement)
+  const wren = npcs.find((n) => n.typeId === "ponce:npc_merchant");
+  wren.isValid = false;
+  world.setDynamicProperty("ponce:floor1_npcs", JSON.stringify(["ponce:npc_guild", "ponce:npc_smith", "ponce:npc_cook"]));
+  system.tick(220);
+  assert(dim.entities.filter((e) => e.isValid && e.typeId === "ponce:npc_merchant" && g.isOnFloor1(e.location)).length === 1,
+    "a town built before an update gets its new merchant");
+
+  // Wren's general store: food bundles, pricey potions, pickaxes locked by Mining level
+  {
+    const Q = await import("../behavior_pack/scripts/quests.js");
+    const { SHOPS } = await import("../behavior_pack/scripts/quests_data.js");
+    const row = (id, pred = () => true) => SHOPS.merchant.buy.findIndex(([i, , o]) => i === id && pred(o ?? {}));
+    const shop = async (sel) => { globalThis.nextFormResponse = [{ canceled: false, selection: sel }]; await Q.openShop(v, "merchant"); };
+    const vd = getDataFor(v);
+    const has = (id) => v.items.filter((it) => it?.typeId === id).reduce((n, it) => n + it.amount, 0);
+    vd.col = 1000; vd.jobs.mining.level = 1;
+    await shop(row("minecraft:bread"));
+    assert(has("minecraft:bread") === 4 && vd.col === 988, "bread comes in a bundle of 4 for 12 Col");
+    const heal = SHOPS.merchant.buy.find(([, , o]) => o?.cmd?.endsWith(" 21"));
+    assert(heal[1] >= 500 && SHOPS.merchant.buy.every(([, p, o]) => o?.cmd || p <= 250), "healing potions cost far more than anything else in the store");
+    v.commands.length = 0;
+    await shop(SHOPS.merchant.buy.indexOf(heal));
+    assert(v.commands.includes("give @s potion 1 21") && vd.col === 988 - heal[1], "buying a Potion of Healing hands it over");
+    vd.col = 1000;
+    await shop(row("minecraft:stone_pickaxe"));
+    assert(has("minecraft:stone_pickaxe") === 0 && vd.col === 1000 && v.msgs.some((m) => m.includes("Mining 5")), "the stone pickaxe is locked below Mining 5");
+    await shop(row("minecraft:wooden_pickaxe"));
+    assert(has("minecraft:wooden_pickaxe") === 1, "the wooden pickaxe is sold from Mining 1");
+    vd.jobs.mining.level = 12;
+    await shop(row("minecraft:iron_pickaxe"));
+    assert(has("minecraft:iron_pickaxe") === 1 && SHOPS.merchant.buy.every(([i, , o]) => !i.endsWith("_pickaxe") || o?.miningLevel),
+      "at Mining 12 the iron pickaxe unlocks; every pickaxe has a Mining requirement");
+    assert(!SHOPS.merchant.buy.some(([i]) => i === "minecraft:diamond_pickaxe"), "no diamond pickaxe yet (saved for Tier IV)");
+  }
 
   // A chunk that unloads mid-build is retried, not marked done
   const testChunk = [(C.x + 160) >> 4, C.z >> 4];
@@ -1051,7 +1088,7 @@ console.log("forms shown:", log.length);
   assert(typeAt(FLOOR.center.x + 5, BASE, FLOOR.center.z + 5) === "minecraft:mangrove_log", "on mangrove stilts");
   assert(h.commands.some((c) => c === "fog @s push ponce:marsh_fog ponce_floor"), "the marsh fog rolls in on Floor 2");
   const npcs = dim.entities.filter((e) => e.isValid && e.typeId.startsWith("ponce:npc_") && g2.isOnFloor(e.location));
-  assert(npcs.length === 3 && npcs.some((n) => n.typeId === "ponce:npc_warden"), "Ysolde, Bram and Pip set up in Stiltwater");
+  assert(npcs.length === 4 && npcs.some((n) => n.typeId === "ponce:npc_warden") && npcs.some((n) => n.typeId === "ponce:npc_merchant"), "Ysolde, Bram, Pip and Wren set up in Stiltwater");
   h.location = { x: 0, y: 64, z: 0 }; system.tick(20);
   assert(h.commands.includes("fog @s remove ponce_floor"), "the fog lifts when you leave");
 
@@ -1223,7 +1260,11 @@ console.log("forms shown:", log.length);
   const { FLOOR, ARENA, GATE, ARRIVAL } = g3;
   const typeAt = (x, y, z) => dim.blocks.get(`${x},${y},${z}`)?.typeId;
   dim.allLoaded = true;
-  dim.factory = (id, loc) => { const e = makeEntity(id, id === "ponce:thunderhoof" ? 2600 : 90); e.location = { ...loc }; e.remove = () => { e.isValid = false; }; return e; };
+  dim.factory = (id, loc) => {
+    const proj = id === "minecraft:arrow" ? { owner: undefined, shot: undefined, shoot(v) { this.shot = v; } } : undefined;
+    const e = makeEntity(id, id === "ponce:thunderhoof" ? 2600 : 90, proj ? { "minecraft:projectile": proj } : {});
+    e.projectile = proj; e.location = { ...loc }; e.remove = () => { e.isValid = false; }; return e;
+  };
 
   // ---- Generator ----
   let total = 0, outside = 0, hmin = 1e9, hmax = -1e9;
@@ -1255,7 +1296,7 @@ console.log("forms shown:", log.length);
   system.tick(500);
   assert(floors.isChunkBuilt(3, FLOOR.center.x >> 4, FLOOR.center.z >> 4), "Cairnhold gets built");
   const npcs = dim.entities.filter((e) => e.isValid && e.typeId.startsWith("ponce:npc_") && g3.isOnFloor(e.location));
-  assert(npcs.length === 3 && npcs.some((n) => n.typeId === "ponce:npc_ranger"), "Corra, Bram and Pip set up in Cairnhold");
+  assert(npcs.length === 4 && npcs.some((n) => n.typeId === "ponce:npc_ranger") && npcs.some((n) => n.typeId === "ponce:npc_merchant"), "Corra, Bram, Pip and Wren set up in Cairnhold");
   t.location = { x: FLOOR.center.x + 100.5, y: g3.surfaceY(FLOOR.center.x + 100, FLOOR.center.z) + 1, z: FLOOR.center.z + 0.5 };
   system.tick(400);
   world.timeOfDay = 18000; system.tick(40 * 12); world.timeOfDay = 6000; system.tick(40 * 12);
@@ -1277,37 +1318,89 @@ console.log("forms shown:", log.length);
   const boss = dim.entities.find((e) => e.isValid && e.typeId === "ponce:thunderhoof");
   assert(boss && t.items[0] === undefined, "the Thunder Call summons Thunderhoof in the Crown");
 
-  // Quake: jumping avoids it, standing still doesn't
-  t.location = { x: boss.location.x + 3, y: boss.location.y, z: boss.location.z };
+  // ---- Phase 1: the Archer ----
   const st = TH.thunderState.get(boss.id) ?? (system.tick(2), TH.thunderState.get(boss.id));
-  st.nextCharge = system.currentTick + 10000; st.nextStampede = system.currentTick + 10000; st.nextQuake = 0;
-  t.health.currentValue = 20; t.isOnGround = false;
-  let saw = false;
-  for (let i = 0; i < 40; i++) { system.tick(1); if ((t.actionBar ?? "").includes("JUMP")) saw = true; }
-  assert(saw && t.health.currentValue === 20, "Ground Quake is telegraphed, and jumping over it takes no damage");
-  st.nextQuake = 0; t.isOnGround = true;
-  for (let i = 0; i < 40; i++) system.tick(1);
-  assert(t.health.currentValue <= 20 - TH.TUNING.quakeDamage + 0.01 && t.effects.slowness, "standing on the ground, the quake hits and slows you");
-
-  // Stampede below 70%: bulls run the marked lanes; standing between lanes is safe
-  boss.health.currentValue = 2600 * 0.6;
-  st.nextStampede = 0; st.nextQuake = system.currentTick + 10000;
-  t.health.currentValue = 20;
-  let lanesWarned = false, bulls = 0;
-  for (let i = 0; i < 50; i++) { system.tick(1); if ((t.actionBar ?? "").includes("STAMPEDE")) lanesWarned = true; }
-  const a = st.attack;
-  bulls = dim.entities.filter((e) => e.isValid && e.tagList.includes("ponce_stampede")).length;
-  assert(lanesWarned && a?.kind === "stampede" && bulls === 3, "Stampede: lanes are marked, then three bulls charge down them");
-  const herd = dim.entities.filter((e) => e.isValid && e.tagList.includes("ponce_stampede"));
-  t.location = { ...herd[1].location }; // stand in the middle lane, right where a bull is
+  assert(st.phase === 1 && boss.events.length === 0, "Thunderhoof opens the fight with his bow");
+  t.location = { x: boss.location.x + 14, y: boss.location.y, z: boss.location.z };
+  st.nextRain = system.currentTick + 10000; st.nextShot = 0;
+  const arrowsBefore = dim.entities.filter((e) => e.typeId === "minecraft:arrow").length;
   system.tick(2);
-  assert(t.health.currentValue <= 20 - TH.TUNING.stampedeDamage + 0.01, "standing in a lane: trampled");
-  system.tick(60);
-  assert(dim.entities.filter((e) => e.isValid && e.tagList.includes("ponce_stampede")).length === 0, "the stampede herd leaves afterwards");
+  const shot = dim.entities.filter((e) => e.typeId === "minecraft:arrow").slice(arrowsBefore);
+  assert(shot.length === 1 && shot[0].projectile.owner === boss && shot[0].projectile.shot.x > 0,
+    "Aimed Shot: he looses an arrow at you (owned by him, flying your way)");
+  system.tick(TH.TUNING.shotEvery + 4);
+  assert(dim.entities.filter((e) => e.typeId === "minecraft:arrow").length >= arrowsBefore + 2, "...and keeps shooting every couple of seconds");
+
+  // Arrow Rain: a marked circle, then damage inside it only
+  st.nextShot = system.currentTick + 10000; st.nextRain = 0;
+  t.health.currentValue = 20;
+  let warned = false;
+  system.tick(2);
+  const rainAt = { ...st.attack?.center };
+  for (let i = 0; i < TH.TUNING.rainWindup; i++) { system.tick(1); if ((t.actionBar ?? "").includes("circle")) warned = true; }
+  assert(warned && t.health.currentValue <= 20 - TH.TUNING.rainDamage + 0.01, "Arrow Rain is telegraphed, and standing in the circle hurts");
+  st.nextRain = 0; t.health.currentValue = 20;
+  system.tick(2);
+  t.location = { x: t.location.x, y: t.location.y, z: t.location.z + TH.TUNING.rainRadius + 3 }; // step out
+  system.tick(TH.TUNING.rainWindup + 4);
+  assert(rainAt.x !== undefined && t.health.currentValue === 20 && st.attack === undefined, "stepping out of the circle avoids the rain");
+
+  // Kiting: get close and he gallops away
+  st.nextShot = st.nextRain = system.currentTick + 10000; st.nextKite = 0;
+  t.location = { x: boss.location.x + 3, y: boss.location.y, z: boss.location.z };
+  boss.impulses.length = 0;
+  system.tick(2);
+  assert(boss.impulses.some((v) => v.x < 0), "get close and he gallops away from you");
+
+  // ---- Half health: sword and shield ----
+  boss.health.currentValue = 2600 * 0.49;
+  system.tick(2);
+  assert(st.phase === 2 && boss.events.includes("ponce:phase2") && t.msgs.some((m) => m.includes("Sword and Shield")),
+    "at half health he switches to sword and shield");
+  const arrowsP2 = dim.entities.filter((e) => e.typeId === "minecraft:arrow").length;
+  st.nextShield = st.nextSweep = st.nextCharge = system.currentTick + 10000;
+  system.tick(120);
+  assert(dim.entities.filter((e) => e.typeId === "minecraft:arrow").length === arrowsP2, "no more arrows in phase 2");
+
+  // Shield Stance: frontal hits are blocked, hits from behind land
+  boss.view = { x: 1, y: 0, z: 0 }; // facing +x
+  st.nextShield = 0; system.tick(2);
+  assert(TH.shieldUp(boss), "Shield Stance: he raises his shield");
+  t.location = { x: boss.location.x + 3, y: boss.location.y, z: boss.location.z }; // in front
+  let hp0 = boss.health.currentValue;
+  boss.applyDamage(20, { damagingEntity: t });
+  const frontLoss = hp0 - boss.health.currentValue;
+  t.location = { x: boss.location.x - 3, y: boss.location.y, z: boss.location.z }; // behind
+  hp0 = boss.health.currentValue;
+  boss.applyDamage(20, { damagingEntity: t });
+  const backLoss = hp0 - boss.health.currentValue;
+  assert(Math.abs(frontLoss - 4) < 0.01 && backLoss === 20, `shield blocks 80% from the front (${frontLoss}) but not from behind (${backLoss})`);
+  system.tick(TH.TUNING.shieldTicks + 2);
+  assert(!TH.shieldUp(boss), "the shield comes down after a few seconds");
+
+  // Sword Sweep: in front gets hit, behind is safe
+  st.nextShield = st.nextCharge = system.currentTick + 10000; st.nextSweep = 0;
+  t.location = { x: boss.location.x + 3, y: boss.location.y, z: boss.location.z }; t.health.currentValue = 20;
+  warned = false;
+  for (let i = 0; i < TH.TUNING.sweepWindup + 4; i++) { system.tick(1); if ((t.actionBar ?? "").includes("blade")) warned = true; }
+  assert(warned && t.health.currentValue <= 20 - TH.TUNING.sweepDamage + 0.01, "Sword Sweep is telegraphed and hits whoever is in front");
+  st.nextSweep = 0; t.health.currentValue = 20;
+  system.tick(2);
+  t.location = { x: boss.location.x - 3, y: boss.location.y, z: boss.location.z };
+  system.tick(TH.TUNING.sweepWindup + 4);
+  assert(t.health.currentValue === 20, "standing behind him, the sweep misses");
+
+  // Charge still in his kit
+  st.nextSweep = st.nextShield = system.currentTick + 10000; st.nextCharge = 0;
+  t.location = { x: boss.location.x + 10, y: boss.location.y, z: boss.location.z };
+  system.tick(2);
+  assert(st.attack?.kind === "charge" && (t.actionBar ?? "").includes("sideways"), "in phase 2 he also charges");
+  system.tick(TH.TUNING.chargeWindup + TH.TUNING.chargeTicks + 4);
+  st.nextCharge = system.currentTick + 10000;
 
   // Enrage and victory
   boss.health.currentValue = 2600 * 0.25; system.tick(4);
-  assert(boss.events.includes("ponce:enrage"), "enraged below 30%");
+  assert(boss.events.includes("ponce:enrage"), "enraged at 25%");
   Q.accept(t, QUESTS_BY_ID.bull_run);
   td.level = 18; td.quests.done.sprite_storm = 1; td.quests.done.hawk_eyes = 1;
   Q.accept(t, QUESTS_BY_ID.king_of_the_hills);

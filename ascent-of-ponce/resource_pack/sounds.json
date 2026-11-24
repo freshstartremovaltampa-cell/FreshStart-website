@@ -263,19 +263,18 @@
         }
       },
       "ponce:thunderhoof": {
-        "volume": 2.0,
+        "volume": 1.6,
         "pitch": [
-          0.4,
-          0.5
+          0.7,
+          0.8
         ],
         "events": {
-          "ambient": "mob.ravager.ambient",
-          "hurt": "mob.ravager.hurt",
-          "death": "mob.ravager.death",
-          "attack": "mob.ravager.bite",
+          "ambient": "mob.horse.angry",
+          "hurt": "mob.horse.hit",
+          "death": "mob.horse.death",
           "step": {
-            "sound": "mob.ravager.step",
-            "volume": 1.0
+            "sound": "mob.horse.wood",
+            "volume": 0.8
           }
         }
       }

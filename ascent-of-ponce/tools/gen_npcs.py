@@ -29,6 +29,8 @@ NPCS = [
     ("npc_cook", "Pip, the Cook", ("#F0F0F0", "#3C64B4"),
      {"hair": (240, 240, 240), "hat": True, "shirt": (235, 235, 230), "pants": (60, 100, 180), "boots": (60, 40, 30),
       "eyes": (90, 60, 40), "cheeks": (235, 140, 140)}),
+    ("npc_merchant", "Wren, the Merchant", ("#6E3C8C", "#E6C35A"),
+     {"hair": (60, 40, 30), "shirt": (110, 60, 140), "trim": (230, 195, 90), "pants": (70, 56, 46), "boots": (46, 34, 28), "eyes": (120, 90, 50)}),
 ]
 
 

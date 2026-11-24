@@ -239,6 +239,7 @@ function buildTown() {
 
   // Market stalls around the plaza
   marketStall(-9, 14, "red_wool");
+  NPC_SPOTS["ponce:npc_merchant"] = { x: -8, z: 15 }; // Wren keeps the red stall
   marketStall(5, -17, "blue_wool");
   marketStall(-17, 4, "yellow_wool");
 

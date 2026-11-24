@@ -17,17 +17,21 @@
       ],
       "animations": {
         "walk": "animation.ponce.thunderhoof.walk",
+        "archer": "animation.ponce.thunderhoof.archer",
+        "warrior": "animation.ponce.thunderhoof.warrior",
+        "stance": "controller.animation.ponce.thunderhoof",
         "look_at_target": "animation.common.look_at_target"
       },
       "scripts": {
         "animate": [
           "walk",
+          "stance",
           "look_at_target"
         ]
       },
       "spawn_egg": {
-        "base_color": "#464A56",
-        "overlay_color": "#96D2FF"
+        "base_color": "#8A522E",
+        "overlay_color": "#3C508C"
       }
     }
   }
