@@ -124,6 +124,30 @@
     },
     "ponce_burnt_mess": {
       "textures": "textures/items/burnt_mess"
+    },
+    "ponce_wayfarers_sword": {
+      "textures": "textures/items/weapons/wayfarers_sword"
+    },
+    "ponce_wayfarers_dagger": {
+      "textures": "textures/items/weapons/wayfarers_dagger"
+    },
+    "ponce_wayfarers_rapier": {
+      "textures": "textures/items/weapons/wayfarers_rapier"
+    },
+    "ponce_wayfarers_hammer": {
+      "textures": "textures/items/weapons/wayfarers_hammer"
+    },
+    "ponce_wayfarers_axe": {
+      "textures": "textures/items/weapons/wayfarers_axe"
+    },
+    "ponce_wayfarers_spear": {
+      "textures": "textures/items/weapons/wayfarers_spear"
+    },
+    "ponce_wayfarers_katana": {
+      "textures": "textures/items/weapons/wayfarers_katana"
+    },
+    "ponce_wayfarers_greatsword": {
+      "textures": "textures/items/weapons/wayfarers_greatsword"
     }
   }
 }

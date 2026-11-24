@@ -68,7 +68,8 @@ fire("entityHurt", { hurtEntity: s, damage: 5, damageSource: { cause: "entityAtt
 system.tick(20);
 assert(JSON.parse(p.props["ponce:data"]).mastery.hammer > 0, "mace counts as hammer mastery");
 
-// Allocate stats through the menu: VIT 10, STR 2
+// Allocate stats through the menu (this player already picked a starter, so Status is the first button)
+getDataFor(p).starter = "ponce:wayfarers_sword";
 globalThis.nextFormResponse = [{ canceled: false, selection: 0 }, { canceled: false, selection: 0 }, { canceled: false, formValues: [1, 0, 0, 2] }];
 fire("itemUse", { source: p, itemStack: new ItemStack("ponce:wayfarer_compass") });
 await new Promise((r) => setTimeout(r, 20));
@@ -393,7 +394,12 @@ console.log("forms shown:", log.length);
   const { WEAPON_DEFS } = await import("../behavior_pack/scripts/weapon_data.js");
   const { damageMultiplier, effectiveStats } = await import("../behavior_pack/scripts/progression.js");
   const { meetsWeaponReq } = await import("../behavior_pack/scripts/weapons.js");
-  ItemStack.registry = Object.fromEntries(Object.entries(WEAPON_DEFS).map(([id, w]) => [id, { tags: [`ponce:${w.type}`, "ponce:weapon", "ponce:tier_iron"], durability: w.durability }]));
+  // Read tags straight from the generated item files, like the game does
+  const fs = await import("node:fs");
+  ItemStack.registry = Object.fromEntries(Object.entries(WEAPON_DEFS).map(([id, w]) => {
+    const json = JSON.parse(fs.readFileSync(new URL(`../behavior_pack/items/weapons/${id.split(":")[1]}.json`, import.meta.url)));
+    return [id, { tags: json["minecraft:item"].components["minecraft:tags"].tags, durability: w.durability }];
+  }));
   const fireBefore = (n, e) => { world.beforeEvents[n].h.forEach((f) => f(e)); return e; };
   const flush = () => new Promise((r) => setTimeout(r, 5));
 
@@ -434,7 +440,7 @@ console.log("forms shown:", log.length);
 
   // ---- Forging ----
   const forge = dim.setBlock({ x: 300, y: 64, z: 1 }, "ponce:smithing_forge");
-  const order = Object.entries(WEAPON_DEFS).sort(([, a], [, b]) => a.tier - b.tier || a.type.localeCompare(b.type)).map(([id]) => id);
+  const order = Object.entries(WEAPON_DEFS).filter(([, x]) => x.forge).sort(([, a], [, b]) => a.tier - b.tier || a.type.localeCompare(b.type)).map(([id]) => id);
   const giveMats = (id) => { for (const m of WEAPON_DEFS[id].forge.materials) j.items[j.items.indexOf(undefined)] = new ItemStack(m.item, m.count); };
   const startForge = async (id) => {
     giveMats(id);
@@ -453,7 +459,7 @@ console.log("forms shown:", log.length);
   for (let i = 0; i < 10 && sessions.has(j.id); i++) { const s = sessions.get(j.id); s.pos = s.zone; punch(); system.tick(5); }
   let sword = forged("ponce:iron_longsword")[0];
   assert(sword?.getDynamicProperty("ponce:quality") === "masterwork", "all-perfect strikes forge a Masterwork: " + sword?.getDynamicProperty("ponce:quality"));
-  assert(sword.nameTag.includes("Masterwork") && sword.lore[0].includes("Masterwork"), "quality shown in name and tooltip");
+  assert(sword.nameTag.includes("Masterwork") && sword.lore.some((l) => l.includes("Masterwork")), "quality shown in name and tooltip");
   assert(d.jobs.smithing.xp > 0 || d.jobs.smithing.level > 1, "Smithing XP gained");
 
   await startForge("ponce:iron_dagger");
@@ -522,4 +528,101 @@ console.log("forms shown:", log.length);
   assert(!meetsWeaponReq(d, WEAPON_DEFS["ponce:iron_longsword"]), "meal buffs don't count toward weapon requirements");
   system.tick(20 * 181);
   assert(d.foodBuff === null && j.msgs.some((m) => m.includes("wore off")), "buff wears off after 3 minutes");
+}
+
+// ================= Starter weapons and infusions =================
+{
+  const { WEAPON_DEFS, INFUSIONS } = await import("../behavior_pack/scripts/weapon_data.js");
+  const { ORDER, sessions } = await import("../behavior_pack/scripts/forging.js");
+  const { effectiveDamage, wearWeapon, infusionsOf } = await import("../behavior_pack/scripts/weapons.js");
+  const { isDecentWeapon } = await import("../behavior_pack/scripts/bosses.js");
+  const { useSkill } = await import("../behavior_pack/scripts/abilities.js");
+  const { STARTERS } = await import("../behavior_pack/scripts/starter.js");
+  const flush = () => new Promise((r) => setTimeout(r, 5));
+  const fireBefore = (n, e) => { world.beforeEvents[n].h.forEach((f) => f(e)); return e; };
+
+  // ---- Starter choice on first login ----
+  const n = makePlayer("Newcomer"); world.players.push(n);
+  Object.assign(n, { dimension: dim, location: { x: 500.5, y: 64, z: 0.5 }, isSneaking: false, getGameMode: () => "Survival" });
+  const hammerIdx = STARTERS.findIndex(([id]) => id === "ponce:wayfarers_hammer");
+  globalThis.starterResponse = { Newcomer: { canceled: false, selection: hammerIdx } };
+  fire("playerSpawn", { player: n, initialSpawn: true });
+  system.tick(119); await flush();
+  assert(!n.items.some((i) => i?.typeId === "ponce:wayfarers_hammer"), "picker waits until after the welcome");
+  system.tick(2); await flush();
+  const nd = getDataFor(n);
+  const starter = n.items.find((i) => i?.typeId === "ponce:wayfarers_hammer");
+  assert(starter && nd.starter === "ponce:wayfarers_hammer", "first login: chosen starter weapon is given");
+  assert(starter.lore.some((l) => l.includes("Can't be forged")), "starter tooltip says it can't be forged");
+  fire("playerSpawn", { player: n, initialSpawn: false });
+  system.tick(130); await flush();
+  assert(n.items.filter((i) => i?.typeId?.startsWith("ponce:wayfarers_")).length === 1, "starter is only ever given once");
+
+  const forged = Object.values(WEAPON_DEFS).filter((d) => d.tier > 0);
+  const minForged = Math.min(...forged.map((d) => d.damage));
+  const starters = Object.values(WEAPON_DEFS).filter((d) => d.tier === 0);
+  assert(starters.length === 8 && starters.every((d) => d.damage < minForged), `all 8 starters are weaker than every forged weapon (max ${Math.max(...starters.map((d) => d.damage))} < ${minForged})`);
+  assert(starters.every((d) => d.durability < Math.min(...forged.map((f) => f.durability))), "starters also have the lowest durability");
+  assert(starters.every((d) => !d.forge) && ORDER.every(([id]) => WEAPON_DEFS[id].tier > 0), "starters can't be forged and aren't in the forge menu");
+  assert(!isDecentWeapon(new ItemStack("ponce:wayfarers_greatsword")), "starters don't count as iron-tier against Ironhide");
+
+  // Starter can use skills (it's a Ponce weapon)
+  const s2 = makePlayer("Swordling"); world.players.push(s2);
+  Object.assign(s2, { dimension: dim, location: { x: 520.5, y: 64, z: 0.5 }, isSneaking: false });
+  fire("playerSpawn", { player: s2, initialSpawn: true });
+  const sd = getDataFor(s2); sd.starter = "ponce:wayfarers_sword"; sd.skills.push("sword_dash");
+  const ws = new ItemStack("ponce:wayfarers_sword"); s2.setHeld(ws);
+  const dummy = dim.spawnEntity("ponce:tusk_boar", { x: 520.5, y: 64, z: 2.5 }); dummy.health.currentValue = dummy.health.effectiveMax = 100;
+  useSkill(s2, ws); system.tick(6);
+  assert(dummy.health.currentValue < 100, "starter weapon can use skills");
+
+  // ---- Infusions ----
+  const c = makePlayer("Infuser"); world.players.push(c);
+  Object.assign(c, { dimension: dim, location: { x: 540.5, y: 64, z: 0.5 }, isSneaking: false, getGameMode: () => "Survival" });
+  fire("playerSpawn", { player: c, initialSpawn: true });
+  const cd = getDataFor(c); cd.starter = "ponce:wayfarers_sword";
+  const forge = dim.setBlock({ x: 540, y: 64, z: 1 }, "ponce:smithing_forge");
+  const put = (id, k) => { c.items[c.items.indexOf(undefined)] = new ItemStack(id, k); };
+  const count = (id) => c.items.filter((i) => i?.typeId === id).reduce((a, i) => a + i.amount, 0);
+  const forgeWith = async (id, picks) => {
+    globalThis.nextFormResponse = [{ canceled: false, selection: ORDER.findIndex(([x]) => x === id) }, { canceled: false, selection: 0 }, { canceled: false, formValues: picks }];
+    fireBefore("playerInteractWithBlock", { block: forge, player: c, isFirstEvent: true, cancel: false });
+    system.tick(1); await flush();
+    for (let i = 0; i < 12 && sessions.has(c.id); i++) { const s = sessions.get(c.id); s.pos = s.zone; fire("entityHitBlock", { damagingEntity: c, hitBlock: forge }); system.tick(5); }
+    return c.items.filter((i) => i?.typeId === id).pop();
+  };
+
+  for (const m of WEAPON_DEFS["ponce:iron_longsword"].forge.materials) put(m.item, m.count);
+  put("ponce:boar_tusk", 1);
+  const tuskSword = await forgeWith("ponce:iron_longsword", [1]); // option 1 = the only affordable infusion
+  assert(JSON.stringify(infusionsOf(tuskSword)) === '["ponce:boar_tusk"]' && count("ponce:boar_tusk") === 0, "Tier I: one infusion slot, Boar Tusk used up");
+  assert(tuskSword.lore.some((l) => l.includes("Tusk Edge")) && tuskSword.nameTag.includes("+1"), "infusion shown in tooltip and name");
+  const plain = new ItemStack("ponce:iron_longsword"); plain.setDynamicProperty("ponce:quality", "masterwork");
+  assert(Math.abs(effectiveDamage(tuskSword) - effectiveDamage(plain) * 8 / 7) < 0.01, `Tusk Edge adds +1 base damage (${effectiveDamage(plain).toFixed(1)} -> ${effectiveDamage(tuskSword).toFixed(1)})`);
+
+  // Tier II: two slots, recipe materials and infusion costs add up
+  cd.jobs.smithing.level = 8;
+  for (const m of WEAPON_DEFS["ponce:tuskfang_blade"].forge.materials) put(m.item, m.count);
+  put("ponce:boar_hide", 2); put("ponce:golemite_core", 1);
+  const opts = Object.keys(INFUSIONS).filter((id) => ["ponce:boar_hide", "ponce:golemite_core"].includes(id));
+  const blade = await forgeWith("ponce:tuskfang_blade", [1 + Object.keys(INFUSIONS).filter((id) => id === "ponce:boar_hide" || id === "ponce:golemite_core").indexOf("ponce:boar_hide"), 1 + opts.indexOf("ponce:golemite_core")]);
+  const inf = infusionsOf(blade);
+  assert(inf.length === 2 && inf.includes("ponce:boar_hide") && inf.includes("ponce:golemite_core"), "Tier II: two infusion slots: " + JSON.stringify(inf));
+  assert(count("ponce:boar_hide") === 0 && count("ponce:golemite_core") === 0 && count("ponce:boar_tusk") === 0, "recipe hide + infusion hide both consumed");
+
+  // No infusion materials: no picker, plain weapon
+  for (const m of WEAPON_DEFS["ponce:iron_dagger"].forge.materials) put(m.item, m.count);
+  const plainDagger = await forgeWith("ponce:iron_dagger", []);
+  assert(plainDagger && infusionsOf(plainDagger).length === 0, "infusions are optional");
+
+  // Durability: Hide Grip (+30%) lasts longer, Tusk Edge (-10%) wears faster
+  const wearTest = (infs) => {
+    const it = new ItemStack("ponce:iron_longsword", 1, [], 1e6);
+    if (infs.length) it.setDynamicProperty("ponce:infusions", JSON.stringify(infs));
+    c.setHeld(it);
+    for (let i = 0; i < 3000; i++) wearWeapon(c);
+    return it.dur.damage;
+  };
+  const base = wearTest([]), hide = wearTest(["ponce:boar_hide"]), tusk = wearTest(["ponce:boar_tusk"]);
+  assert(base === 3000 && Math.abs(hide - 3000 / 1.3) < 120 && Math.abs(tusk - 3000 / 0.9) < 120, `durability: base ${base}, Hide Grip ${hide} (~2308), Tusk Edge ${tusk} (~3333)`);
 }

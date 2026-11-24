@@ -29,7 +29,7 @@ export const LORE = [
       "Train with one kind of weapon long enough and it teaches you techniques. Those skills stay with you, whatever blade you hold.\n\n" +
       "§fUse a skill: §7hold a Ponce weapon and press use.\n§fSwitch skill: §7sneak and press use.\n\n" +
       "Every weapon type fights differently. Greatswords hit hard but swing slowly. Daggers are quick and light. " +
-      "Smiths can craft iron weapons, and the tower's creatures provide what's needed to improve them. " +
+      "Every climber starts with a humble Wayfarer's weapon. Better ones must be forged, and the tower's creatures provide materials to temper them. " +
       "But a weapon too heavy for your level or stats will barely scratch an enemy.",
   },
   {

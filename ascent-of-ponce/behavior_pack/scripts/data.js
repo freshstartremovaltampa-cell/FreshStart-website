@@ -23,6 +23,7 @@ function freshData() {
     activeSkill: {}, // weapon type -> equipped active skill id
     jobs: { mining: { level: 1, xp: 0 }, smithing: { level: 1, xp: 0 }, cooking: { level: 1, xp: 0 } },
     foodBuff: null, // { name, stats, until (world absolute time) }
+    starter: null, // id of the Wayfarer's weapon chosen on first login
     col: 0, // currency
     highestFloor: 1,
     kills: 0,

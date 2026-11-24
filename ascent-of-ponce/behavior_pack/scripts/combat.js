@@ -13,7 +13,7 @@ import { getData, markDirty } from "./data.js";
 import {
   addMastery, addXp, critChance, damageMultiplier, dodgeChance, getHeldItem, weaponTypeOf,
 } from "./progression.js";
-import { getOffhand, meetsWeaponReq, qualityMult, wearWeapon, weaponDef } from "./weapons.js";
+import { effectiveDamage, getOffhand, meetsWeaponReq, qualityMult, wearWeapon, weaponBonus, weaponDef } from "./weapons.js";
 import {
   armorBroken, bleeds, lastHit, lastSwing, nextHitBuffs, reduceCooldowns, skillHits, stances,
 } from "./effects.js";
@@ -67,8 +67,7 @@ export function killWithCredit(target, player) {
 
 /** Base damage of the held Ponce weapon. Skills scale from this. */
 export function heldDamage(player) {
-  const item = getHeldItem(player);
-  return (weaponDef(item)?.damage ?? 5) * qualityMult(item);
+  return effectiveDamage(getHeldItem(player));
 }
 
 /**
@@ -121,7 +120,9 @@ function resolveHit(player, target, damage, { skill = false, direct = false } = 
   lastCombatTick.set(player.id, now);
   lastHit.set(player.id, now);
 
-  let mult = damageMultiplier(data, weapon) * qualityMult(item);
+  // Ponce weapons: quality and infusions scale the hit relative to the weapon's base damage
+  const bonus = weaponBonus(item);
+  let mult = damageMultiplier(data, weapon) * (def ? effectiveDamage(item) / def.damage : 1);
 
   if (def && !meetsWeaponReq(data, def)) {
     mult *= UNMET_REQUIREMENT_DAMAGE;
@@ -130,7 +131,8 @@ function resolveHit(player, target, damage, { skill = false, direct = false } = 
 
   if (!skill && handling) {
     const elapsed = now - (lastSwing.get(player.id) ?? -Infinity);
-    const pace = Math.min(1, Math.max(MIN_SWING_DAMAGE, elapsed / handling.swingTicks));
+    const swingTicks = handling.swingTicks * Math.max(0.3, 1 + bonus.swing);
+    const pace = Math.min(1, Math.max(MIN_SWING_DAMAGE, elapsed / swingTicks));
     lastSwing.set(player.id, now);
     mult *= pace;
     if (pace < 0.6) notes.push("§7rushed");
@@ -158,7 +160,7 @@ function resolveHit(player, target, damage, { skill = false, direct = false } = 
     }
   }
 
-  const crit = Math.random() < critChance(data) + (weapon === "katana" ? 0.1 : 0);
+  const crit = Math.random() < critChance(data) + (weapon === "katana" ? 0.1 : 0) + bonus.crit;
   // Crits scale with everything above, so penalties (rushed swings, unmet requirements) apply to them too
   const total = damage * mult * (crit ? 1 + STAT_EFFECTS.critMultiplier : 1);
   if (crit && weapon === "katana" && has("katana_chain")) reduceCooldowns(player.id, 20);
@@ -211,7 +213,7 @@ function afterNormalHit(player, target, weapon, damage, data) {
     system.runTimeout(() => {
       if (!target.isValid || !player.isValid) return;
       if (flatDir(player.location, target.location).dist > 4) return;
-      dealSkillDamage(player, target, off.damage * 0.6);
+      dealSkillDamage(player, target, effectiveDamage(getOffhand(player)) * 0.6);
       wearWeapon(player, EquipmentSlot.Offhand);
     }, 10);
   }

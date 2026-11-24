@@ -8,13 +8,13 @@
 // Smithing level widens the green zone and slows the marker.
 
 import { world, system, ItemStack } from "@minecraft/server";
-import { ActionFormData } from "@minecraft/server-ui";
+import { ActionFormData, ModalFormData } from "@minecraft/server-ui";
 import { WEAPONS } from "./config.js";
-import { WEAPON_DEFS } from "./weapon_data.js";
+import { INFUSIONS, WEAPON_DEFS } from "./weapon_data.js";
 import { getData } from "./data.js";
 import { addJobXp, jobLevel } from "./jobs.js";
 import { countItem, give, hasAll, itemName, takeAll } from "./inventory.js";
-import { QUALITIES, weaponLore } from "./weapons.js";
+import { QUALITIES, describeInfusion, weaponLore } from "./weapons.js";
 import { hudHoldUntil } from "./combat.js";
 import { show } from "./ui.js";
 
@@ -48,7 +48,21 @@ function inUse(loc, exceptId) {
 
 // ---------- Menu ----------
 
-const ORDER = Object.entries(WEAPON_DEFS).sort(([, a], [, b]) => a.tier - b.tier || a.type.localeCompare(b.type));
+// Starter weapons have no forge recipe and never show up here
+export const ORDER = Object.entries(WEAPON_DEFS).filter(([, d]) => d.forge)
+  .sort(([, a], [, b]) => a.tier - b.tier || a.type.localeCompare(b.type));
+
+/** Recipe materials plus the chosen infusions, merged by item. */
+export function totalMaterials(mats, infusions) {
+  const total = new Map(mats.map((m) => [m.item, m.count]));
+  for (const id of infusions) total.set(id, (total.get(id) ?? 0) + INFUSIONS[id].cost);
+  return [...total].map(([item, count]) => ({ item, count }));
+}
+
+/** Infusions the player can afford on top of the recipe's own materials. */
+function affordableInfusions(player, mats) {
+  return Object.keys(INFUSIONS).filter((id) => hasAll(player, totalMaterials(mats, [id])));
+}
 
 function materialList(player, mats) {
   return mats.map((m) => {
@@ -91,23 +105,53 @@ async function confirmForge(player, loc, dimension, id, def, level) {
       `§7${WEAPONS[def.type].name}, Tier ${def.tier === 1 ? "I" : "II"}, ${def.damage} damage\n` +
       `§7Needs Smithing §e${def.forge.smithing}§7 (you're ${level})\n` +
       `§7Materials: ${materialList(player, mats)}\n` +
-      `§8Weapon requirements: Lv ${def.req.level}, ${Object.entries(def.req.stats).map(([k, v]) => `${k.toUpperCase()} ${v}`).join(", ")}`
+      `§8Weapon requirements: Lv ${def.req.level}, ${Object.entries(def.req.stats).map(([k, v]) => `${k.toUpperCase()} ${v}`).join(", ")}\n` +
+      `§d${def.forge.slots} optional infusion slot${def.forge.slots > 1 ? "s" : ""}§7: add monster drops to change the weapon's stats. ` +
+      "§8You'll be asked after you start, if you carry any."
     );
   if (ready) form.button("§aStart forging");
   form.button("Back");
   const res = await show(player, form);
   if (res.canceled) return;
   if (!ready || res.selection !== 0) return openForgeMenu(player, dimension.getBlock(loc));
-  if (!hasAll(player, mats) || sessions.has(player.id) || inUse(loc, player.id)) return;
-  takeAll(player, mats);
-  start(player, loc, dimension, id, def, level);
+  const infusions = await pickInfusions(player, def);
+  if (infusions === undefined) return openForgeMenu(player, dimension.getBlock(loc));
+  const all = totalMaterials(mats, infusions);
+  if (!hasAll(player, all) || sessions.has(player.id) || inUse(loc, player.id)) return;
+  takeAll(player, all);
+  start(player, loc, dimension, id, def, level, infusions);
+}
+
+/**
+ * One dropdown per infusion slot, each defaulting to None. Returns the chosen
+ * infusion ids ([] for none), or undefined if the player backed out.
+ */
+async function pickInfusions(player, def) {
+  const options = affordableInfusions(player, def.forge.materials);
+  if (options.length === 0 || !def.forge.slots) return [];
+  const labels = ["None", ...options.map((id) => `${INFUSIONS[id].name} (${INFUSIONS[id].cost}x ${itemName(id)}): ${describeInfusion(INFUSIONS[id])}`)];
+  const form = new ModalFormData().title("§l§dInfusions (optional)");
+  for (let i = 0; i < def.forge.slots; i++) form.dropdown(`§7Slot ${i + 1}`, labels, { defaultValueIndex: 0 });
+  form.submitButton("Forge");
+  const res = await show(player, form);
+  if (res.canceled) return undefined;
+  const picked = [];
+  for (const v of res.formValues.filter((x) => typeof x === "number")) {
+    const id = options[v - 1];
+    if (id && !picked.includes(id)) picked.push(id);
+  }
+  if (!hasAll(player, totalMaterials(def.forge.materials, picked))) {
+    player.sendMessage("§c[Ponce] You don't have enough materials for those infusions together.");
+    return undefined;
+  }
+  return picked;
 }
 
 // ---------- Minigame ----------
 
-function start(player, loc, dimension, id, def, level) {
+function start(player, loc, dimension, id, def, level, infusions = []) {
   const s = {
-    id, def, loc: { ...loc }, dim: dimension.id,
+    id, def, infusions, loc: { ...loc }, dim: dimension.id,
     pos: 0, dir: 1, speed: markerSpeed(level), width: zoneWidth(level),
     progress: 0, score: 0, strikes: 0, heat: HEAT_TICKS, lastStrike: -10, zone: 0,
   };
@@ -169,8 +213,9 @@ function finish(player, s, cooled) {
   const q = QUALITIES[key];
   const item = new ItemStack(s.id, 1);
   item.setDynamicProperty("ponce:quality", key);
-  item.nameTag = `${q.name} ${s.def.name}`;
-  item.setLore([`§7Quality: ${q.name}`, ...weaponLore(s.def)]);
+  if (s.infusions.length) item.setDynamicProperty("ponce:infusions", JSON.stringify(s.infusions));
+  item.nameTag = `${q.name} ${s.def.name}${s.infusions.length ? " §d+" + s.infusions.length : ""}`;
+  item.setLore(weaponLore(s.def, { quality: key, infusions: s.infusions }));
   if (key === "crude") {
     const dur = item.getComponent("minecraft:durability");
     if (dur) dur.damage = Math.floor(dur.maxDurability * 0.25);

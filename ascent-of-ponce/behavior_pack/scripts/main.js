@@ -14,6 +14,7 @@ import { forgetPlayer } from "./effects.js";
 import { registerMining } from "./mining.js";
 import { registerForging } from "./forging.js";
 import { registerCooking, buffHudText } from "./cooking.js";
+import { needsStarter, offerStarter } from "./starter.js";
 
 const COMPASS = "ponce:wayfarer_compass";
 
@@ -55,6 +56,8 @@ world.afterEvents.playerSpawn.subscribe(({ player }) => {
   }
   giveCompass(player);
   applyStatEffects(player);
+  // New and existing players without a starter weapon get the picker (after the welcome title)
+  if (needsStarter(player)) system.runTimeout(() => player.isValid && offerStarter(player), 120);
 });
 
 world.afterEvents.itemUse.subscribe(({ source, itemStack }) => {

@@ -48,8 +48,8 @@
         "tags": [
           "ponce:rapier",
           "ponce:weapon",
-          "ponce:tier_iron",
-          "ponce:weapon_tier_1"
+          "ponce:weapon_tier_1",
+          "ponce:tier_iron"
         ]
       }
     }

@@ -63,7 +63,15 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
 
   The passives are Backstab, Rend (bleed), Iaido Draw, Crimson Chain, Bulwark and Dual Wield.
 - **Dual Wield**: with a Ponce sword in your offhand, each hit is followed by an offhand strike, and it unlocks **Twin Tempest** (six alternating strikes).
-- **16 Ponce weapons**, 2 tiers for each of the 8 types (Tier I needs Lv 3, Tier II needs Lv 5-8). Since Phase 3 they're **forged**, not crafted. The Armory page in the menu lists them with your requirements shown in green or red.
+- **24 Ponce weapons** across 8 types:
+  - **Starter**: one Wayfarer's weapon per type, chosen once on first login (see below).
+  - **Tier I** (Lv 3) and **Tier II** (Lv 5-8): **forged**, not crafted (see Phase 3).
+
+  The Armory page in the menu lists them with your requirements shown in green or red.
+- **Starter weapon**: shortly after the welcome on first login, you choose a weapon type and get its **Wayfarer's** weapon. Players on older saves without one are offered it too, and it's also on the menu until chosen.
+  - Starters deal 3-4 damage and have 300 durability, weaker than every forged weapon (5+ damage, 450+ durability).
+  - They can't be forged or crafted, are only given once, and don't count as iron-tier against Ironhide.
+  - They can use skills, so your first skill unlock is usable right away.
 - **Requirements**: below a weapon's level or stats it deals 25% damage and can't use skills. The tooltip shows the requirements.
 - **Each type handles differently**:
 
@@ -110,6 +118,20 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
   | Masterwork | 120% | 33% less wear |
 
   Running out of heat always gives Crude. Smithing level widens the green zone and slows the marker.
+- **Infusions (optional)**: after picking a weapon, add Floor 1 monster drops to change its stats. Tier I has 1 slot and Tier II has 2. The cost is on top of the recipe. Infusions change stats only, never abilities, and they show in the weapon's name and tooltip:
+
+  | Infusion | Cost | Effect |
+  |---|---|---|
+  | Tusk Edge | 1 Boar Tusk | +1 damage, -10% durability |
+  | Hide Grip | 2 Boar Hide | +30% durability |
+  | Quill Barbs | 3 Thorn Quill | +5% crit chance |
+  | Stinger Point | 2 Wasp Stinger | +0.5 damage, +3% crit chance |
+  | Claw Serration | 2 Mole Claw | +0.5 damage, 10% faster swing |
+  | Gel Temper | 4 Jelly Gel | -0.5 damage, 20% faster swing |
+  | Wing Balance | 2 Wasp Wing | 15% faster swing |
+  | Moss Binding | 3 Moss Clump | +20% durability |
+  | Core Weight | 1 Golemite Core | +2 damage, 15% slower swing |
+  | King's Crest | 1 Boar King's Crest | +1.5 damage, +25% durability |
 
 ### Cooking: timing minigame and meal buffs
 - Craft a **Cooking Pot** from 7 Ember Copper Ingots and 1 Campfire.
@@ -149,6 +171,7 @@ behavior_pack/
     forging.js        Smithing Forge menu and minigame
     cooking.js        Cooking Pot menu, minigame, meal buffs
     jobs_data.js      generated ore / food / recipe table (from tools/gen_jobs.py)
+    starter.js        first-login starter weapon choice
     inventory.js, ui.js  shared helpers
     mobs.js           mole ambush, golemite weaknesses
     bosses.js         floor guardian fights

@@ -48,8 +48,8 @@
         "tags": [
           "ponce:dagger",
           "ponce:weapon",
-          "ponce:tier_iron",
-          "ponce:weapon_tier_2"
+          "ponce:weapon_tier_2",
+          "ponce:tier_iron"
         ]
       }
     }

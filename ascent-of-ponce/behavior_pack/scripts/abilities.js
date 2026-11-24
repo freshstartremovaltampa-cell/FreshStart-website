@@ -8,7 +8,7 @@ import { WEAPONS } from "./config.js";
 import { getData, markDirty } from "./data.js";
 import { getHeldItem } from "./progression.js";
 import { activeSkillsFor, SKILLS, SKILLS_BY_ID } from "./skills.js";
-import { getOffhand, meetsWeaponReq, qualityMult, wearWeapon, weaponDef } from "./weapons.js";
+import { effectiveDamage, getOffhand, meetsWeaponReq, wearWeapon, weaponDef } from "./weapons.js";
 import { dealSkillDamage, flash, flatDir, isTarget, push } from "./combat.js";
 import { armorBroken, cooldownLeft, nextHitBuffs, setCooldown, stances } from "./effects.js";
 
@@ -83,7 +83,7 @@ const IMPL = {
       later(i * 8, () => {
         const t = closestInFront(p, 4, 0.2);
         sound(p, "game.player.attack.strong", 1.1 + (i % 2) * 0.2);
-        if (t) dealSkillDamage(p, t, (i % 2 ? off.damage : dmg) * 0.9);
+        if (t) dealSkillDamage(p, t, (i % 2 ? effectiveDamage(getOffhand(p)) : dmg) * 0.9);
       });
     }
     wearWeapon(p, EquipmentSlot.Offhand);
@@ -264,7 +264,7 @@ export function useSkill(player, item) {
   const left = cooldownLeft(player.id, skill.id, now);
   if (left > 0) return flash(player, `§7${skill.name} §8- ready in ${Math.ceil(left / 20)}s`, 20);
 
-  const result = IMPL[skill.id]?.(player, def.damage * qualityMult(item), data);
+  const result = IMPL[skill.id]?.(player, effectiveDamage(item), data);
   if (result === false) return;
   setCooldown(player.id, skill.id, now + skill.cooldown * 20);
   wearWeapon(player);

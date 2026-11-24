@@ -14,9 +14,11 @@ import { show } from "./ui.js";
 import { JOBS, JOB_MAX, jobXpToNext } from "./jobs.js";
 import { ORES } from "./jobs_data.js";
 import { buffActive } from "./cooking.js";
+import { needsStarter, offerStarter } from "./starter.js";
 import { equippedSkill } from "./abilities.js";
-import { WEAPON_DEFS } from "./weapon_data.js";
-import { describeWeaponReq } from "./weapons.js";
+import { INFUSIONS, WEAPON_DEFS } from "./weapon_data.js";
+import { describeInfusion, describeWeaponReq } from "./weapons.js";
+import { itemName } from "./inventory.js";
 
 const DIV = "§8────────────────";
 
@@ -41,25 +43,28 @@ export async function openMainMenu(player) {
       `§cHP §f${Math.ceil(hp?.currentValue ?? 0)} / ${Math.round(hp?.effectiveMax ?? 20)}\n` +
       `§bEXP ${bar(d.xp, next)} §7${d.xp}/${next}\n` +
       `§6Col §f${d.col}    §dFloor §f${d.highestFloor}\n${DIV}`
-    )
-    .button(`Status${d.statPoints > 0 ? `  §a(+${d.statPoints})` : ""}`, "textures/items/totem")
-    .button("Skills", "textures/items/book_enchanted")
-    .button("Weapon Mastery", "textures/items/weapons/iron_longsword")
-    .button("Armory", "textures/items/weapons/iron_greatsword")
-    .button("Jobs", "textures/items/iron_pickaxe")
-    .button("Quests  §8(coming soon)", "textures/items/book_writable")
-    .button("Floor Map  §8(coming soon)", "textures/items/map_filled")
-    .button("Journal", "textures/items/book_normal")
-    .button("Settings", "textures/items/redstone_dust");
+    );
 
-  const dev = player.hasTag("ponce_dev");
-  if (dev) form.button("§cDev Tools", "textures/items/barrier");
+  const entries = [];
+  if (needsStarter(player)) entries.push(["§a§lChoose your starter weapon", "textures/items/weapons/wayfarers_sword", offerStarter]);
+  entries.push(
+    [`Status${d.statPoints > 0 ? `  §a(+${d.statPoints})` : ""}`, "textures/items/totem", openStatus],
+    ["Skills", "textures/items/book_enchanted", openSkills],
+    ["Weapon Mastery", "textures/items/weapons/iron_longsword", openMastery],
+    ["Armory", "textures/items/weapons/iron_greatsword", openArmory],
+    ["Jobs", "textures/items/iron_pickaxe", openJobs],
+    ["Quests  §8(coming soon)", "textures/items/book_writable", comingSoon],
+    ["Floor Map  §8(coming soon)", "textures/items/map_filled", comingSoon],
+    ["Journal", "textures/items/book_normal", openJournal],
+    ["Settings", "textures/items/redstone_dust", openSettings],
+  );
+  if (player.hasTag("ponce_dev")) entries.push(["§cDev Tools", "textures/items/barrier", openDev]);
+  for (const [label, icon] of entries) form.button(label, icon);
 
   const res = await show(player, form);
   if (res.canceled) return;
   player.playSound("random.click");
-  const pages = [openStatus, openSkills, openMastery, openArmory, openJobs, comingSoon, comingSoon, openJournal, openSettings, openDev];
-  await pages[res.selection]?.(player);
+  await entries[res.selection]?.[2](player);
 }
 
 async function comingSoon(player) {
@@ -201,6 +206,10 @@ async function openJobs(player) {
 
 // ---------- Armory ----------
 
+function infusionList() {
+  return Object.entries(INFUSIONS).map(([id, inf]) => `§f${inf.name} §8(${inf.cost}x ${itemName(id)})§7: ${describeInfusion(inf)}`).join("\n");
+}
+
 async function openArmory(player) {
   const d = getData(player);
   const byTier = (tier) => Object.values(WEAPON_DEFS).filter((w) => w.tier === tier)
@@ -210,8 +219,10 @@ async function openArmory(player) {
     .body(
       "§7Ponce weapons are §fforged§7 at a Smithing Forge, not crafted. They have level and stat requirements. Below them, a weapon deals only 25% damage and can't use skills. " +
       "Weapons never grant abilities; every weapon type handles differently.\n" +
+      `${DIV}\n§7Starter §8- chosen once on first login, can't be forged\n${byTier(0)}\n` +
       `${DIV}\n§eTier I §7- Ironheart + Ember Copper, Smithing 1\n${byTier(1)}\n` +
-      `${DIV}\n§bTier II §7- Ironheart + Glimmer Silver + Floor 1 materials, Smithing 8\n${byTier(2)}`
+      `${DIV}\n§bTier II §7- Ironheart + Glimmer Silver + Floor 1 materials, Smithing 8\n${byTier(2)}\n` +
+      `${DIV}\n§dInfusions §7- optional monster drops added while forging (Tier I: 1 slot, Tier II: 2)\n${infusionList()}`
     )
     .button("Back"));
   if (!res.canceled) return openMainMenu(player);
