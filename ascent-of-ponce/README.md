@@ -67,6 +67,7 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
   - **Starter**: one Wayfarer's weapon per type, chosen once on first login (see below).
   - **Tier I** (Lv 3) and **Tier II** (Lv 5-8): **forged**, not crafted (see Phase 3).
   - **Relic** (Lv 25; usable at half strength below that): Legendary quest rewards (see Phase 4).
+  - **Hydra Relic** (Lv 30): dropped by the Mire Hydra (see Floor 2).
 
   The Armory page in the menu lists them with your requirements shown in green or red.
 - **Starter weapon**: shortly after the welcome on first login, you choose a weapon type and get its **Wayfarer's** weapon. Players on older saves without one are offered it too, and it's also on the menu until chosen.
@@ -257,6 +258,16 @@ The hydra introduces **multi-head creatures** (`scripts/multihead.js`, data-driv
   - The **last surviving head goes into a frenzy** and attacks twice as often.
 - **Leash**: the hydra is held to its pool.
 - **Victory**: Floor 2 is cleared (opening its Stair Gate) and you get +250 Col. The final blow earns 900 EXP and +15 mastery. Drops are Hydra Fangs, Hydra Scales and Gator Hide.
+- **Hydra Relics**: whoever fells the last head receives a Hydra Relic matching the weapon type they're holding (random if none). It's **guaranteed on your first Hydra kill, then a 15% chance**.
+  - Eight weapons, one per type: Mireblade, Fenfang, Venom Needle, Headsplitter, Neckcleaver, Hydra Lance, Severance and Threefold Ruin.
+  - **Unbreakable**, with **base damage 1 above the quest Relic** of the same type.
+  - **Lv 30** and about 52 stat points (a Lv 30 player has 87), for example Threefold Ruin needs 42 STR and 12 VIT. Like all Relics, they work at half strength below their requirements.
+  - Built-in infusions:
+    - **Hydra Fang** (+2.5 damage, +5% crit)
+    - **Hydra's Eye** (+10% crit)
+    - **Hydra's Thirst** (heals you for 4% of the damage you deal, on every hit)
+
+    Hydra's Eye and Hydra's Thirst exist only on these weapons and can't be forged. Hydra's Thirst is the one deliberate exception to "weapons never grant abilities".
 
 ## Roadmap
 5. Floors (part 3): Floor 3 and beyond; hydra-kind return as regular floor mobs around Floor 15

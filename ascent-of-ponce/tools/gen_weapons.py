@@ -29,6 +29,8 @@ WOOD, LEATHER, GOLD = (120, 84, 50), (92, 60, 40), (214, 170, 60)
 # id, name, type, tier, damage, durability, level, stats, recipe, palette
 WORN = {"blade": (150, 148, 140), "edge": (185, 182, 175), "shadow": (100, 98, 92)}
 RELIC = {"blade": (196, 178, 240), "edge": (255, 236, 160), "shadow": (112, 82, 170)}
+HYDRA = {"blade": (60, 120, 96), "edge": (190, 240, 120), "shadow": (30, 64, 50)}
+HYDRA_INFUSIONS = ["ponce:hydra_fang", "relic:hydras_eye", "relic:hydras_thirst"]
 
 WEAPONS = [
     # ---- Starter: one is chosen on first login. Can't be forged or crafted. Unbreakable.
@@ -106,6 +108,19 @@ WEAPONS = [
      {"relic": ["ponce:wasp_wing", "ponce:thorn_quill", "ponce:moss_clump"]}, RELIC),
     ("kingsfall", "Kingsfall", "greatsword", 3, 26, None, 25, {"str": 34, "vit": 12},
      {"relic": ["ponce:boar_king_crest", "ponce:golemite_core", "ponce:boar_tusk"]}, RELIC),
+
+    # ---- Hydra Relics: dropped by the Mire Hydra (Floor 2 guardian). Unbreakable. Lv 30 with
+    #      ~52 stat points (of 87 at Lv 30). Base damage 1 above the quest Relic of the same type.
+    #      Infusions: Hydra Fang (damage), Hydra's Eye (crit) and Hydra's Thirst (heals you for a
+    #      small share of every hit). The last two exist only on these weapons. ----
+    ("mireblade", "Mireblade", "sword", 3, 19, None, 30, {"str": 26, "dex": 26}, {"relic": HYDRA_INFUSIONS, "source": "hydra"}, HYDRA),
+    ("fenfang", "Fenfang", "dagger", 3, 16, None, 30, {"dex": 38, "agi": 14}, {"relic": HYDRA_INFUSIONS, "source": "hydra"}, HYDRA),
+    ("venom_needle", "Venom Needle", "rapier", 3, 19, None, 30, {"dex": 38, "agi": 15}, {"relic": HYDRA_INFUSIONS, "source": "hydra"}, HYDRA),
+    ("headsplitter", "Headsplitter", "hammer", 3, 23, None, 30, {"str": 40, "vit": 12}, {"relic": HYDRA_INFUSIONS, "source": "hydra"}, HYDRA),
+    ("neckcleaver", "Neckcleaver", "axe", 3, 22, None, 30, {"str": 32, "vit": 20}, {"relic": HYDRA_INFUSIONS, "source": "hydra"}, HYDRA),
+    ("hydra_lance", "Hydra Lance", "spear", 3, 20, None, 30, {"agi": 32, "str": 20}, {"relic": HYDRA_INFUSIONS, "source": "hydra"}, HYDRA),
+    ("severance", "Severance", "katana", 3, 22, None, 30, {"dex": 30, "agi": 22}, {"relic": HYDRA_INFUSIONS, "source": "hydra"}, HYDRA),
+    ("threefold_ruin", "Threefold Ruin", "greatsword", 3, 27, None, 30, {"str": 42, "vit": 12}, {"relic": HYDRA_INFUSIONS, "source": "hydra"}, HYDRA),
 ]
 
 SHAPED_KEYS = {"I": "minecraft:iron_ingot", "S": "minecraft:stick", "N": "minecraft:iron_nugget", "L": "minecraft:leather"}
@@ -186,6 +201,8 @@ def item_json(wid, name, kind, tier, damage, durability):
         tags.append("ponce:starter")
     if tier == 3:
         tags.append("ponce:relic")
+        if wid in HYDRA_RELIC_IDS:
+            tags.append("ponce:hydra_relic")
     comps = {
         "minecraft:icon": f"ponce_{wid}",
         "minecraft:display_name": {"value": f"§{'7fbd'[tier]}{name}"},
@@ -213,6 +230,8 @@ def item_json(wid, name, kind, tier, damage, durability):
         },
     }
 
+
+HYDRA_RELIC_IDS = {"mireblade", "fenfang", "venom_needle", "headsplitter", "neckcleaver", "hydra_lance", "severance", "threefold_ruin"}
 
 INGOTS = {"dagger": 2, "spear": 2, "sword": 3, "rapier": 3, "katana": 3, "axe": 3, "hammer": 4, "greatsword": 5}
 
@@ -250,6 +269,9 @@ INFUSIONS = {
     "ponce:gator_hide": {"name": "Gator Scale", "cost": 2, "durability": 0.4, "swing": 0.05},
     "ponce:hydra_fang": {"name": "Hydra Fang", "cost": 1, "damage": 2.5, "crit": 0.05},
     "ponce:hydra_scale": {"name": "Hydra Scale", "cost": 2, "damage": 0.5, "durability": 0.5},
+    # Relic-only (built into Hydra Relics, never forged). lifesteal = share of each hit's damage healed.
+    "relic:hydras_eye": {"name": "Hydra's Eye", "relicOnly": True, "crit": 0.1},
+    "relic:hydras_thirst": {"name": "Hydra's Thirst", "relicOnly": True, "lifesteal": 0.04},
 }
 
 
@@ -281,6 +303,7 @@ def main():
                                  "forge": forge_recipe(kind, tier, recipe)}
         if tier == 3:
             table[f"ponce:{wid}"]["infusions"] = recipe["relic"]
+            table[f"ponce:{wid}"]["relic"] = recipe.get("source", "quest")
 
     path = f"{RP}/textures/item_texture.json"
     data = json.load(open(path))

@@ -20,7 +20,10 @@ import { getData, markDirty } from "./data.js";
 import { addMastery, addXp, getHeldItem, weaponTypeOf } from "./progression.js";
 import { hudHoldUntil, push } from "./combat.js";
 import { rewardGuardian } from "./bosses.js";
-import { MOBS } from "./config.js";
+import { MOBS, WEAPON_KEYS } from "./config.js";
+import { WEAPON_DEFS } from "./weapon_data.js";
+import { give } from "./inventory.js";
+import { weaponLore } from "./weapons.js";
 import { notify } from "./quests.js";
 
 const DIM = "overworld";
@@ -45,7 +48,11 @@ export const SPECIES = {
     warnSeconds: 8,
     bite: { damage: 9, everyTicks: 90, windupTicks: 15, reach: 8, radius: 3 },
     acid: { damage: 4, poisonTicks: 80, everyTicks: 160, windupTicks: 25, range: 16, radius: 2.5, lingerTicks: 60 },
-    guardian: { floor: 2, arena: F2.ARENA, lure: "ponce:mire_lure", fallen: "The Mire Hydra has fallen", col: 250 },
+    guardian: {
+      floor: 2, arena: F2.ARENA, lure: "ponce:mire_lure", fallen: "The Mire Hydra has fallen", col: 250,
+      // A Hydra Relic for whoever fells the last head: guaranteed the first time, then a chance
+      relic: { source: "hydra", firstGuaranteed: true, chance: 0.15 },
+    },
     loot: [["ponce:hydra_fang", 1, 2], ["ponce:hydra_scale", 2, 4], ["ponce:gator_hide", 1, 2]],
   },
 };
@@ -153,6 +160,7 @@ function defeat(body, f) {
   }
   const killer = f.lastHitter?.isValid ? f.lastHitter : undefined;
   const mob = MOBS[f.typeId];
+  if (killer && sp.guardian?.relic) dropRelic(killer, f.typeId, sp);
   if (killer && mob) {
     addXp(killer, mob.xp);
     const weapon = weaponTypeOf(getHeldItem(killer));
@@ -164,6 +172,24 @@ function defeat(body, f) {
   body.remove();
   if (sp.guardian) rewardGuardian(dim, loc, { floor: sp.guardian.floor, type: f.typeId, fallen: sp.guardian.fallen, col: sp.guardian.col });
   else if (killer) notify(killer, "kill", f.typeId);
+}
+
+/** The guardian's relic: matches the weapon type the finisher is holding (random otherwise). */
+function dropRelic(player, typeId, sp) {
+  const cfg = sp.guardian.relic;
+  const d = getData(player);
+  const count = d.relicDrops[typeId] ?? 0;
+  if (!(cfg.firstGuaranteed && count === 0) && Math.random() >= cfg.chance) return;
+  const held = weaponTypeOf(getHeldItem(player));
+  const type = held ?? WEAPON_KEYS[Math.floor(Math.random() * WEAPON_KEYS.length)];
+  const [id, def] = Object.entries(WEAPON_DEFS).find(([, w]) => w.tier === 3 && w.relic === cfg.source && w.type === type);
+  const item = new ItemStack(id, 1);
+  item.setLore(weaponLore(def));
+  give(player, item);
+  d.relicDrops[typeId] = count + 1;
+  markDirty(player);
+  player.onScreenDisplay.setTitle("§2Hydra Relic", { subtitle: `§f${def.name}`, fadeInDuration: 10, stayDuration: 60, fadeOutDuration: 20 });
+  player.sendMessage(`§2[${sp.name}] §fFrom the last severed neck you pull a relic: §2${def.name}§f.`);
 }
 
 function regrowTick(body, f) {

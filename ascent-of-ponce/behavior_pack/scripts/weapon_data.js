@@ -629,7 +629,8 @@ export const WEAPON_DEFS = {
       "ponce:boar_tusk",
       "ponce:boar_king_crest",
       "ponce:wasp_stinger"
-    ]
+    ],
+    "relic": "quest"
   },
   "ponce:wasps_kiss": {
     "name": "Wasp's Kiss",
@@ -649,7 +650,8 @@ export const WEAPON_DEFS = {
       "ponce:wasp_stinger",
       "ponce:thorn_quill",
       "ponce:wasp_wing"
-    ]
+    ],
+    "relic": "quest"
   },
   "ponce:thornwhisper": {
     "name": "Thornwhisper",
@@ -669,7 +671,8 @@ export const WEAPON_DEFS = {
       "ponce:thorn_quill",
       "ponce:wasp_wing",
       "ponce:wasp_stinger"
-    ]
+    ],
+    "relic": "quest"
   },
   "ponce:golemheart_maul": {
     "name": "Golemheart Maul",
@@ -689,7 +692,8 @@ export const WEAPON_DEFS = {
       "ponce:golemite_core",
       "ponce:boar_king_crest",
       "ponce:moss_clump"
-    ]
+    ],
+    "relic": "quest"
   },
   "ponce:tuskreaver": {
     "name": "Tuskreaver",
@@ -709,7 +713,8 @@ export const WEAPON_DEFS = {
       "ponce:boar_tusk",
       "ponce:boar_king_crest",
       "ponce:boar_hide"
-    ]
+    ],
+    "relic": "quest"
   },
   "ponce:molefang_pike": {
     "name": "Molefang Pike",
@@ -729,7 +734,8 @@ export const WEAPON_DEFS = {
       "ponce:mole_claw",
       "ponce:thorn_quill",
       "ponce:boar_tusk"
-    ]
+    ],
+    "relic": "quest"
   },
   "ponce:verdant_moon": {
     "name": "Verdant Moon",
@@ -749,7 +755,8 @@ export const WEAPON_DEFS = {
       "ponce:wasp_wing",
       "ponce:thorn_quill",
       "ponce:moss_clump"
-    ]
+    ],
+    "relic": "quest"
   },
   "ponce:kingsfall": {
     "name": "Kingsfall",
@@ -769,7 +776,176 @@ export const WEAPON_DEFS = {
       "ponce:boar_king_crest",
       "ponce:golemite_core",
       "ponce:boar_tusk"
-    ]
+    ],
+    "relic": "quest"
+  },
+  "ponce:mireblade": {
+    "name": "Mireblade",
+    "type": "sword",
+    "tier": 3,
+    "damage": 19,
+    "durability": null,
+    "req": {
+      "level": 30,
+      "stats": {
+        "str": 26,
+        "dex": 26
+      }
+    },
+    "forge": null,
+    "infusions": [
+      "ponce:hydra_fang",
+      "relic:hydras_eye",
+      "relic:hydras_thirst"
+    ],
+    "relic": "hydra"
+  },
+  "ponce:fenfang": {
+    "name": "Fenfang",
+    "type": "dagger",
+    "tier": 3,
+    "damage": 16,
+    "durability": null,
+    "req": {
+      "level": 30,
+      "stats": {
+        "dex": 38,
+        "agi": 14
+      }
+    },
+    "forge": null,
+    "infusions": [
+      "ponce:hydra_fang",
+      "relic:hydras_eye",
+      "relic:hydras_thirst"
+    ],
+    "relic": "hydra"
+  },
+  "ponce:venom_needle": {
+    "name": "Venom Needle",
+    "type": "rapier",
+    "tier": 3,
+    "damage": 19,
+    "durability": null,
+    "req": {
+      "level": 30,
+      "stats": {
+        "dex": 38,
+        "agi": 15
+      }
+    },
+    "forge": null,
+    "infusions": [
+      "ponce:hydra_fang",
+      "relic:hydras_eye",
+      "relic:hydras_thirst"
+    ],
+    "relic": "hydra"
+  },
+  "ponce:headsplitter": {
+    "name": "Headsplitter",
+    "type": "hammer",
+    "tier": 3,
+    "damage": 23,
+    "durability": null,
+    "req": {
+      "level": 30,
+      "stats": {
+        "str": 40,
+        "vit": 12
+      }
+    },
+    "forge": null,
+    "infusions": [
+      "ponce:hydra_fang",
+      "relic:hydras_eye",
+      "relic:hydras_thirst"
+    ],
+    "relic": "hydra"
+  },
+  "ponce:neckcleaver": {
+    "name": "Neckcleaver",
+    "type": "axe",
+    "tier": 3,
+    "damage": 22,
+    "durability": null,
+    "req": {
+      "level": 30,
+      "stats": {
+        "str": 32,
+        "vit": 20
+      }
+    },
+    "forge": null,
+    "infusions": [
+      "ponce:hydra_fang",
+      "relic:hydras_eye",
+      "relic:hydras_thirst"
+    ],
+    "relic": "hydra"
+  },
+  "ponce:hydra_lance": {
+    "name": "Hydra Lance",
+    "type": "spear",
+    "tier": 3,
+    "damage": 20,
+    "durability": null,
+    "req": {
+      "level": 30,
+      "stats": {
+        "agi": 32,
+        "str": 20
+      }
+    },
+    "forge": null,
+    "infusions": [
+      "ponce:hydra_fang",
+      "relic:hydras_eye",
+      "relic:hydras_thirst"
+    ],
+    "relic": "hydra"
+  },
+  "ponce:severance": {
+    "name": "Severance",
+    "type": "katana",
+    "tier": 3,
+    "damage": 22,
+    "durability": null,
+    "req": {
+      "level": 30,
+      "stats": {
+        "dex": 30,
+        "agi": 22
+      }
+    },
+    "forge": null,
+    "infusions": [
+      "ponce:hydra_fang",
+      "relic:hydras_eye",
+      "relic:hydras_thirst"
+    ],
+    "relic": "hydra"
+  },
+  "ponce:threefold_ruin": {
+    "name": "Threefold Ruin",
+    "type": "greatsword",
+    "tier": 3,
+    "damage": 27,
+    "durability": null,
+    "req": {
+      "level": 30,
+      "stats": {
+        "str": 42,
+        "vit": 12
+      }
+    },
+    "forge": null,
+    "infusions": [
+      "ponce:hydra_fang",
+      "relic:hydras_eye",
+      "relic:hydras_thirst"
+    ],
+    "relic": "hydra"
   }
 };
 
@@ -864,5 +1040,15 @@ export const INFUSIONS = {
     "cost": 2,
     "damage": 0.5,
     "durability": 0.5
+  },
+  "relic:hydras_eye": {
+    "name": "Hydra's Eye",
+    "relicOnly": true,
+    "crit": 0.1
+  },
+  "relic:hydras_thirst": {
+    "name": "Hydra's Thirst",
+    "relicOnly": true,
+    "lifesteal": 0.04
   }
 };

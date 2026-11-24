@@ -891,7 +891,7 @@ console.log("forms shown:", log.length);
   const { WEAPON_DEFS } = await import("../behavior_pack/scripts/weapon_data.js");
   const { effectiveDamage } = await import("../behavior_pack/scripts/weapons.js");
   const { useSkill } = await import("../behavior_pack/scripts/abilities.js");
-  const relics = Object.entries(WEAPON_DEFS).filter(([, w]) => w.tier === 3);
+  const relics = Object.entries(WEAPON_DEFS).filter(([, w]) => w.tier === 3 && w.relic === "quest");
   const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
   assert(relics.every(([, r]) => {
     const t2 = Object.values(WEAPON_DEFS).find((w) => w.tier === 2 && w.type === r.type);
@@ -1152,4 +1152,61 @@ console.log("forms shown:", log.length);
   killHead(wildHeads()[0]); killHead(wildHeads()[0]); killHead(wildHeads()[0]);
   assert(!wild.isValid && dim.drops.length > drops0 && hd.highestFloor === floorBefore, "it drops loot when every head falls, but clears no floor");
   delete MH.SPECIES["ponce:test_hydra"];
+}
+
+// ================= Hydra Relics =================
+{
+  const { WEAPON_DEFS, INFUSIONS } = await import("../behavior_pack/scripts/weapon_data.js");
+  const { effectiveDamage, infusionsOf, weaponBonus } = await import("../behavior_pack/scripts/weapons.js");
+  const { ORDER } = await import("../behavior_pack/scripts/forging.js");
+  const MH = await import("../behavior_pack/scripts/multihead.js");
+  const g2 = await import("../behavior_pack/scripts/floor2_gen.js");
+  const hydra = Object.entries(WEAPON_DEFS).filter(([, w]) => w.relic === "hydra");
+  const quest = Object.values(WEAPON_DEFS).filter((w) => w.relic === "quest");
+  const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+
+  assert(hydra.length === 8 && hydra.every(([, w]) => w.tier === 3 && !w.durability && !w.forge), "8 Hydra Relics, one per type: unbreakable, not forgeable");
+  assert(hydra.every(([, w]) => w.req.level === 30 && sum(w.req.stats) >= 50 && sum(w.req.stats) <= 54), "Lv 30 requirements with ~52 stat points (of 87 at Lv 30)");
+  assert(hydra.every(([, w]) => w.damage === quest.find((q) => q.type === w.type).damage + 1), "base damage exactly 1 above the quest Relic of the same type");
+  assert(hydra.every(([, w]) => JSON.stringify(w.infusions) === JSON.stringify(["ponce:hydra_fang", "relic:hydras_eye", "relic:hydras_thirst"])), "built in: Hydra Fang (damage), Hydra's Eye (crit), Hydra's Thirst (lifesteal)");
+  const b = weaponBonus(new ItemStack("ponce:mireblade"));
+  assert(Math.abs(b.damage - 2.5) < 1e-9 && Math.abs(b.crit - 0.15) < 1e-9 && b.lifesteal === 0.04, "Mireblade bonuses: +2.5 damage, +15% crit, 4% lifesteal");
+  assert(Object.values(INFUSIONS).filter((i) => i.relicOnly).every((i) => i.cost === undefined) && ORDER.every(([id]) => WEAPON_DEFS[id].tier !== 3), "Hydra's Eye and Thirst can't be forged");
+
+  // Lifesteal in combat
+  const p = makePlayer("Thirsty"); world.players.push(p);
+  Object.assign(p, { dimension: dim, location: { x: 1100.5, y: 64, z: 0.5 }, isSneaking: false });
+  fire("playerSpawn", { player: p, initialSpawn: true });
+  const pd = getDataFor(p); pd.starter = "ponce:wayfarers_sword";
+  Object.assign(pd, { level: 30 }); Object.assign(pd.stats, { str: 26, dex: 26 });
+  const blade = new ItemStack("ponce:mireblade"); p.setHeld(blade); system.tick(20);
+  const t = dim.spawnEntity("ponce:tusk_boar", { x: 1100.5, y: 64, z: 2.5 }); t.health.currentValue = t.health.effectiveMax = 1000;
+  p.health.currentValue = 10;
+  const realRandom = Math.random; Math.random = () => 0.99;
+  t.health.currentValue -= 19; fire("entityHurt", { hurtEntity: t, damage: 19, damageSource: { cause: "entityAttack", damagingEntity: p } });
+  Math.random = realRandom;
+  const dealt = 1000 - t.health.currentValue, healed = p.health.currentValue - 10;
+  assert(healed > 0 && Math.abs(healed - dealt * 0.04) < 0.01, `Hydra's Thirst heals 4% of each hit (${dealt.toFixed(1)} dealt, ${healed.toFixed(2)} healed)`);
+
+  // Drops: guaranteed the first time, matching the finisher's weapon type, then 15%
+  const sp = MH.SPECIES["ponce:mire_hydra"];
+  const realDefeat = (heldId) => {
+    p.setHeld(new ItemStack(heldId));
+    const body = dim.spawnEntity("ponce:mire_hydra", { x: g2.ARENA.x + 0.5, y: g2.ARENA.y, z: g2.ARENA.z + 0.5 });
+    system.tick(2);
+    for (const hd of body.getComponent("minecraft:rideable").getRiders()) { hd.health.currentValue = 0; hd.isValid = false; fire("entityDie", { deadEntity: hd, damageSource: { cause: "entityAttack", damagingEntity: p } }); }
+  };
+  p.location = { x: g2.ARENA.x + 0.5, y: g2.ARENA.y + 1, z: g2.ARENA.z + 5.5 };
+  realDefeat("ponce:iron_katana");
+  const relics = () => p.items.filter((i) => i && WEAPON_DEFS[i.typeId]?.relic === "hydra");
+  assert(relics().length === 1 && relics()[0].typeId === "ponce:severance", "first Hydra kill: a guaranteed Hydra Relic matching your weapon (katana -> Severance)");
+  assert(relics()[0].lore.some((l) => l.includes("Mire Hydra")), "its tooltip says where it came from");
+  Math.random = () => 0.5;
+  realDefeat("ponce:iron_katana");
+  assert(relics().length === 1, "later kills: no drop on a miss (15% chance)");
+  Math.random = () => 0.05;
+  realDefeat("ponce:iron_greatsword");
+  Math.random = realRandom;
+  assert(relics().length === 2 && relics()[1].typeId === "ponce:threefold_ruin", "later kills: a 15% roll drops another (greatsword -> Threefold Ruin)");
+  assert(sp.guardian.relic.chance === 0.15, "drop chance after the first is 15%");
 }

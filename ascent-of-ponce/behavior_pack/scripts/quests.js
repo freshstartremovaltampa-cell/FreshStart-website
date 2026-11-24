@@ -144,7 +144,7 @@ export function abandon(player, q) {
 
 function rewardWeaponDef(kind, type) {
   const tier = { fine_t1: 1, fine_t2: 2, masterwork_t2: 2, relic: 3 }[kind];
-  return Object.entries(WEAPON_DEFS).find(([, d]) => d.tier === tier && d.type === type);
+  return Object.entries(WEAPON_DEFS).find(([, d]) => d.tier === tier && d.type === type && (tier !== 3 || d.relic === "quest"));
 }
 
 export function makeRewardWeapon(reward, type) {

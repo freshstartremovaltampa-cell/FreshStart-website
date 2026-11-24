@@ -62,7 +62,7 @@ export function totalMaterials(mats, infusions) {
 
 /** Infusions the player can afford on top of the recipe's own materials. */
 function affordableInfusions(player, mats) {
-  return Object.keys(INFUSIONS).filter((id) => hasAll(player, totalMaterials(mats, [id])));
+  return Object.keys(INFUSIONS).filter((id) => !INFUSIONS[id].relicOnly && hasAll(player, totalMaterials(mats, [id])));
 }
 
 function materialList(player, mats) {

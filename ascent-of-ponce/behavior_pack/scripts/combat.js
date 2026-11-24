@@ -185,6 +185,12 @@ function resolveHit(player, target, damage, { skill = false, direct = false } = 
     health.setCurrentValue(Math.min(max, remaining));
   }
 
+  // Hydra's Thirst: heal for a small share of the damage dealt
+  if (bonus.lifesteal > 0 && total > 0) {
+    const ph = player.getComponent("minecraft:health");
+    if (ph && ph.currentValue > 0) ph.setCurrentValue(Math.min(ph.effectiveMax, ph.currentValue + total * bonus.lifesteal));
+  }
+
   if (remaining > 0) {
     if (stun) {
       target.addEffect("slowness", 40, { amplifier: 6, showParticles: true });

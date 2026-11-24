@@ -27,7 +27,7 @@ export function infusionsOf(item) {
 
 /** Summed stat changes from a list of infusion item ids. */
 export function infusionBonus(ids) {
-  const b = { damage: 0, durability: 0, crit: 0, swing: 0 };
+  const b = { damage: 0, durability: 0, crit: 0, swing: 0, lifesteal: 0 };
   for (const id of ids) for (const k of Object.keys(b)) b[k] += INFUSIONS[id]?.[k] ?? 0;
   return b;
 }
@@ -45,6 +45,7 @@ export function describeInfusion(inf) {
   if (inf.durability) parts.push(`${pctText(inf.durability)} durability`);
   if (inf.crit) parts.push(`${pctText(inf.crit)} crit chance`);
   if (inf.swing) parts.push(inf.swing < 0 ? `${Math.round(-inf.swing * 100)}% faster swing` : `${Math.round(inf.swing * 100)}% slower swing`);
+  if (inf.lifesteal) parts.push(`heals you for ${Math.round(inf.lifesteal * 100)}% of the damage you deal`);
   return parts.join(", ");
 }
 
@@ -99,7 +100,10 @@ export function weaponLore(def, { quality, infusions = def.infusions ?? [] } = {
   lines.push(stats ? `§7Requires §eLv ${def.req.level}§7 / ${stats}` : `§7Requires §eLv ${def.req.level}`);
   if (!def.durability) lines.push("§bUnbreakable");
   if (def.tier === 0) lines.push("§8Your first weapon. Can't be forged.");
-  if (def.tier === 3) lines.push("§8A Legendary quest reward. Can't be forged. Below its requirements it works at half strength.");
+  if (def.tier === 3) {
+    const from = def.relic === "hydra" ? "Dropped by the Mire Hydra" : "A Legendary quest reward";
+    lines.push(`§8${from}. Can't be forged. Below its requirements it works at half strength.`);
+  }
   lines.push(`§8${WEAPON_HANDLING[def.type].trait}`);
   return lines;
 }

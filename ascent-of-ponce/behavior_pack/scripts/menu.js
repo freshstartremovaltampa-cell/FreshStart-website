@@ -259,12 +259,13 @@ async function openJobs(player) {
 // ---------- Armory ----------
 
 function infusionList() {
-  return Object.entries(INFUSIONS).map(([id, inf]) => `§f${inf.name} §8(${inf.cost}x ${itemName(id)})§7: ${describeInfusion(inf)}`).join("\n");
+  return Object.entries(INFUSIONS).filter(([, inf]) => !inf.relicOnly)
+    .map(([id, inf]) => `§f${inf.name} §8(${inf.cost}x ${itemName(id)})§7: ${describeInfusion(inf)}`).join("\n");
 }
 
 async function openArmory(player) {
   const d = getData(player);
-  const byTier = (tier) => Object.values(WEAPON_DEFS).filter((w) => w.tier === tier)
+  const byTier = (tier, relic) => Object.values(WEAPON_DEFS).filter((w) => w.tier === tier && (!relic || w.relic === relic))
     .map((w) => `§f${w.name} §8(${WEAPONS[w.type].name}, ${w.damage} dmg)\n  ${describeWeaponReq(d, w)}`).join("\n");
   const res = await show(player, new ActionFormData()
     .title("§l§6Armory")
@@ -275,7 +276,8 @@ async function openArmory(player) {
       `${DIV}\n§7Starter §8- chosen once on first login, can't be forged\n${byTier(0)}\n` +
       `${DIV}\n§eTier I §7- Ironheart + Ember Copper, Smithing 1\n${byTier(1)}\n` +
       `${DIV}\n§bTier II §7- Ironheart + Glimmer Silver + Floor 1 materials, Smithing 8\n${byTier(2)}\n` +
-      `${DIV}\n§dRelic §7- Legendary quest rewards; unbreakable, 3 built-in infusions\n${byTier(3)}\n` +
+      `${DIV}\n§dRelic §7- Legendary quest rewards; unbreakable, 3 built-in infusions\n${byTier(3, "quest")}\n` +
+      `${DIV}\n§2Hydra Relic §7- dropped by the Mire Hydra; Hydra Fang, Hydra's Eye (+10% crit) and Hydra's Thirst (heals 4% of damage dealt)\n${byTier(3, "hydra")}\n` +
       `${DIV}\n§dInfusions §7- optional monster drops added while forging (Tier I: 1 slot, Tier II: 2)\n${infusionList()}`
     )
     .button("Back"));

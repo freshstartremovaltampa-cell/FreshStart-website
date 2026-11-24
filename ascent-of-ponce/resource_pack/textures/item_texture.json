@@ -202,6 +202,30 @@
     },
     "ponce_marsh_gumbo": {
       "textures": "textures/items/marsh_gumbo"
+    },
+    "ponce_mireblade": {
+      "textures": "textures/items/weapons/mireblade"
+    },
+    "ponce_fenfang": {
+      "textures": "textures/items/weapons/fenfang"
+    },
+    "ponce_venom_needle": {
+      "textures": "textures/items/weapons/venom_needle"
+    },
+    "ponce_headsplitter": {
+      "textures": "textures/items/weapons/headsplitter"
+    },
+    "ponce_neckcleaver": {
+      "textures": "textures/items/weapons/neckcleaver"
+    },
+    "ponce_hydra_lance": {
+      "textures": "textures/items/weapons/hydra_lance"
+    },
+    "ponce_severance": {
+      "textures": "textures/items/weapons/severance"
+    },
+    "ponce_threefold_ruin": {
+      "textures": "textures/items/weapons/threefold_ruin"
     }
   }
 }

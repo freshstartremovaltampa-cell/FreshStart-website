@@ -24,6 +24,7 @@ function freshData() {
     jobs: { mining: { level: 1, xp: 0 }, smithing: { level: 1, xp: 0 }, cooking: { level: 1, xp: 0 } },
     foodBuff: null, // { name, stats, until (world absolute time) }
     starter: null, // id of the Wayfarer's weapon chosen on first login
+    relicDrops: {}, // guardian id -> how many relics it has dropped for this player
     quests: { active: {}, done: {} }, // active: { id: { p: [progress per objective] } }, done: { id: times }
     col: 0, // currency
     highestFloor: 1,
@@ -42,6 +43,7 @@ function migrate(raw) {
   data.weaponMinutes = { ...base.weaponMinutes, ...(raw.weaponMinutes ?? {}) };
   data.settings = { ...base.settings, ...(raw.settings ?? {}) };
   data.activeSkill = { ...(raw.activeSkill ?? {}) };
+  data.relicDrops = { ...(raw.relicDrops ?? {}) };
   data.quests = { active: { ...(raw.quests?.active ?? {}) }, done: { ...(raw.quests?.done ?? {}) } };
   data.jobs = Object.fromEntries(Object.entries(base.jobs).map(([k, v]) => [k, { ...v, ...(raw.jobs?.[k] ?? {}) }]));
   data.v = SCHEMA_VERSION;
