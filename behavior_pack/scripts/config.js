@@ -45,17 +45,17 @@ export const WEAPON_KEYS = Object.keys(WEAPONS);
 
 // Mastery is an endgame grind. Pace counts only time spent actively fighting
 // ordinary mobs with that one weapon (~2 kills/minute, nonstop):
-//   25 mastery  ~ 1-2 hours    (first skill)
-//   200         ~ 9 hours
-//   500         ~ 25 hours
-//   800         ~ 46 hours     (Dual Wield tier)
+//   25 mastery  ~ 45 minutes   (first skill)
+//   200         ~ 6 hours
+//   500         ~ 16 hours
+//   800         ~ 30 hours     (Dual Wield tier)
 // Real play mixes in mining, forging and travel, so it stretches far longer.
 // Tougher mobs, and floor guardians later on, speed it up.
 export const MASTERY_GAIN = {
-  hit: 0.01,
-  killPerXp: 0.012, // a 12-XP zombie gives ~0.14 mastery
+  hit: 0.015,
+  killPerXp: 0.018, // a 10-XP mob gives 0.18 mastery
   killMax: 3, // most one kill can give (before diminishing returns)
-  perActiveMinute: 0.1, // holding the weapon while you've been fighting recently
+  perActiveMinute: 0.15, // holding the weapon while you've been fighting recently
   activeWindowTicks: 20 * 120, // "recently" = hit something in the last 2 minutes
   diminishing: 0.6, // gains slow down as you climb: 100% at 0, 40% at the cap
 };
@@ -69,8 +69,15 @@ export const MASTERY_RANKS = [
   { min: 1000, name: "§6Grandmaster" },
 ];
 
+// Tower mobs. The level shows in the target bar when you hit one.
+export const MOBS = {
+  "ponce:meadow_jelly": { name: "Meadow Jelly", level: 1, xp: 8 },
+  "ponce:tusk_boar": { name: "Tusk Boar", level: 3, xp: 18 },
+};
+
 // XP from kills. Anything not listed falls back to its max health.
 export const MOB_XP = {
+  ...Object.fromEntries(Object.entries(MOBS).map(([id, m]) => [id, m.xp])),
   "minecraft:zombie": 10,
   "minecraft:husk": 12,
   "minecraft:drowned": 12,

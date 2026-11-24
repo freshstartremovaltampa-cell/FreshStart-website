@@ -1,0 +1,29 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.ponce.meadow_jelly.move": {
+      "loop": true,
+      "bones": {
+        "sprout": {
+          "rotation": [
+            0,
+            0,
+            "math.sin(query.anim_time * 300) * 12"
+          ]
+        },
+        "body": {
+          "position": [
+            0,
+            "math.abs(math.sin(query.anim_time * 400)) * 3 * query.modified_move_speed",
+            0
+          ],
+          "scale": [
+            "1 + math.sin(query.anim_time * 800) * 0.06 * (0.3 + query.modified_move_speed)",
+            "1 - math.sin(query.anim_time * 800) * 0.08 * (0.3 + query.modified_move_speed)",
+            "1 + math.sin(query.anim_time * 800) * 0.06 * (0.3 + query.modified_move_speed)"
+          ]
+        }
+      }
+    }
+  }
+}

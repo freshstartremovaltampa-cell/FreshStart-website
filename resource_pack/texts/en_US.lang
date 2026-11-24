@@ -1,2 +1,6 @@
 pack.name=The Ascent of Ponce
 pack.description=Climb the tower of Ponce in search of the Fountain of Youth.
+entity.ponce:meadow_jelly.name=Meadow Jelly
+entity.ponce:tusk_boar.name=Tusk Boar
+item.spawn_egg.entity.ponce:meadow_jelly.name=Meadow Jelly Spawn Egg
+item.spawn_egg.entity.ponce:tusk_boar.name=Tusk Boar Spawn Egg

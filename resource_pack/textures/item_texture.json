@@ -2,6 +2,20 @@
   "resource_pack_name": "ascent_of_ponce",
   "texture_name": "atlas.items",
   "texture_data": {
-    "ponce_wayfarer_compass": { "textures": "textures/items/wayfarer_compass" }
+    "ponce_wayfarer_compass": {
+      "textures": "textures/items/wayfarer_compass"
+    },
+    "ponce_jelly_gel": {
+      "textures": "textures/items/jelly_gel"
+    },
+    "ponce_raw_boar": {
+      "textures": "textures/items/raw_boar"
+    },
+    "ponce_boar_hide": {
+      "textures": "textures/items/boar_hide"
+    },
+    "ponce_boar_tusk": {
+      "textures": "textures/items/boar_tusk"
+    }
   }
 }

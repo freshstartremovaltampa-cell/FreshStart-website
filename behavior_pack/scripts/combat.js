@@ -1,7 +1,7 @@
 // Combat hooks: stat-based bonus damage, crits, dodges, kill XP and mastery.
 
 import { world, system } from "@minecraft/server";
-import { MASTERY_GAIN, MOB_XP, PASSIVE_XP_MULTIPLIER, STAT_EFFECTS } from "./config.js";
+import { MASTERY_GAIN, MOBS, MOB_XP, PASSIVE_XP_MULTIPLIER, STAT_EFFECTS } from "./config.js";
 import { getData, markDirty } from "./data.js";
 import {
   addMastery, addXp, critChance, damageMultiplier, dodgeChance, getHeldItem, weaponTypeOf,
@@ -29,19 +29,37 @@ function onPlayerMelee(player, target, damage) {
   if (weapon) addMastery(player, weapon, MASTERY_GAIN.hit);
 
   const health = target.getComponent("minecraft:health");
-  if (!health || bonus <= 0) return;
-  const remaining = health.currentValue - bonus;
+  if (!health) return;
+  const max = health.effectiveMax;
+  let remaining = health.currentValue - Math.max(0, bonus);
   if (remaining <= 0) {
     killCredit.set(target.id, { player, weapon });
     target.kill();
-  } else {
+    remaining = 0;
+  } else if (bonus > 0) {
     health.setCurrentValue(remaining);
   }
-  if (crit) {
-    player.playSound("random.anvil_land", { volume: 0.4, pitch: 1.8 });
-    player.onScreenDisplay.setActionBar("§e§lCRITICAL!");
-    hudHoldUntil.set(player.id, system.currentTick + 20);
-  }
+  if (crit) player.playSound("random.anvil_land", { volume: 0.4, pitch: 1.8 });
+  showTargetBar(player, target, remaining, max, crit);
+}
+
+function displayName(entity) {
+  const mob = MOBS[entity.typeId];
+  if (mob) return `§f${mob.name} §7Lv${mob.level}`;
+  if (isPlayer(entity)) return `§f${entity.name}`;
+  const raw = entity.typeId.split(":")[1] ?? entity.typeId;
+  return "§f" + raw.split("_").map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
+}
+
+/** Shows the struck enemy's name, level and HP above the hotbar for a moment. */
+function showTargetBar(player, target, hp, max, crit) {
+  const ratio = max > 0 ? Math.max(0, hp) / max : 0;
+  const filled = Math.ceil(ratio * 20);
+  const color = ratio > 0.5 ? "§a" : ratio > 0.25 ? "§e" : "§c";
+  player.onScreenDisplay.setActionBar(
+    `${crit ? "§e§lCRITICAL! §r" : ""}${displayName(target)}  ${color}${"|".repeat(filled)}§8${"|".repeat(20 - filled)} §f${Math.ceil(Math.max(0, hp))}/${Math.round(max)}`
+  );
+  hudHoldUntil.set(player.id, system.currentTick + 30);
 }
 
 function onPlayerHurt(player, damage) {

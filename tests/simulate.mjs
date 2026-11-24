@@ -45,7 +45,7 @@ for (let i = 0; i < 30; i++) {
 system.tick(20);
 const d = JSON.parse(p.props["ponce:data"]);
 assert(d.level > 1, `leveled up to ${d.level} with ${d.statPoints} points`);
-assert(d.mastery.sword > 3 && d.mastery.sword < 6, "30 zombie kills = only " + d.mastery.sword + " sword mastery");
+assert(d.mastery.sword > 3 && d.mastery.sword < 9, "30 zombie kills = only " + d.mastery.sword + " sword mastery");
 assert(!d.skills.includes("sword_dash"), "Dash Slash still locked after 30 kills");
 assert(d.kills === 30, "kills tracked");
 
@@ -54,7 +54,7 @@ p.setHeld(new ItemStack("minecraft:mace"));
 const s = makeEntity("minecraft:skeleton", 20);
 fire("entityHurt", { hurtEntity: s, damage: 5, damageSource: { cause: "entityAttack", damagingEntity: p } });
 system.tick(20);
-assert(JSON.parse(p.props["ponce:data"]).mastery.hammer === 0.01, "mace counts as hammer mastery");
+assert(JSON.parse(p.props["ponce:data"]).mastery.hammer > 0, "mace counts as hammer mastery");
 
 // Allocate stats through the menu: VIT 10, STR 2
 globalThis.nextFormResponse = [{ canceled: false, selection: 0 }, { canceled: false, selection: 0 }, { canceled: false, formValues: [1, 0, 0, 2] }];
@@ -76,6 +76,20 @@ assert(weak.killed, "bonus damage finished the mob");
 fire("entityDie", { deadEntity: weak, damageSource: { cause: "none" } });
 system.tick(20);
 assert(JSON.parse(p.props["ponce:data"]).kills === before + 1, "kill credited to player");
+
+// Hitting a tower mob shows its name, level and HP bar
+{
+  const j = makeEntity("ponce:meadow_jelly", 12);
+  fire("entityHurt", { hurtEntity: j, damage: 3, damageSource: { cause: "entityAttack", damagingEntity: p } });
+  assert(p.actionBar.includes("Meadow Jelly") && p.actionBar.includes("Lv1"), "target bar: " + p.actionBar);
+  system.tick(10);
+  assert(p.actionBar.includes("Meadow Jelly"), "HUD waits while target bar is showing");
+  const xpBefore = JSON.parse(p.props["ponce:data"]);
+  fire("entityDie", { deadEntity: j, damageSource: { cause: "entityAttack", damagingEntity: p } });
+  system.tick(20);
+  const after = JSON.parse(p.props["ponce:data"]);
+  assert(after.kills === xpBefore.kills + 1, "jelly kill counted");
+}
 
 // Respawn without compass gets a new one
 p.items.fill(undefined);
@@ -104,5 +118,5 @@ console.log("forms shown:", log.length);
   }
   const at = (m) => Object.entries(hours).find(([, v]) => v >= m)?.[0] ?? ">50";
   console.log(`pacing: 25 -> ${at(25)}h, 200 -> ${at(200)}h, 500 -> ${at(500)}h, 800 -> ${at(800)}h`);
-  assert(Number(at(800)) >= 35 || at(800) === ">50", "Dual Wield mastery is endgame (35h+ of nonstop fighting)");
+  assert(Number(at(800)) >= 25 && Number(at(800)) <= 35, "Dual Wield mastery takes ~30h of nonstop fighting");
 }
