@@ -10,6 +10,9 @@ A Minecraft Bedrock add-on. Explorers climb a floating tower, floor by floor, se
 
 For testing, run `/tag @s add ponce_dev` (cheats on) to show **Dev Tools** in the menu.
 
+## World defaults
+- **Keep Inventory is turned on** the first time the add-on runs in a world (new or existing), so a death on a floor doesn't scatter your forged weapons and Relics. It's only set once: if you turn it off in the world settings, it stays off.
+
 ## Phase 1 (done)
 - **Levels and EXP** from kills. Level cap 100, 3 stat points per level.
 - **Stats**
@@ -406,6 +409,7 @@ behavior_pack/
     floors.js         builds every floor in the game; travel, gates, fog, spawners
     multihead.js      multi-head creatures (the Mire Hydra): heads, regrowth, attacks
     floor3_gen.js     Floor 3 layout: highlands, Cairnhold, Crown of Stones (pure code)
+    gamerules.js      world defaults applied once per world (Keep Inventory on)
     floor4_gen.js     Floor 4 layout: frozen peaks, Frosthollow, the Frozen Cirque (pure code)
     frostgiant.js     Floor 4 guardian fight (Chill, braziers, icicles, breath)
     thunderhoof.js    Floor 3 guardian fight

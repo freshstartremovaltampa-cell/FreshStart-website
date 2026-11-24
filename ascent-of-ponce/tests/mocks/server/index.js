@@ -27,7 +27,7 @@ const worldProps = {};
 export const BlockTypes = { invalid: new Set(["minecraft:grass_path"]), get: (id) => (BlockTypes.invalid.has(id) ? undefined : { id }) };
 export const BlockPermutation = { resolve: (id, states) => ({ id, states }) };
 export class BlockVolume { constructor(from, to) { this.from = from; this.to = to; } }
-export const world = { getDimension: () => dim, timeOfDay: 6000, getTimeOfDay: () => world.timeOfDay, getDefaultSpawnLocation: () => ({ x: 0, y: 32767, z: 0 }), getAbsoluteTime: () => system.currentTick + (world.timeOffset ?? 0),
+export const world = { gameRules: { keepInventory: false }, getDimension: () => dim, timeOfDay: 6000, getTimeOfDay: () => world.timeOfDay, getDefaultSpawnLocation: () => ({ x: 0, y: 32767, z: 0 }), getAbsoluteTime: () => system.currentTick + (world.timeOffset ?? 0),
   getDynamicProperty: (k) => worldProps[k], setDynamicProperty: (k, v) => (worldProps[k] = v),
   beforeEvents: { playerBreakBlock: ev(), playerInteractWithBlock: ev(), playerInteractWithEntity: ev() }, getEntity: (id) => dim.entities.find((e) => e.id === id) ?? world.players.find((p) => p.id === id), afterEvents: { playerSpawn: ev(), itemUse: ev(), playerLeave: ev(), entityHurt: ev(), entityDie: ev(), playerBreakBlock: ev(), entityHitBlock: ev(), itemCompleteUse: ev(), entitySpawn: ev() }, players: [], getAllPlayers() { return this.players; } };
 export const system = { currentTick: 0, intervals: [], timeouts: [],

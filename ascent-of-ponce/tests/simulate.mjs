@@ -1417,6 +1417,15 @@ console.log("forms shown:", log.length);
   assert([2, 3, 4].every((n) => avg(n, "xp") > avg(n - 1, "xp")), "quest EXP still rises with difficulty");
 }
 
+// ================= World defaults =================
+{
+  const GR = await import("../behavior_pack/scripts/gamerules.js");
+  assert(world.gameRules.keepInventory === true && world.getDynamicProperty("ponce:default_rules_v1") === true, "Keep Inventory is switched on in a new world");
+  world.gameRules.keepInventory = false; // the player turns it off in the world settings
+  assert(GR.applyDefaultRules() === false && world.gameRules.keepInventory === false, "...and stays off if the player turns it off later");
+  world.gameRules.keepInventory = true;
+}
+
 // ================= Floor 4: the Frozen Peaks and Rimegrasp =================
 {
   const g4 = await import("../behavior_pack/scripts/floor4_gen.js");
