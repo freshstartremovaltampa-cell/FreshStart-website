@@ -171,7 +171,7 @@ function rewardText(q) {
     const inf = (r.weapon.infusions ?? []).map((id) => INFUSIONS[id].name).join(" + ");
     lines.push(`§6A Masterwork Tier II weapon${inf ? ` with ${inf}` : ""} §7(you choose the type)`);
   }
-  if (r.weapon?.kind === "relic") lines.push("§d§lA Relic weapon§r§7: unbreakable, 3 built-in infusions, the best stats on the floor. Needs Lv 18 for full strength, but even at half it beats ordinary weapons (you choose the type)");
+  if (r.weapon?.kind === "relic") lines.push("§d§lA Relic weapon§r§7: unbreakable, 3 built-in infusions, the best stats on the floor. Needs Lv 25 for full strength, but even at half it beats ordinary weapons (you choose the type)");
   return lines.join("\n");
 }
 

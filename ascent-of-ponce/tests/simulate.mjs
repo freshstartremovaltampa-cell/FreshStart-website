@@ -867,8 +867,8 @@ console.log("forms shown:", log.length);
   const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
   assert(relics.every(([, r]) => {
     const t2 = Object.values(WEAPON_DEFS).find((w) => w.tier === 2 && w.type === r.type);
-    return r.req.level >= 18 && sum(r.req.stats) >= sum(t2.req.stats) * 1.8;
-  }), "Relics need Lv 18 and roughly double Tier II's stats");
+    return r.req.level === 25 && sum(r.req.stats) >= sum(t2.req.stats) * 1.8;
+  }), "Relics need Lv 25 and roughly double Tier II's stats");
   let worst = Infinity;
   for (const [rid, r] of relics) {
     const [tid] = Object.entries(WEAPON_DEFS).find(([, w]) => w.tier === 2 && w.type === r.type);
@@ -892,7 +892,7 @@ console.log("forms shown:", log.length);
   };
   const kingsfall = new ItemStack("ponce:kingsfall");
   const under = dummyHit(kingsfall, 26);
-  rd.level = 18;
+  rd.level = 25;
   const met = dummyHit(kingsfall, 26);
   Math.random = realRandom;
   assert(Math.abs(under / met - 0.5) < 0.05, `below requirements: half strength (${under.toFixed(1)} vs ${met.toFixed(1)})`);

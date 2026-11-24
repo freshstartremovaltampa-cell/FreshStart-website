@@ -66,7 +66,7 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
 - **32 Ponce weapons** across 8 types:
   - **Starter**: one Wayfarer's weapon per type, chosen once on first login (see below).
   - **Tier I** (Lv 3) and **Tier II** (Lv 5-8): **forged**, not crafted (see Phase 3).
-  - **Relic** (Lv 18; usable at half strength below that): Legendary quest rewards (see Phase 4).
+  - **Relic** (Lv 25; usable at half strength below that): Legendary quest rewards (see Phase 4).
 
   The Armory page in the menu lists them with your requirements shown in green or red.
 - **Starter weapon**: shortly after the welcome on first login, you choose a weapon type and get its **Wayfarer's** weapon. Players on older saves without one are offered it too, and it's also on the menu until chosen.
@@ -174,7 +174,7 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
 
   Weapon rewards let you pick the weapon type at turn-in. Closing the picker keeps the quest ready.
 - **Relic weapons**, one per type: **unbreakable**, **3 built-in infusions**, and they can't be forged. The relics are Boarbane, Wasp's Kiss, Thornwhisper, Golemheart Maul, Tuskreaver, Molefang Pike, Verdant Moon and Kingsfall.
-  - **Semi-high requirements**: Lv 18 and about double Tier II's stats. Boarbane only needs Lv 12, so most players get their Relic before they can fully wield it.
+  - **Semi-high requirements**: Lv 25 and about double Tier II's stats. Boarbane only needs Lv 12, so players carry their Relic at half strength for a long stretch (still a little better than the best forged weapon, plus 3 infusions) before growing into it at 25.
   - **Below the requirements a Relic works at half strength**, with skills still usable. Other weapons drop to 25% and lose their skills.
   - **Even at half strength it beats a Masterwork Tier II** of its type, so at full strength it's about 2.5x a Tier II. Base damage: Boarbane 18, Wasp's Kiss 15, Thornwhisper 18, Golemheart Maul 22, Tuskreaver 21, Molefang Pike 19, Verdant Moon 21, Kingsfall 26, plus each Relic's infusions.
 - **Quest log** in the menu: progress, details, abandon. Progress also shows above the hotbar as it happens.

@@ -618,7 +618,7 @@ export const WEAPON_DEFS = {
     "damage": 18,
     "durability": null,
     "req": {
-      "level": 18,
+      "level": 25,
       "stats": {
         "str": 10,
         "dex": 10
@@ -638,7 +638,7 @@ export const WEAPON_DEFS = {
     "damage": 15,
     "durability": null,
     "req": {
-      "level": 18,
+      "level": 25,
       "stats": {
         "dex": 14,
         "agi": 4
@@ -658,7 +658,7 @@ export const WEAPON_DEFS = {
     "damage": 18,
     "durability": null,
     "req": {
-      "level": 18,
+      "level": 25,
       "stats": {
         "dex": 14,
         "agi": 5
@@ -678,7 +678,7 @@ export const WEAPON_DEFS = {
     "damage": 22,
     "durability": null,
     "req": {
-      "level": 18,
+      "level": 25,
       "stats": {
         "str": 16,
         "vit": 5
@@ -698,7 +698,7 @@ export const WEAPON_DEFS = {
     "damage": 21,
     "durability": null,
     "req": {
-      "level": 18,
+      "level": 25,
       "stats": {
         "str": 12,
         "vit": 8
@@ -718,7 +718,7 @@ export const WEAPON_DEFS = {
     "damage": 19,
     "durability": null,
     "req": {
-      "level": 18,
+      "level": 25,
       "stats": {
         "agi": 12,
         "str": 8
@@ -738,7 +738,7 @@ export const WEAPON_DEFS = {
     "damage": 21,
     "durability": null,
     "req": {
-      "level": 18,
+      "level": 25,
       "stats": {
         "dex": 12,
         "agi": 10
@@ -758,7 +758,7 @@ export const WEAPON_DEFS = {
     "damage": 26,
     "durability": null,
     "req": {
-      "level": 18,
+      "level": 25,
       "stats": {
         "str": 18,
         "vit": 8
