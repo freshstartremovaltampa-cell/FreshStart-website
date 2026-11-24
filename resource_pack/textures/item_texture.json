@@ -1,0 +1,7 @@
+{
+  "resource_pack_name": "ascent_of_ponce",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "ponce_wayfarer_compass": { "textures": "textures/items/wayfarer_compass" }
+  }
+}
