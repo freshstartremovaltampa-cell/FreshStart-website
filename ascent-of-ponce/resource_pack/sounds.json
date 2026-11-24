@@ -108,6 +108,104 @@
             "volume": 0.2
           }
         }
+      },
+      "ponce:bog_frog": {
+        "volume": 0.9,
+        "pitch": [
+          0.6,
+          0.8
+        ],
+        "events": {
+          "ambient": "mob.frog.ambient",
+          "hurt": "mob.frog.hurt",
+          "death": "mob.frog.death",
+          "step": {
+            "sound": "mob.frog.step",
+            "volume": 0.3
+          }
+        }
+      },
+      "ponce:will_o_wisp": {
+        "volume": 0.6,
+        "pitch": [
+          1.6,
+          1.9
+        ],
+        "events": {
+          "ambient": "mob.allay.idle",
+          "hurt": "mob.allay.hurt",
+          "death": "mob.allay.death"
+        }
+      },
+      "ponce:mire_shambler": {
+        "volume": 1.0,
+        "pitch": [
+          0.5,
+          0.7
+        ],
+        "events": {
+          "ambient": "mob.drowned.say",
+          "hurt": "mob.drowned.hurt",
+          "death": "mob.drowned.death",
+          "step": {
+            "sound": "mob.drowned.step",
+            "volume": 0.4
+          }
+        }
+      },
+      "ponce:marsh_gator": {
+        "volume": 1.0,
+        "pitch": [
+          0.5,
+          0.7
+        ],
+        "events": {
+          "hurt": "mob.hoglin.hurt",
+          "death": "mob.hoglin.death",
+          "attack": "mob.hoglin.attack",
+          "step": {
+            "sound": "mob.turtle.step",
+            "volume": 0.4
+          }
+        }
+      },
+      "ponce:mire_hydra": {
+        "volume": 2.0,
+        "pitch": [
+          0.4,
+          0.5
+        ],
+        "events": {
+          "ambient": "mob.enderdragon.growl",
+          "step": {
+            "sound": "mob.ravager.step",
+            "volume": 0.8
+          }
+        }
+      },
+      "ponce:hydra_head": {
+        "volume": 1.5,
+        "pitch": [
+          0.5,
+          0.7
+        ],
+        "events": {
+          "hurt": "mob.ravager.hurt",
+          "death": "mob.ravager.death",
+          "ambient": "mob.ravager.ambient"
+        }
+      },
+      "ponce:hydra_head_acid": {
+        "volume": 1.5,
+        "pitch": [
+          0.6,
+          0.8
+        ],
+        "events": {
+          "hurt": "mob.ravager.hurt",
+          "death": "mob.ravager.death",
+          "ambient": "mob.ravager.ambient"
+        }
       }
     }
   }

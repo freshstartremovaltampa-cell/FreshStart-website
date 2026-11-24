@@ -67,6 +67,14 @@ export const FOODS = {
       "vit": 3
     },
     "seconds": 300
+  },
+  "ponce:marsh_gumbo": {
+    "name": "Marsh Gumbo",
+    "stats": {
+      "agi": 4,
+      "dex": 2
+    },
+    "seconds": 300
   }
 };
 
@@ -140,6 +148,26 @@ export const COOK_RECIPES = [
       {
         "item": "minecraft:potato",
         "count": 2
+      }
+    ]
+  },
+  {
+    "result": "ponce:marsh_gumbo",
+    "name": "Marsh Gumbo",
+    "level": 12,
+    "xp": 45,
+    "ingredients": [
+      {
+        "item": "ponce:frog_legs",
+        "count": 2
+      },
+      {
+        "item": "ponce:bog_moss",
+        "count": 1
+      },
+      {
+        "item": "minecraft:bowl",
+        "count": 1
       }
     ]
   }

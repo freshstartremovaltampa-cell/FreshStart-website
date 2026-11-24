@@ -35,7 +35,7 @@ export const system = { currentTick: 0, intervals: [], timeouts: [],
   tick(n = 1) { for (let i = 0; i < n; i++) { this.currentTick++; for (const it of this.intervals) if (this.currentTick % it.n === 0) it.f();
     const due = this.timeouts.filter((t) => t.at <= this.currentTick); this.timeouts = this.timeouts.filter((t) => t.at > this.currentTick); due.forEach((t) => t.f()); } } };
 export const GameMode = { Creative: "Creative", Spectator: "Spectator", Survival: "Survival" };
-export const EntityDamageCause = { entityAttack: "entityAttack" };
+export const EntityDamageCause = { entityAttack: "entityAttack", magic: "magic" };
 export const EquipmentSlot = { Mainhand: "Mainhand", Offhand: "Offhand" };
 export class ItemStack {
   // ItemStack.registry mimics item JSON: id -> { tags, durability }

@@ -1,0 +1,31 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.ponce.bog_frog.hop": {
+      "loop": true,
+      "bones": {
+        "body": {
+          "position": [
+            0,
+            "math.abs(math.sin(query.modified_distance_moved * 20)) * 3 * query.modified_move_speed",
+            0
+          ]
+        },
+        "leg_bl": {
+          "rotation": [
+            "-math.abs(math.sin(query.modified_distance_moved * 20)) * 3 * query.modified_move_speed * 20",
+            0,
+            0
+          ]
+        },
+        "leg_br": {
+          "rotation": [
+            "-math.abs(math.sin(query.modified_distance_moved * 20)) * 3 * query.modified_move_speed * 20",
+            0,
+            0
+          ]
+        }
+      }
+    }
+  }
+}

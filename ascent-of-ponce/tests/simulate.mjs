@@ -2,16 +2,32 @@ import { world, system, ItemStack, dim } from "@minecraft/server";
 import { log } from "@minecraft/server-ui";
 const assert = (c, m) => { if (!c) { console.error("FAIL:", m); process.exitCode = 1; } else console.log("ok:", m); };
 
+// Mob families come from the real entity files, like in the game
+import fsMod from "node:fs";
+const familyCache = new Map();
+function familiesOf(typeId) {
+  if (familyCache.has(typeId)) return familyCache.get(typeId);
+  let fams = typeId === "minecraft:cow" ? ["mob"] : ["mob", "monster"];
+  if (typeId.startsWith("ponce:")) {
+    try {
+      const j = JSON.parse(fsMod.readFileSync(new URL(`../behavior_pack/entities/${typeId.slice(6)}.json`, import.meta.url)));
+      fams = j["minecraft:entity"].components["minecraft:type_family"].family;
+    } catch { fams = ["ponce_mob", "mob", "monster"]; }
+  }
+  familyCache.set(typeId, fams);
+  return fams;
+}
+
 function makeEntity(typeId, hp, extra = {}) {
   const health = { currentValue: hp, effectiveMax: hp, setCurrentValue(v) { this.currentValue = v; } };
   const e = { id: Math.random().toString(36), typeId, isValid: true, health, killed: false, dimension: dim,
     location: { x: 0, y: 64, z: 0 }, tagList: [], props: {}, getProperty(k) { return this.props[k]; }, events: [], effects: {}, impulses: [], damageTaken: 0,
     getComponent(n) { return n === "minecraft:health" ? health : extra[n]; },
-    families: typeId === "minecraft:cow" ? ["mob"] : typeId.startsWith("ponce:npc_") ? ["ponce_npc", "npc"]
-      : typeId.startsWith("ponce:") ? ["ponce_mob", "mob", "monster", ...(typeId === "ponce:ironhide" ? ["ponce_boss"] : [])] : ["mob", "monster"],
+    families: familiesOf(typeId),
     matches(o) { return !o?.families || o.families.every((f) => this.families.includes(f)); }, kill() { this.killed = true; health.currentValue = 0; },
     addTag(t) { this.tagList.push(t); }, removeTag(t) { this.tagList = this.tagList.filter((x) => x !== t); }, hasTag(t) { return this.tagList.includes(t); },
     teleport(loc) { this.location = { ...loc }; },
+    dprops: {}, getDynamicProperty(k) { return this.dprops[k]; }, setDynamicProperty(k, v) { this.dprops[k] = v; },
     triggerEvent(ev) { this.events.push(ev); }, applyImpulse(v) { this.impulses.push(v); },
     addEffect(t, d, o) { this.effects[t] = { duration: d, amplifier: o?.amplifier ?? 0 }; }, getEffect(t) { return this.effects[t]; },
     removeEffect(t) { delete this.effects[t]; }, remove() { this.isValid = false; },
@@ -33,6 +49,7 @@ function makePlayer(name) {
     selectedSlotIndex: 0, getViewDirection: () => ({ x: 0, y: 0, z: 1 }),
     // Teleports are recorded, not applied, so tests keep players where they put them
     teleport(loc, o) { p.teleportedTo = { ...loc }; p.teleportOptions = o; }, setSpawnPoint(sp) { p.spawnPoint = sp; },
+    commands: [], runCommand(c) { p.commands.push(c); return { successCount: 1 }; },
     velocity: { x: 0, y: 0, z: 0 }, getVelocity() { return p.velocity; },
     onScreenDisplay: { setTitle: (t, o) => msgs.push("TITLE " + t + " " + (o?.subtitle ?? "")), setActionBar: (t) => (p.actionBar = t) },
     sendMessage: (m) => msgs.push(m), playSound() {}, hasTag: (t) => p.tags.includes(t) });
@@ -784,7 +801,7 @@ console.log("forms shown:", log.length);
 // ================= Floor 1: Wayfarer's Rest =================
 {
   const g = await import("../behavior_pack/scripts/floor1_gen.js");
-  const f1 = await import("../behavior_pack/scripts/floor1.js");
+  const f1 = await import("../behavior_pack/scripts/floors.js");
   const { BlockTypes } = await import("@minecraft/server");
   const { FLOOR1, ARRIVAL, NPC_SPOTS } = g;
   const C = FLOOR1.center, BASE = FLOOR1.base;
@@ -814,7 +831,7 @@ console.log("forms shown:", log.length);
   v.location = { ...ARRIVAL };
   system.tick(400);
   const centerChunk = [C.x >> 4, C.z >> 4];
-  assert(f1.isChunkBuilt(...centerChunk), "the town chunk gets built");
+  assert(f1.isChunkBuilt(1, ...centerChunk), "the town chunk gets built");
   assert(typeAt(C.x, BASE + 5, C.z) === "minecraft:water" && typeAt(C.x, BASE + 2, C.z) === "minecraft:chiseled_stone_bricks", "Fountain of Youth: pillar with water on top");
   assert(typeAt(C.x + 17, BASE + 1, C.z + 15) === "ponce:smithing_forge" && typeAt(C.x - 18, BASE + 1, C.z - 21) === "ponce:cooking_pot", "the smithy has a forge, the kitchen a cooking pot");
   assert(typeAt(C.x, BASE, C.z + 20) === "minecraft:dirt_path", "fallback block ids: grass_path missing -> dirt_path used");
@@ -837,9 +854,9 @@ console.log("forms shown:", log.length);
   dim.unloaded.add(testChunk.join(","));
   v.location = { x: C.x + 160, y: BASE + 2, z: C.z };
   system.tick(300);
-  assert(!f1.isChunkBuilt(...testChunk), "unloaded chunk is not marked built");
+  assert(!f1.isChunkBuilt(1, ...testChunk), "unloaded chunk is not marked built");
   dim.unloaded.clear(); system.tick(300);
-  assert(f1.isChunkBuilt(...testChunk), "built once it loads");
+  assert(f1.isChunkBuilt(1, ...testChunk), "built once it loads");
 
   // Forest spawning: Floor 1 mobs only, outside town, capped
   system.tick(40 * 12);
@@ -922,7 +939,7 @@ console.log("forms shown:", log.length);
 // ================= Guardian's Arena, Stair Gate, map =================
 {
   const g = await import("../behavior_pack/scripts/floor1_gen.js");
-  const f1 = await import("../behavior_pack/scripts/floor1.js");
+  const f1 = await import("../behavior_pack/scripts/floors.js");
   const { ARENA, GATE, FLOOR1 } = g;
   const fireBefore = (n, e) => { world.beforeEvents[n].h.forEach((f) => f(e)); return e; };
   const typeAt = (x, y, z) => dim.blocks.get(`${x},${y},${z}`)?.typeId;
@@ -961,19 +978,161 @@ console.log("forms shown:", log.length);
   const e1 = useGate();
   assert(e1.cancel && a.msgs.some((m) => m.includes("Stair Gate is sealed")), "gate is sealed before beating Ironhide");
   ad.highestFloor = 2;
+  a.teleportedTo = undefined;
   useGate();
-  assert(a.msgs.some((m) => m.includes("Floor 2 is still being built")), "after the victory the gate opens (Floor 2 arrives later)");
-  let traveled = false;
-  f1.NEXT_FLOOR.travel = () => { traveled = true; };
-  useGate();
-  assert(traveled, "once Floor 2 exists, the open gate sends you there");
-  f1.NEXT_FLOOR.travel = undefined;
+  const F2 = await import("../behavior_pack/scripts/floor2_gen.js");
+  assert(a.teleportedTo && Math.abs(a.teleportedTo.x - F2.ARRIVAL.x) < 1 && Math.abs(a.teleportedTo.z - F2.ARRIVAL.z) < 1, "after the victory the gate takes you up to Floor 2");
 
   // Map text
   a.location = { x: FLOOR1.center.x + 0.5, y: FLOOR1.base + 1, z: FLOOR1.center.z + 10.5 };
   const t1 = f1.mapText(a);
-  assert(t1.includes("Floor 1") && t1.includes("you're in town") && /Guardian's Arena.*blocks north/.test(t1) && t1.includes("open to you"), "map: where you are, the arena's direction, gate status");
+  assert(t1.includes("Floor 1") && t1.includes("you're in town") && /Guardian's arena.*blocks north/.test(t1) && t1.includes("open to you"), "map: where you are, the arena's direction, gate status");
   a.location = { x: 0, y: 64, z: 0 };
   assert(f1.mapText(a).includes("world below"), "map off the floor says so");
   assert(g.directionText({ x: 0, z: 0 }, { x: 0, z: -100 }) === "100 blocks north" && g.directionText({ x: 0, z: 0 }, { x: 70, z: 70 }) === "99 blocks south-east", "compass directions (north is -z)");
+}
+
+// ================= Floor 2: the Misty Marsh and the Mire Hydra =================
+{
+  const g2 = await import("../behavior_pack/scripts/floor2_gen.js");
+  const floors = await import("../behavior_pack/scripts/floors.js");
+  const MH = await import("../behavior_pack/scripts/multihead.js");
+  const Q = await import("../behavior_pack/scripts/quests.js");
+  const { QUESTS_BY_ID } = await import("../behavior_pack/scripts/quests_data.js");
+  const { isTarget } = await import("../behavior_pack/scripts/combat.js");
+  const { FLOOR, ARENA, GATE, ARRIVAL, NPC_SPOTS } = g2;
+  const BASE = FLOOR.base;
+  const typeAt = (x, y, z) => dim.blocks.get(`${x},${y},${z}`)?.typeId;
+  dim.allLoaded = true;
+
+  // Bodies get a working rideable component; heads report what they ride
+  dim.factory = (id, loc) => {
+    const hp = id === "ponce:mire_hydra" ? 1800 : id.startsWith("ponce:hydra_head") ? 600 : 30;
+    const e = makeEntity(id, hp); e.location = { ...loc };
+    const riders = [];
+    const rideable = { addRider(h) { riders.push(h); h.ridingOn = e; return true; }, getRiders: () => riders.filter((r) => r.isValid) };
+    const riding = { get entityRidingOn() { return e.ridingOn; } };
+    e.getComponent = (n) => (n === "minecraft:health" ? e.health : n === "minecraft:rideable" && id === "ponce:mire_hydra" ? rideable : n === "minecraft:riding" ? riding : undefined);
+    e.remove = () => { e.isValid = false; };
+    return e;
+  };
+
+  // ---- Generator ----
+  let total = 0, outside = 0, water = 0, land = 0;
+  for (let cx = g2.CHUNK_BOUNDS.min.x; cx <= g2.CHUNK_BOUNDS.max.x; cx++) for (let cz = g2.CHUNK_BOUNDS.min.z; cz <= g2.CHUNK_BOUNDS.max.z; cz++) {
+    if (!g2.chunkHasIsland(cx, cz)) continue;
+    for (const op of g2.chunkOps(cx, cz)) { total++; if ((op[2] >> 4) !== cx || ((op[0] === "f" ? op[5] : op[4]) >> 4) !== cz) outside++; }
+  }
+  for (let i = 0; i < 4000; i++) {
+    const a = Math.random() * Math.PI * 2, r = FLOOR.townRadius + 10 + Math.random() * 150;
+    const x = Math.floor(FLOOR.center.x + Math.cos(a) * r), z = Math.floor(FLOOR.center.z + Math.sin(a) * r);
+    if (!g2.onIsland(x, z)) continue;
+    if (g2.isWater(x, z)) water++; else land++;
+  }
+  assert(total > 400000 && outside === 0, `marsh generator: ${total} block ops, all inside their chunks`);
+  assert(water > land * 1.2 && land > water * 0.2, `a marsh: mostly shallow water with dry hummocks (${water} water / ${land} land samples)`);
+  assert(Math.hypot(ARENA.x - FLOOR.center.x, ARENA.z - FLOOR.center.z) > 150 && ARENA.z < FLOOR.center.z, "Hydra Pool lies at the end of the north boardwalk");
+
+  // ---- Arriving through Floor 1's gate, the marsh builds and the fog rolls in ----
+  const h = makePlayer("Hydrabane"); world.players.push(h);
+  Object.assign(h, { dimension: dim, location: { x: 0, y: 64, z: 0 }, isSneaking: false, getGameMode: () => "Survival" });
+  fire("playerSpawn", { player: h, initialSpawn: true });
+  const hd = getDataFor(h); hd.starter = "ponce:wayfarers_sword";
+  system.tick(20);
+  assert(floors.unlockedFloors(h).length === 1, "only Floor 1 is unlocked at first");
+  assert(Q.questStatus(h, QUESTS_BY_ID.frog_chorus) === "locked", "Floor 2 quests are locked until you reach Floor 2");
+  hd.highestFloor = 2;
+  assert(floors.unlockedFloors(h).length === 2 && Q.questStatus(h, QUESTS_BY_ID.frog_chorus) === "available", "after Ironhide: Floor 2 travel and quests unlock");
+
+  h.location = { ...ARRIVAL };
+  system.tick(500);
+  assert(floors.isChunkBuilt(2, FLOOR.center.x >> 4, FLOOR.center.z >> 4), "Stiltwater gets built");
+  assert(typeAt(FLOOR.center.x + 6, BASE + 1, FLOOR.center.z + 4) === "minecraft:mangrove_planks" && typeAt(FLOOR.center.x + 6, BASE, FLOOR.center.z + 4) === "minecraft:water", "the town deck stands over the water");
+  assert(typeAt(FLOOR.center.x + 5, BASE, FLOOR.center.z + 5) === "minecraft:mangrove_log", "on mangrove stilts");
+  assert(h.commands.some((c) => c === "fog @s push ponce:marsh_fog ponce_floor"), "the marsh fog rolls in on Floor 2");
+  const npcs = dim.entities.filter((e) => e.isValid && e.typeId.startsWith("ponce:npc_") && g2.isOnFloor(e.location));
+  assert(npcs.length === 3 && npcs.some((n) => n.typeId === "ponce:npc_warden"), "Ysolde, Bram and Pip set up in Stiltwater");
+  h.location = { x: 0, y: 64, z: 0 }; system.tick(20);
+  assert(h.commands.includes("fog @s remove ponce_floor"), "the fog lifts when you leave");
+
+  // ---- Floor 2 spawning ----
+  h.location = { x: FLOOR.center.x + 90.5, y: BASE + 2, z: FLOOR.center.z + 0.5 };
+  system.tick(400);
+  world.timeOfDay = 18000; system.tick(40 * 15);
+  world.timeOfDay = 6000;
+  const f2mobs = dim.entities.filter((e) => e.isValid && e.families?.includes("ponce_mob") && g2.isOnFloor(e.location));
+  const kinds = new Set(f2mobs.map((e) => e.typeId));
+  assert(f2mobs.length >= 4 && [...kinds].every((k) => ["ponce:bog_frog", "ponce:will_o_wisp", "ponce:mire_shambler", "ponce:marsh_gator"].includes(k)), "only marsh creatures spawn on Floor 2: " + [...kinds].join(", "));
+  const wisps = f2mobs.filter((e) => e.typeId === "ponce:will_o_wisp");
+  assert(wisps.every((w) => w.location.y >= g2.surfaceY(Math.floor(w.location.x), Math.floor(w.location.z)) + 2), "wisps float above the ground");
+  assert(f2mobs.filter((e) => e.typeId === "ponce:mire_shambler").every((e) => !g2.isWater(Math.floor(e.location.x), Math.floor(e.location.z))), "shamblers only spawn on dry land");
+
+  // ---- Wisps blink away when struck ----
+  const wisp = dim.spawnEntity("ponce:will_o_wisp", { x: FLOOR.center.x + 90.5, y: BASE + 3, z: FLOOR.center.z + 5.5 });
+  const rr = Math.random; Math.random = () => 0.1;
+  fire("entityHurt", { hurtEntity: wisp, damage: 2, damageSource: { cause: "entityAttack", damagingEntity: h } });
+  Math.random = rr;
+  assert(Math.hypot(wisp.location.x - (FLOOR.center.x + 90.5), wisp.location.z - (FLOOR.center.z + 5.5)) > 3, "a struck wisp flickers away");
+
+  // ---- The Mire Hydra ----
+  h.location = { x: ARENA.x + 0.5, y: ARENA.y + 1, z: ARENA.z + 10.5 };
+  system.tick(500); // build the arena
+  assert(typeAt(GATE.x, GATE.y, GATE.z) === "ponce:stair_gate", "the Hydra Pool has its own Stair Gate");
+  const lure = new ItemStack("ponce:mire_lure");
+  h.items[0] = lure;
+  h.location = { x: ARENA.x + 60, y: ARENA.y + 1, z: ARENA.z };
+  fire("itemUse", { source: h, itemStack: lure });
+  assert(h.items[0] === lure && h.msgs.some((m) => m.includes("Hydra Pool")), "outside the pool the lure does nothing and points the way");
+  h.location = { x: ARENA.x + 0.5, y: ARENA.y + 1, z: ARENA.z + 8.5 };
+  fire("itemUse", { source: h, itemStack: lure });
+  const body = dim.entities.find((e) => e.isValid && e.typeId === "ponce:mire_hydra");
+  const heads = () => body.getComponent("minecraft:rideable").getRiders();
+  assert(body && heads().length === 3 && h.items[0] === undefined, "the lure calls up the hydra with three heads riding its body");
+  assert(heads().filter((x) => x.typeId === "ponce:hydra_head_acid").length === 1, "the middle head is the acid spitter");
+  assert(!isTarget(body) && heads().every((x) => isTarget(x)), "skills can't hit the body, only the heads");
+
+  // Body health mirrors the heads (boss bar)
+  heads()[0].health.currentValue = 100; system.tick(2);
+  assert(body.health.currentValue === 100 + 600 + 600, "boss bar = combined head health");
+
+  // Severing one head starts its regrowth timer
+  const killHead = (x) => { x.health.currentValue = 0; x.isValid = false; fire("entityDie", { deadEntity: x, damageSource: { cause: "entityAttack", damagingEntity: h } }); };
+  killHead(heads()[0]);
+  assert(heads().length === 2 && h.msgs.some((m) => m.includes("Left head severed")), "a slain head is severed");
+  system.tick(20 * 22 + 2);
+  assert(h.msgs.some((m) => m.includes("is regrowing")), "warning before it regrows");
+  system.tick(20 * 9);
+  assert(heads().length === 3 && heads().some((x) => x.health.currentValue === 600 && x.dprops["ponce:seat"] === 0), "after 30s the head grows back at full health");
+
+  // The heads attack: a bite for players in front of a head
+  for (const x of heads()) x.location = { x: body.location.x, y: body.location.y + 3, z: body.location.z };
+  h.location = { x: body.location.x + 2, y: body.location.y, z: body.location.z };
+  h.health.currentValue = 20;
+  let warned = false, bitten = false;
+  for (let i = 0; i < 300 && !bitten; i++) { system.tick(1); if (/rears back|Acid incoming/.test(h.actionBar ?? "")) warned = true; if (h.health.currentValue < 20) bitten = true; }
+  assert(warned && bitten, "heads telegraph, then bite or spit at nearby players");
+
+  // Leash
+  body.location = { x: ARENA.x + 40, y: ARENA.y, z: ARENA.z }; system.tick(2);
+  assert(Math.hypot(body.location.x - ARENA.x, body.location.z - ARENA.z) < 2, "the hydra is held to its pool");
+
+  // Two down, then wait too long: one grows back, and the hydra stands
+  killHead(heads()[0]); killHead(heads()[0]);
+  assert(heads().length === 1 && h.msgs.some((m) => m.includes("frenzy")), "the last head goes into a frenzy");
+  system.tick(20 * 31);
+  assert(heads().length === 3 && body.isValid, "too slow: the severed heads grow back");
+
+  // All three within the window: the hydra falls
+  Q.accept(h, QUESTS_BY_ID.shambling_dead); // (unrelated quest, to show boss credit only goes to boss quests)
+  hd.level = 12; hd.quests.done.shambling_dead = 1; hd.quests.done.gator_hunt = 1; delete hd.quests.active.shambling_dead;
+  Q.accept(h, QUESTS_BY_ID.heads_will_roll);
+  const col0 = hd.col, xp0 = hd.xp + hd.level * 1e6;
+  killHead(heads()[0]); system.tick(20 * 10); killHead(heads()[0]); system.tick(20 * 10); killHead(heads()[0]);
+  assert(!body.isValid, "every head down at once: the Mire Hydra falls");
+  assert(hd.highestFloor === 3 && hd.col >= col0 + 250, "Floor 2 cleared: +250 Col and the next gate opens");
+  assert(hd.xp + hd.level * 1e6 > xp0, "the final blow earns the hydra's EXP");
+  assert(dim.drops.some((x) => x.stack.typeId === "ponce:hydra_fang"), "it drops Hydra Fangs");
+  assert(Q.questStatus(h, QUESTS_BY_ID.heads_will_roll) === "ready", "\"Heads Will Roll\" is ready to turn in");
+  assert(floors.useStairGate(h, 2) === "open" && h.msgs.some((m) => m.includes("Floor 3 is still being built")), "the Hydra Pool's gate opens (Floor 3 comes later)");
+  assert(floors.mapText(h).includes("Floor 2") && floors.mapText(h).includes("open to you"), "the map knows you're on Floor 2");
 }

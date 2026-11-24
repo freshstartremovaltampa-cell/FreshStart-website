@@ -278,6 +278,26 @@ function blowHorn(player) {
   }
 }
 
+// ---------- Guardian victory (shared by every floor guardian) ----------
+
+/**
+ * Everyone near a fallen floor guardian: the floor counts as cleared (opening
+ * that floor's Stair Gate for them), they get Col, a title, and quest credit.
+ */
+export function rewardGuardian(dim, loc, { floor, type, fallen, col }) {
+  for (const p of dim.getPlayers({ location: loc, maxDistance: TUNING.rewardRange })) {
+    const d = getData(p);
+    const first = (d.highestFloor ?? 1) <= floor;
+    d.highestFloor = Math.max(d.highestFloor ?? 1, floor + 1);
+    d.col += col;
+    markDirty(p);
+    p.onScreenDisplay.setTitle(`§6FLOOR ${floor} CLEARED`, { subtitle: `§f${fallen}`, fadeInDuration: 10, stayDuration: 80, fadeOutDuration: 20 });
+    p.playSound("random.totem");
+    p.sendMessage(`§6[Ponce] §fVictory! §6+${col} Col${first ? "§f. The Stair Gate in the arena's north wall now opens for you." : "."}`);
+    notify(p, "boss", type);
+  }
+}
+
 // ---------- Registration ----------
 
 export function registerBosses() {
@@ -309,19 +329,7 @@ export function registerBosses() {
     for (const m of dim.getEntities({ location: loc, maxDistance: 48, tags: [MINION_TAG] })) {
       m.removeTag(MINION_TAG); // the herd scatters and goes back to normal
     }
-    for (const p of dim.getPlayers({ location: loc, maxDistance: TUNING.rewardRange })) {
-      const d = getData(p);
-      const first = d.highestFloor < 2;
-      d.highestFloor = Math.max(d.highestFloor, 2);
-      d.col += TUNING.colReward;
-      markDirty(p);
-      p.onScreenDisplay.setTitle("§6FLOOR 1 CLEARED", {
-        subtitle: "§fIronhide, the Boar King has fallen", fadeInDuration: 10, stayDuration: 80, fadeOutDuration: 20,
-      });
-      p.playSound("random.totem");
-      p.sendMessage(`§6[Ponce] §fVictory! §6+${TUNING.colReward} Col${first ? "§f. The Stair Gate in the arena's north wall now opens for you." : "."}`);
-      notify(p, "boss", BOSS);
-    }
+    rewardGuardian(dim, loc, { floor: 1, type: BOSS, fallen: "Ironhide, the Boar King has fallen", col: TUNING.colReward });
   });
 
   system.runInterval(() => {

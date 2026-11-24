@@ -1,0 +1,101 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "ponce:mire_shambler",
+      "is_spawnable": true,
+      "is_summonable": true
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": [
+          "shambler",
+          "monster",
+          "ponce_mob",
+          "mob"
+        ]
+      },
+      "minecraft:health": {
+        "value": 60,
+        "max": 60
+      },
+      "minecraft:attack": {
+        "damage": 7,
+        "effect_name": "poison",
+        "effect_duration": 3
+      },
+      "minecraft:collision_box": {
+        "width": 0.8,
+        "height": 2.0
+      },
+      "minecraft:movement": {
+        "value": 0.18
+      },
+      "minecraft:movement.basic": {},
+      "minecraft:navigation.walk": {
+        "avoid_water": false,
+        "can_path_over_water": true,
+        "can_walk_in_lava": false
+      },
+      "minecraft:jump.static": {},
+      "minecraft:physics": {},
+      "minecraft:pushable": {
+        "is_pushable": true,
+        "is_pushable_by_piston": true
+      },
+      "minecraft:breathable": {
+        "total_supply": 15,
+        "suffocate_time": 0
+      },
+      "minecraft:nameable": {},
+      "minecraft:despawn": {
+        "despawn_from_distance": {}
+      },
+      "minecraft:loot": {
+        "table": "loot_tables/entities/mire_shambler.json"
+      },
+      "minecraft:experience_reward": {
+        "on_death": "query.last_hit_by_player ? 2 : 0"
+      },
+      "minecraft:behavior.float": {
+        "priority": 0
+      },
+      "minecraft:behavior.random_stroll": {
+        "priority": 6,
+        "speed_multiplier": 0.8
+      },
+      "minecraft:behavior.look_at_player": {
+        "priority": 7,
+        "look_distance": 6
+      },
+      "minecraft:behavior.random_look_around": {
+        "priority": 8
+      },
+      "minecraft:behavior.hurt_by_target": {
+        "priority": 1
+      },
+      "minecraft:behavior.melee_attack": {
+        "priority": 2,
+        "speed_multiplier": 1.2,
+        "track_target": true,
+        "cooldown_time": 1.2
+      },
+      "minecraft:behavior.nearest_attackable_target": {
+        "priority": 3,
+        "must_see": true,
+        "reselect_targets": true,
+        "within_radius": 14,
+        "entity_types": [
+          {
+            "filters": {
+              "test": "is_family",
+              "subject": "other",
+              "value": "player"
+            },
+            "max_dist": 14
+          }
+        ]
+      }
+    }
+  }
+}

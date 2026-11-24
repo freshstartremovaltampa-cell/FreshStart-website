@@ -98,6 +98,15 @@ export const MOBS = {
   "ponce:moss_golemite": { name: "Moss Golemite", level: 4, xp: 35 },
   // Floor guardians give a big flat mastery boost to the weapon that lands the final blow
   "ponce:ironhide": { name: "Ironhide, the Boar King", level: 8, xp: 600, mastery: 12, boss: true },
+  // Floor 2: the Misty Marsh
+  "ponce:bog_frog": { name: "Bog Frog", level: 8, xp: 30 },
+  "ponce:will_o_wisp": { name: "Will-o'-Wisp", level: 10, xp: 34 },
+  "ponce:mire_shambler": { name: "Mire Shambler", level: 11, xp: 45 },
+  "ponce:marsh_gator": { name: "Marsh Gator", level: 12, xp: 60 },
+  "ponce:hydra_head": { name: "Hydra Head", level: 15, xp: 40, mastery: 1.5 },
+  "ponce:hydra_head_acid": { name: "Hydra Head", level: 15, xp: 40, mastery: 1.5 },
+  // XP and mastery here go to whoever fells the last head
+  "ponce:mire_hydra": { name: "Mire Hydra", level: 15, xp: 900, mastery: 15, boss: true },
 };
 
 // XP from kills. Anything not listed falls back to its max health.

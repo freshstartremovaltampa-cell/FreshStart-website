@@ -22,15 +22,15 @@ const TOWN_R = FLOOR1.townRadius;
 
 // ---------- Noise ----------
 
-function hash(x, z, seed = 0) {
+export function hash(x, z, seed = 0) {
   let h = (x * 374761393 + z * 668265263 + seed * 2147483647) | 0;
   h = Math.imul(h ^ (h >>> 13), 1274126177);
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
 
-const smooth = (t) => t * t * (3 - 2 * t);
+export const smooth = (t) => t * t * (3 - 2 * t);
 
-function valueNoise(x, z, scale, seed) {
+export function valueNoise(x, z, scale, seed) {
   const fx = x / scale, fz = z / scale;
   const x0 = Math.floor(fx), z0 = Math.floor(fz);
   const tx = smooth(fx - x0), tz = smooth(fz - z0);
@@ -39,7 +39,7 @@ function valueNoise(x, z, scale, seed) {
   return (a + (b - a) * tx) + ((c + (d - c) * tx) - (a + (b - a) * tx)) * tz; // 0..1
 }
 
-function fbm(x, z, scale, seed) {
+export function fbm(x, z, scale, seed) {
   return (valueNoise(x, z, scale, seed) * 0.6 + valueNoise(x, z, scale / 2, seed + 7) * 0.3 + valueNoise(x, z, scale / 4, seed + 13) * 0.1);
 }
 
@@ -74,7 +74,8 @@ function trailAngle(k, d) {
 
 const ARENA_D = 185;
 export const ARENA = (() => {
-  const a = trailAngle(0, ARENA_D);
+  // Continue straight on from where the north trail ends, so the trail arrives at the south entrance
+  const a = trailAngle(0, ARENA_D - 14);
   return { x: C.x + Math.round(Math.cos(a) * ARENA_D), z: C.z + Math.round(Math.sin(a) * ARENA_D), y: BASE, radius: 16 };
 })();
 /** The Stair Gate sits in the arena's north wall. */
@@ -291,8 +292,14 @@ function buildArena() {
     for (let y = 1; y <= 4; y++) P("chiseled", x, y, z);
     P("lantern", x, 5, z);
   }
-  // South entrance meets the trail
+  // South entrance, joined to wherever the trail ends by a short straight path
   for (let z = 16; z <= 21; z++) for (let x = -1; x <= 1; x++) P("path", x, 0, z);
+  const a = trailAngle(0, ARENA_D - 14);
+  const end = { x: C.x + Math.cos(a) * (ARENA_D - 14), z: C.z + Math.sin(a) * (ARENA_D - 14) };
+  for (let t = 0; t <= 1; t += 0.02) {
+    const x = Math.round(end.x + (A.x - end.x) * t) - A.x, z = Math.round(end.z + (A.z + 21 - end.z) * t) - A.z;
+    for (let dx = -1; dx <= 1; dx++) P("path", x + dx, 0, z);
+  }
   // Stair Gate in the north wall: an archway filled with the gate
   for (const x of [-3, 3]) for (let y = 1; y <= 6; y++) P("chiseled", x, y, -17);
   for (let x = -3; x <= 3; x++) P("bricks", x, 7, -17);
@@ -471,6 +478,13 @@ export function directionText(from, to) {
 }
 
 /** True if a location is on (or just above/below) Floor 1. */
+export function isOnFloor(loc) {
+  return isOnFloor1(loc);
+}
+
+/** Common floor interface (each floor module exports the same names). */
+export const FLOOR = { ...FLOOR1, id: 1 };
+
 export function isOnFloor1(loc) {
   return onIsland(Math.floor(loc.x), Math.floor(loc.z)) && loc.y > BASE - 60 && loc.y < BASE + 60;
 }

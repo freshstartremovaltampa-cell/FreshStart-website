@@ -1,0 +1,32 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "ponce:mire_hydra",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/mire_hydra"
+      },
+      "geometry": {
+        "default": "geometry.ponce.mire_hydra"
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "animations": {
+        "walk": "animation.ponce.mire_hydra.walk"
+      },
+      "scripts": {
+        "animate": [
+          "walk"
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#30604C",
+        "overlay_color": "#A0AA78"
+      }
+    }
+  }
+}

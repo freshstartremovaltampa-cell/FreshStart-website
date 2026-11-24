@@ -243,6 +243,13 @@ INFUSIONS = {
     "ponce:moss_clump": {"name": "Moss Binding", "cost": 3, "durability": 0.2},
     "ponce:golemite_core": {"name": "Core Weight", "cost": 1, "damage": 2, "swing": 0.15},
     "ponce:boar_king_crest": {"name": "King's Crest", "cost": 1, "damage": 1.5, "durability": 0.25},
+    # Floor 2 drops
+    "ponce:frog_skin": {"name": "Frogskin Wrap", "cost": 3, "durability": 0.2, "swing": -0.05},
+    "ponce:wisp_essence": {"name": "Wisp Spark", "cost": 2, "crit": 0.08},
+    "ponce:gator_tooth": {"name": "Gator Fang", "cost": 2, "damage": 2, "durability": -0.1},
+    "ponce:gator_hide": {"name": "Gator Scale", "cost": 2, "durability": 0.4, "swing": 0.05},
+    "ponce:hydra_fang": {"name": "Hydra Fang", "cost": 1, "damage": 2.5, "crit": 0.05},
+    "ponce:hydra_scale": {"name": "Hydra Scale", "cost": 2, "damage": 0.5, "durability": 0.5},
 }
 
 

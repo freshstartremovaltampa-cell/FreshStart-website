@@ -1,0 +1,18 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:item": {
+    "description": {
+      "identifier": "ponce:gator_hide",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": "ponce_gator_hide",
+      "minecraft:display_name": {
+        "value": "\u00a7fGator Hide"
+      },
+      "minecraft:max_stack_size": 64
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.ponce.mire_shambler.walk": {
+      "loop": true,
+      "bones": {
+        "leg_l": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.17) * 40 * query.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "leg_r": {
+          "rotation": [
+            "-math.cos(query.modified_distance_moved * 38.17) * 40 * query.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "arm_l": {
+          "rotation": [
+            "-math.cos(query.modified_distance_moved * 38.17) * 30 * query.modified_move_speed - 10",
+            0,
+            0
+          ]
+        },
+        "arm_r": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.17) * 30 * query.modified_move_speed - 10",
+            0,
+            0
+          ]
+        },
+        "body": {
+          "rotation": [
+            0,
+            0,
+            "math.sin(query.anim_time * 90) * 3"
+          ]
+        }
+      }
+    }
+  }
+}

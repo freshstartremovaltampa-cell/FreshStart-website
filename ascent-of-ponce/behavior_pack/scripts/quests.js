@@ -27,6 +27,7 @@ function qstate(data) {
 
 function meetsRequires(data, q) {
   const r = q.requires ?? {};
+  if (r.floor && (data.highestFloor ?? 1) < r.floor) return false;
   if (r.level && data.level < r.level) return false;
   return (r.quests ?? []).every((id) => (qstate(data).done[id] ?? 0) > 0);
 }
@@ -34,6 +35,7 @@ function meetsRequires(data, q) {
 function requiresText(data, q) {
   const r = q.requires ?? {};
   const parts = [];
+  if (r.floor) parts.push(`${(data.highestFloor ?? 1) >= r.floor ? "§a" : "§c"}reach Floor ${r.floor}`);
   if (r.level) parts.push(`${data.level >= r.level ? "§a" : "§c"}Lv ${r.level}`);
   for (const id of r.quests ?? []) parts.push(`${(qstate(data).done[id] ?? 0) > 0 ? "§a" : "§c"}"${QUESTS_BY_ID[id].name}"`);
   return parts.join("§7, ");
@@ -141,7 +143,7 @@ export function abandon(player, q) {
 // ---------- Rewards ----------
 
 function rewardWeaponDef(kind, type) {
-  const tier = { fine_t1: 1, masterwork_t2: 2, relic: 3 }[kind];
+  const tier = { fine_t1: 1, fine_t2: 2, masterwork_t2: 2, relic: 3 }[kind];
   return Object.entries(WEAPON_DEFS).find(([, d]) => d.tier === tier && d.type === type);
 }
 
@@ -152,7 +154,7 @@ export function makeRewardWeapon(reward, type) {
     item.setLore(weaponLore(def));
     return item;
   }
-  const quality = reward.kind === "fine_t1" ? "fine" : "masterwork";
+  const quality = reward.kind.startsWith("fine") ? "fine" : "masterwork";
   const infusions = reward.infusions ?? [];
   item.setDynamicProperty("ponce:quality", quality);
   if (infusions.length) item.setDynamicProperty("ponce:infusions", JSON.stringify(infusions));
@@ -167,6 +169,7 @@ function rewardText(q) {
   for (const [id, n] of r.items ?? []) lines.push(`§f${n}x ${itemName(id)}`);
   for (const [job, xp] of Object.entries(r.jobXp ?? {})) lines.push(`${JOBS[job].color}${xp} ${JOBS[job].name} XP`);
   if (r.weapon?.kind === "fine_t1") lines.push("§aA Fine Tier I weapon §7(you choose the type)");
+  if (r.weapon?.kind === "fine_t2") lines.push("§aA Fine Tier II weapon §7(you choose the type)");
   if (r.weapon?.kind === "masterwork_t2") {
     const inf = (r.weapon.infusions ?? []).map((id) => INFUSIONS[id].name).join(" + ");
     lines.push(`§6A Masterwork Tier II weapon${inf ? ` with ${inf}` : ""} §7(you choose the type)`);

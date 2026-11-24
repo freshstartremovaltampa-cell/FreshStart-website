@@ -872,7 +872,9 @@ def resources():
     data["texture_data"].update(ITEM_TEXTURES)
     write_json(path, data)
 
-    write_json(f"{RP}/sounds.json", {"entity_sounds": {"entities": {
+    sounds_path = f"{RP}/sounds.json"
+    sounds = json.load(open(sounds_path)) if os.path.exists(sounds_path) else {"entity_sounds": {"entities": {}}}
+    sounds["entity_sounds"]["entities"].update({
         "ponce:meadow_jelly": {"volume": 0.8, "pitch": [1.1, 1.4], "events": {
             "hurt": "mob.slime.small", "death": "mob.slime.small", "attack": "mob.slime.attack",
             "step": {"sound": "mob.slime.small", "volume": 0.25}}},
@@ -891,7 +893,8 @@ def resources():
         "ponce:tusk_boar": {"volume": 1.0, "pitch": [0.9, 1.1], "events": {
             "ambient": "mob.hoglin.ambient", "hurt": "mob.hoglin.hurt", "death": "mob.hoglin.death",
             "attack": "mob.hoglin.attack", "step": {"sound": "mob.pig.step", "volume": 0.2}}},
-    }}})
+    })
+    write_json(sounds_path, sounds)
 
 
 if __name__ == "__main__":

@@ -40,6 +40,7 @@ export function isTarget(entity) {
   try {
     if (!entity?.isValid || NOT_TARGETS.has(entity.typeId) || entity.typeId.startsWith("ponce:npc_")) return false;
     if (!entity.getComponent("minecraft:health")) return false;
+    if (entity.matches?.({ families: ["ponce_untargetable"] })) return false; // e.g. a hydra's body: hit its heads
     return !entity.getComponent("minecraft:tameable")?.isTamed;
   } catch {
     return false;

@@ -208,10 +208,58 @@ Floor 1 is a **floating island** about 500 blocks across at y 200, centered on x
 - **Floor 1 mobs** spawn in the forest around players (8 nearby at most), never inside town or the arena. Hares and wasps come out by day; moles and golemites come out more at night.
 - **No Minecraft mobs**: vanilla mobs that spawn on the floor are removed.
 - **Falling off the edge** brings you back to town.
-- Preview the layout with `node tools/preview_floor1.mjs <dir>`, which writes a top-down map and the town's blocks.
+- Preview a floor with `node tools/preview_floor.mjs <floor> <dir>`, which writes a top-down map and the town's and arena's blocks.
+
+## Floor 2: the Misty Marsh
+Floor 2 is a second floating island (centered on x 10000, z -10000, water level y 200), reached through Floor 1's Stair Gate or from Map & Travel once Floor 1 is cleared.
+
+- **The marsh**:
+  - shallow water over mud, deeper channels, and mossy hummocks with reeds, moss, grass and blue orchids
+  - mangroves with arching roots, dead snags, and lily pads
+  - wooden boardwalks with railing posts for trails
+  - **fog** that rolls in when you arrive on the floor and lifts when you leave
+- **Stiltwater**: a town on a mangrove-plank deck raised on stilts above the water, with a small twin of the Fountain of Youth, huts, lanterns and railings. It has:
+  - **Ysolde, the Marsh Warden** (new quest giver and shop)
+  - branches of Bram's smithy (forge, furnace, anvil) and Pip's kitchen (cooking pot)
+- **Hydra Pool**: the guardian arena at the end of the north boardwalk, a ring of mossy stone with a flooded center, lantern pillars, and the next Stair Gate (Floor 3 comes later).
+- **Creatures** (spawned by the floor, never in town or the pool; each has a habitat: land, water, either, or air):
+
+  | Creature | Lv | HP | Behavior | Drops |
+  |---|---|---|---|---|
+  | Bog Frog | 8 | 40 | Hostile, leaps at you, swims | Raw Frog Legs, Frog Skin |
+  | Will-o'-Wisp | 10 | 30 | Glowing, hovers, slows you; flickers away when hit; mostly at night | Wisp Essence |
+  | Mire Shambler | 11 | 60 | Slow walking mound of moss and mud; poisons; more at night | Bog Moss |
+  | Marsh Gator | 12 | 80 | Lurks in the shallows, notices you late, lunges hard | Gator Hide, Gator Tooth |
+
+- **New infusions**:
+
+  | Infusion | Cost | Effect |
+  |---|---|---|
+  | Frogskin Wrap | 3 Frog Skin | +20% durability, 5% faster swing |
+  | Wisp Spark | 2 Wisp Essence | +8% crit |
+  | Gator Fang | 2 Gator Tooth | +2 damage, -10% durability |
+  | Gator Scale | 2 Gator Hide | +40% durability, 5% slower swing |
+  | Hydra Fang | 1 Hydra Fang | +2.5 damage, +5% crit |
+  | Hydra Scale | 2 Hydra Scale | +0.5 damage, +50% durability |
+
+- **New meal**: Marsh Gumbo (2 Raw Frog Legs, Bog Moss, Bowl; Cooking 12) gives +4 AGI and +2 DEX for 5 minutes.
+- **Quests** (Ysolde): six of them, all needing Floor 2 reached. They include Fine **Tier II** weapons for Hard quests, a Masterwork Tier II with Gator Fang and Wisp Spark for the Elite quest "Heads Will Roll", and a repeatable Marsh Patrol.
+
+### Floor 2 guardian: the Mire Hydra (multi-head creatures)
+The hydra introduces **multi-head creatures**, which later floors will make more common (`scripts/multihead.js`, data-driven `SPECIES`).
+- **Summoning**: craft a **Mire Lure** (gator teeth, wisp essence, frog skin) and use it inside the Hydra Pool. Used elsewhere, it points the way.
+- **Separate heads**: the body carries **three heads as riders**. **Each head has its own health pool (600)**. The body can't be hurt, and its boss bar shows the heads' combined health. The on-screen display shows each head's health or regrowth countdown.
+- **Regrowth**: a slain head is **severed** and **regrows at full health after 30 seconds**, with a warning 8 seconds before.
+- **Winning**: the hydra only falls when **all three heads are dead at the same time**. Wear every head down, then finish them in quick succession.
+- **Attacks**:
+  - Heads rear back (warning) and **bite** for 9 damage what's in front of them.
+  - The middle **acid head** spits a pool that poisons anyone standing in it.
+  - The **last surviving head goes into a frenzy** and attacks twice as often.
+- **Leash**: the hydra is held to its pool.
+- **Victory**: Floor 2 is cleared (opening its Stair Gate) and you get +250 Col. The final blow earns 900 EXP and +15 mastery. Drops are Hydra Fangs, Hydra Scales and Gator Hide.
 
 ## Roadmap
-5. Floors (part 3): Floor 2 (theme, town, mobs, guardian, quests), then Floor 3
+5. Floors (part 3): Floor 3, more multi-head creatures on higher floors
 
 ## Layout
 ```
@@ -236,8 +284,10 @@ behavior_pack/
     starter.js        first-login starter weapon choice
     quests.js         quest engine, NPC dialogue, rewards, shops
     quests_data.js    quest givers, quests, shops (hand-edited)
-    floor1_gen.js     Floor 1 layout: island, town, forest (pure code, no game API)
-    floor1.js         builds Floor 1 in the game, travel, spawner
+    floor1_gen.js     Floor 1 layout: island, town, forest, arena (pure code, no game API)
+    floor2_gen.js     Floor 2 layout: marsh, Stiltwater, Hydra Pool (pure code)
+    floors.js         builds every floor in the game; travel, gates, fog, spawners
+    multihead.js      multi-head creatures (the Mire Hydra): heads, regrowth, attacks
     inventory.js, ui.js  shared helpers
     mobs.js           mole ambush, golemite weaknesses
     bosses.js         floor guardian fights
@@ -249,7 +299,8 @@ tools/gen_mobs.py     generates mob files and placeholder art
 tools/gen_weapons.py  generates weapon items, icons and weapon_data.js (incl. forge recipes)
 tools/gen_jobs.py     generates ore nodes, forge, pot, ingots, meals, world gen and jobs_data.js
 tools/gen_npcs.py     generates the quest-giver NPC entities and skins
-tools/preview_floor1.mjs  renders Floor 1 data from the real generator for previews
+tools/gen_floor2_mobs.py  generates the Floor 2 creatures, the hydra, drops, lure and marsh fog
+tools/preview_floor.mjs   renders a floor's data from the real generator for previews
 tests/                run ./tests/run.sh (needs Node) to simulate gameplay against mock APIs
 ```
 

@@ -32,6 +32,9 @@ FOODS = [
      [("ponce:jelly_gel", 2), ("minecraft:wheat", 1), ("minecraft:sugar", 1)], ((96, 214, 170), (220, 180, 110))),
     ("hearty_roast", "Hearty Roast", 10, 0.8, {"vit": 3}, 300, 8, 30,
      [("ponce:raw_boar", 2), ("minecraft:potato", 2)], ((140, 70, 40), (200, 160, 90))),
+    # Floor 2
+    ("marsh_gumbo", "Marsh Gumbo", 10, 0.8, {"agi": 4, "dex": 2}, 300, 12, 45,
+     [("ponce:frog_legs", 2), ("ponce:bog_moss", 1), ("minecraft:bowl", 1)], ((110, 90, 50), (70, 84, 44))),
 ]
 
 

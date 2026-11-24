@@ -1,0 +1,77 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "ponce:hydra_head_acid",
+      "is_spawnable": true,
+      "is_summonable": true
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": [
+          "hydra_head",
+          "ponce_boss_part",
+          "monster",
+          "mob"
+        ]
+      },
+      "minecraft:health": {
+        "value": 600,
+        "max": 600
+      },
+      "minecraft:collision_box": {
+        "width": 1.2,
+        "height": 1.2
+      },
+      "minecraft:scale": {
+        "value": 1.6
+      },
+      "minecraft:physics": {},
+      "minecraft:knockback_resistance": {
+        "value": 1.0
+      },
+      "minecraft:pushable": {
+        "is_pushable": false,
+        "is_pushable_by_piston": false
+      },
+      "minecraft:persistent": {},
+      "minecraft:breathable": {
+        "total_supply": 15,
+        "suffocate_time": 0,
+        "breathes_water": true
+      },
+      "minecraft:damage_sensor": {
+        "triggers": [
+          {
+            "cause": "fall",
+            "deals_damage": "no"
+          },
+          {
+            "cause": "suffocation",
+            "deals_damage": "no"
+          },
+          {
+            "cause": "drowning",
+            "deals_damage": "no"
+          },
+          {
+            "cause": "entity_explosion",
+            "deals_damage": "no"
+          }
+        ]
+      },
+      "minecraft:movement": {
+        "value": 0
+      },
+      "minecraft:movement.basic": {},
+      "minecraft:loot": {
+        "table": "loot_tables/empty.json"
+      },
+      "minecraft:behavior.look_at_player": {
+        "priority": 1,
+        "look_distance": 24,
+        "probability": 1.0
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.ponce.hydra_head_acid.snap": {
+      "loop": true,
+      "bones": {
+        "jaw": {
+          "rotation": [
+            "math.max(0, math.sin(query.anim_time * 150)) * 30",
+            0,
+            0
+          ]
+        },
+        "head": {
+          "rotation": [
+            "math.sin(query.anim_time * 70) * 6",
+            0,
+            0
+          ]
+        }
+      }
+    }
+  }
+}

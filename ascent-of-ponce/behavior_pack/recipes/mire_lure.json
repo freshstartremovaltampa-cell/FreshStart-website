@@ -1,0 +1,35 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "ponce:mire_lure"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "TWT",
+      "WSW",
+      "TWT"
+    ],
+    "key": {
+      "T": {
+        "item": "ponce:gator_tooth"
+      },
+      "W": {
+        "item": "ponce:wisp_essence"
+      },
+      "S": {
+        "item": "ponce:frog_skin"
+      }
+    },
+    "unlock": [
+      {
+        "item": "ponce:gator_tooth"
+      }
+    ],
+    "result": {
+      "item": "ponce:mire_lure"
+    }
+  }
+}

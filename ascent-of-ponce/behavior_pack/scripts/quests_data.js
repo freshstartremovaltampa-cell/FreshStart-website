@@ -9,10 +9,12 @@
 //   cook    { target?: food id, count }       cook dishes (any dish if no target)
 //   cook_perfect { count }                    perfectly timed dishes
 //   level   { count }                         reach this combat level
+// requires: { level, quests: [ids], floor }     floor = must have reached that floor
 //   job     { job, count }                    reach this job level
 //
 // Rewards scale with difficulty. Weapon rewards let the player pick the weapon type:
-//   fine_t1        Fine-quality Tier I weapon (Hard)
+//   fine_t1        Fine-quality Tier I weapon (Hard, Floor 1)
+//   fine_t2        Fine-quality Tier II weapon (Hard, Floor 2)
 //   masterwork_t2  Masterwork Tier II weapon with the listed infusions (Elite)
 //   relic          Relic: unbreakable, 3 built-in infusions, highest stats (Legendary)
 
@@ -23,6 +25,8 @@ export const DIFFICULTY = {
   4: { name: "Elite", color: "§c" },
   5: { name: "Legendary", color: "§d" },
 };
+
+export const FLOOR2_MOBS = ["ponce:bog_frog", "ponce:will_o_wisp", "ponce:mire_shambler", "ponce:marsh_gator"];
 
 export const FLOOR1_MOBS = [
   "ponce:meadow_jelly", "ponce:thornback_hare", "ponce:field_wasp",
@@ -37,6 +41,10 @@ export const NPCS = {
   "ponce:npc_smith": {
     key: "smith", name: "Old Bram, the Smith",
     greeting: "Hmph. Steel doesn't care how brave you are, only how true you strike. Bring me ore and I'll teach you to make something worth swinging.",
+  },
+  "ponce:npc_warden": {
+    key: "warden", name: "Ysolde, the Marsh Warden",
+    greeting: "You climbed the stair, then. Welcome to the marsh. Keep to the boardwalks, mind the water, and never trust a light in the fog.",
   },
   "ponce:npc_cook": {
     key: "cook", name: "Pip, the Cook",
@@ -94,6 +102,39 @@ export const QUESTS = [
     desc: "The guild always pays for fewer monsters.",
     objectives: [{ type: "kill", target: FLOOR1_MOBS, count: 20, label: "Floor 1 monsters" }],
     rewards: { xp: 80, col: 40 } },
+
+  // ---------------- Ysolde: the Misty Marsh (Floor 2) ----------------
+  { id: "frog_chorus", giver: "warden", difficulty: 2, name: "The Frog Chorus",
+    desc: "The Bog Frogs never stop croaking, and they've started leaping at travelers. Quiet them down.",
+    requires: { floor: 2 },
+    objectives: [{ type: "kill", target: "ponce:bog_frog", count: 12 }],
+    rewards: { xp: 300, col: 120, items: [["ponce:frog_legs", 4], ["ponce:marsh_gumbo", 1]] } },
+  { id: "wisp_lights", giver: "warden", difficulty: 2, name: "Lights in the Fog",
+    desc: "Climbers follow the lights off the boardwalks and never come back. Snuff them out and bring me their essence.",
+    requires: { floor: 2 },
+    objectives: [{ type: "kill", target: "ponce:will_o_wisp", count: 8 }, { type: "collect", item: "ponce:wisp_essence", count: 4 }],
+    rewards: { xp: 320, col: 130, items: [["ponce:glimmer_silver_ingot", 2]] } },
+  { id: "shambling_dead", giver: "warden", difficulty: 3, name: "What Walks in the Reeds",
+    desc: "Mounds of moss and mud that walk like men. Whatever they are, there are too many of them.",
+    requires: { floor: 2, level: 10, quests: ["frog_chorus"] },
+    objectives: [{ type: "kill", target: "ponce:mire_shambler", count: 12 }],
+    rewards: { xp: 600, col: 250, weapon: { kind: "fine_t2" } } },
+  { id: "gator_hunt", giver: "warden", difficulty: 3, name: "Gator Season",
+    desc: "The Marsh Gators lie still in the shallows until you're close enough to bite. Hunt them, and bring their teeth.",
+    requires: { floor: 2, level: 11 },
+    objectives: [{ type: "kill", target: "ponce:marsh_gator", count: 8 }, { type: "collect", item: "ponce:gator_tooth", count: 4 }],
+    rewards: { xp: 650, col: 260, items: [["ponce:gator_hide", 3], ["ponce:glimmer_silver_ingot", 3]] } },
+  { id: "heads_will_roll", giver: "warden", difficulty: 4, name: "Heads Will Roll",
+    desc: "The Mire Hydra guards the stair in the Hydra Pool at the end of the north boardwalk. Cut off one head and it grows back. " +
+      "Craft a Mire Lure, call it up, and fell every head before the first one regrows.",
+    requires: { floor: 2, level: 12, quests: ["shambling_dead", "gator_hunt"] },
+    objectives: [{ type: "boss", target: "ponce:mire_hydra", count: 1 }],
+    rewards: { xp: 1200, col: 600, weapon: { kind: "masterwork_t2", infusions: ["ponce:gator_tooth", "ponce:wisp_essence"] } } },
+  { id: "marsh_patrol", giver: "warden", difficulty: 1, repeatable: true, name: "Marsh Patrol (repeatable)",
+    desc: "The marsh never runs out of things that want to eat you. I pay for every one that doesn't.",
+    requires: { floor: 2 },
+    objectives: [{ type: "kill", target: FLOOR2_MOBS, count: 20, label: "Floor 2 creatures" }],
+    rewards: { xp: 150, col: 70 } },
 
   // ---------------- Bram: mining and smithing ----------------
   { id: "first_ore", giver: "smith", difficulty: 1, name: "Copper First",
@@ -172,6 +213,11 @@ export const SHOPS = {
     buy: [["ponce:ember_copper_ingot", 10], ["ponce:ironheart_ingot", 25], ["ponce:glimmer_silver_ingot", 60],
       ["ponce:smithing_forge", 200], ["minecraft:iron_pickaxe", 80]],
     sell: [["ponce:raw_ember_copper", 4], ["ponce:raw_ironheart", 10], ["ponce:raw_glimmer_silver", 25]],
+  },
+  warden: {
+    buy: [["ponce:mire_lure", 400], ["ponce:marsh_gumbo", 50], ["ponce:frog_legs", 6]],
+    sell: [["ponce:frog_skin", 4], ["ponce:wisp_essence", 6], ["ponce:bog_moss", 3], ["ponce:gator_hide", 8],
+      ["ponce:gator_tooth", 10], ["ponce:hydra_scale", 40], ["ponce:hydra_fang", 80]],
   },
   cook: {
     buy: [["ponce:cooking_pot", 150], ["ponce:boar_skewer", 25], ["ponce:hare_stew", 35], ["ponce:jelly_tart", 40],

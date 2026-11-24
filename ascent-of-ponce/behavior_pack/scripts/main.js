@@ -16,7 +16,8 @@ import { registerForging } from "./forging.js";
 import { registerCooking, buffHudText } from "./cooking.js";
 import { needsStarter, offerStarter } from "./starter.js";
 import { registerQuests } from "./quests.js";
-import { registerFloor1, travelToFloor1 } from "./floor1.js";
+import { registerFloors, travelToFloor1 } from "./floors.js";
+import { registerMultihead } from "./multihead.js";
 
 // New players begin their climb in Wayfarer's Rest, the Floor 1 town
 const START_ON_FLOOR_1 = true;
@@ -87,7 +88,8 @@ registerMining();
 registerForging();
 registerCooking();
 registerQuests();
-registerFloor1();
+registerFloors();
+registerMultihead();
 
 // ---------- Loops ----------
 

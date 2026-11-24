@@ -172,6 +172,36 @@
     },
     "ponce_kingsfall": {
       "textures": "textures/items/weapons/kingsfall"
+    },
+    "ponce_frog_skin": {
+      "textures": "textures/items/frog_skin"
+    },
+    "ponce_frog_legs": {
+      "textures": "textures/items/frog_legs"
+    },
+    "ponce_wisp_essence": {
+      "textures": "textures/items/wisp_essence"
+    },
+    "ponce_bog_moss": {
+      "textures": "textures/items/bog_moss"
+    },
+    "ponce_gator_hide": {
+      "textures": "textures/items/gator_hide"
+    },
+    "ponce_gator_tooth": {
+      "textures": "textures/items/gator_tooth"
+    },
+    "ponce_hydra_fang": {
+      "textures": "textures/items/hydra_fang"
+    },
+    "ponce_hydra_scale": {
+      "textures": "textures/items/hydra_scale"
+    },
+    "ponce_mire_lure": {
+      "textures": "textures/items/mire_lure"
+    },
+    "ponce_marsh_gumbo": {
+      "textures": "textures/items/marsh_gumbo"
     }
   }
 }

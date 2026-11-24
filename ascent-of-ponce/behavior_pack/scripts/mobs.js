@@ -7,6 +7,7 @@ import { getHeldItem, weaponTypeOf } from "./progression.js";
 import { killWithCredit } from "./combat.js";
 
 const MOLE = "ponce:burrow_mole";
+const WISP = "ponce:will_o_wisp";
 const GOLEMITE = "ponce:moss_golemite";
 const DIMENSIONS = ["overworld", "nether", "the_end"];
 const IGNORED_MODES = [GameMode?.Creative ?? GameMode?.creative, GameMode?.Spectator ?? GameMode?.spectator].filter(Boolean);
@@ -37,8 +38,22 @@ function tickMoles() {
   }
 }
 
+/** Will-o'-Wisps flicker away when struck (35% chance): chase the light. */
+function wispBlink(wisp) {
+  if (Math.random() >= 0.35) return;
+  const a = Math.random() * Math.PI * 2, r = 4 + Math.random() * 3;
+  const to = { x: wisp.location.x + Math.cos(a) * r, y: wisp.location.y + 0.5, z: wisp.location.z + Math.sin(a) * r };
+  try {
+    wisp.dimension.spawnParticle("minecraft:villager_happy", wisp.location);
+    wisp.teleport(to);
+  } catch { /* blocked */ }
+}
+
 export function registerMobs() {
   system.runInterval(tickMoles, 10);
+  world.afterEvents.entityHurt.subscribe(({ hurtEntity }) => {
+    if (hurtEntity.typeId === WISP && hurtEntity.isValid && (hurtEntity.getComponent("minecraft:health")?.currentValue ?? 0) > 0) wispBlink(hurtEntity);
+  });
 
   world.afterEvents.entityHurt.subscribe(({ hurtEntity, damage, damageSource }) => {
     if (hurtEntity.typeId !== GOLEMITE || !hurtEntity.isValid) return;

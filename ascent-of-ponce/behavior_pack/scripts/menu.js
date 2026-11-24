@@ -17,8 +17,7 @@ import { buffActive } from "./cooking.js";
 import { needsStarter, offerStarter } from "./starter.js";
 import { activeQuests, completedCount, isComplete, MAX_ACTIVE, objectiveProgress, openQuest } from "./quests.js";
 import { DIFFICULTY, NPCS } from "./quests_data.js";
-import { mapText, travelToFloor1, travelToWorldSpawn } from "./floor1.js";
-import { FLOOR1 } from "./floor1_gen.js";
+import { mapText, travelToFloor, travelToWorldSpawn, unlockedFloors } from "./floors.js";
 import { equippedSkill } from "./abilities.js";
 import { INFUSIONS, WEAPON_DEFS } from "./weapon_data.js";
 import { describeInfusion, describeWeaponReq } from "./weapons.js";
@@ -180,17 +179,24 @@ async function openWeaponSkills(player, weapon) {
 // ---------- Travel ----------
 
 async function openTravel(player) {
-  const res = await show(player, new ActionFormData()
+  const floors = unlockedFloors(player);
+  const form = new ActionFormData()
     .title("§l§6Map & Travel")
-    .body(`${mapText(player)}\n${DIV}\n§7Floor 1 is a floating island far above the world. Its town is safe; the forest is not.`)
-    .button(`§f${FLOOR1.name}\n§7Travel to the Floor 1 town`, "textures/items/compass_item")
-    .button("§fWorld spawn\n§7Travel to the world below", "textures/items/map_empty")
-    .button("§fGet a locator map\n§7Draws the land as you explore", "textures/items/map_locator")
-    .button("Back"));
+    .body(`${mapText(player)}\n${DIV}\n§7Each floor is a floating island far above the world. Towns are safe; the wilds are not. ` +
+      "Beat a floor's guardian to unlock the next floor.");
+  for (const f of floors) {
+    const F = f.gen.FLOOR;
+    form.button(`§f${F.name}\n§7Floor ${F.id}${F.title ? `: ${F.title}` : ""}`, "textures/items/compass_item");
+  }
+  form.button("§fWorld spawn\n§7Travel to the world below", "textures/items/map_empty");
+  form.button("§fGet a locator map\n§7Draws the land as you explore", "textures/items/map_locator");
+  form.button("Back");
+  const res = await show(player, form);
   if (res.canceled) return;
-  if (res.selection === 0) return travelToFloor1(player);
-  if (res.selection === 1) return travelToWorldSpawn(player);
-  if (res.selection === 2) {
+  const i = res.selection;
+  if (i < floors.length) return travelToFloor(player, floors[i].gen.FLOOR.id);
+  if (i === floors.length) return travelToWorldSpawn(player);
+  if (i === floors.length + 1) {
     try { player.runCommand("give @s empty_map 1 2"); } // data 2 = locator map
     catch { player.getComponent("minecraft:inventory")?.container?.addItem(new ItemStack("minecraft:empty_map", 1)); }
     player.sendMessage("§a[Ponce] Use the map to start drawing it. The arrow shows where you are.");

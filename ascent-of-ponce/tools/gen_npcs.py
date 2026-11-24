@@ -22,6 +22,8 @@ NPCS = [
     ("npc_smith", "Old Bram, the Smith", ("#5A5A5E", "#8C5A32"),
      {"hair": (170, 170, 170), "beard": (190, 190, 190), "shirt": (110, 110, 116), "apron": (120, 78, 44),
       "pants": (60, 56, 52), "boots": (40, 32, 28), "eyes": (60, 80, 120), "skin": (200, 150, 115)}),
+    ("npc_warden", "Ysolde, the Marsh Warden", ("#3C5A3C", "#78E6C8"),
+     {"hair": (30, 70, 70), "shirt": (60, 90, 56), "trim": (120, 230, 200), "pants": (70, 60, 44), "boots": (40, 46, 34), "eyes": (60, 160, 140)}),
     ("npc_cook", "Pip, the Cook", ("#F0F0F0", "#3C64B4"),
      {"hair": (240, 240, 240), "hat": True, "shirt": (235, 235, 230), "pants": (60, 100, 180), "boots": (60, 40, 30),
       "eyes": (90, 60, 40), "cheeks": (235, 140, 140)}),
