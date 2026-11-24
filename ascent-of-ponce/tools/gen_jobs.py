@@ -19,6 +19,8 @@ ORES = [
     ("ember_copper", "Ember Copper", 1, "wooden", 10, 30, (214, 120, 60), (245, 170, 100), "#B0703C", (0, 80), 8),
     ("ironheart", "Ironheart", 5, "stone", 25, 60, (150, 40, 40), (210, 90, 80), "#8C3A34", (-32, 48), 5),
     ("glimmer_silver", "Glimmer Silver", 12, "iron", 50, 120, (205, 212, 228), (255, 255, 255), "#C8D0E0", (-64, 16), 3),
+    # Floor 3 only (0 veins = no overworld generation; the floor generator places it)
+    ("stormsteel", "Stormsteel", 16, "iron", 80, 150, (80, 120, 168), (190, 236, 255), "#5078A8", (0, 0), 0),
 ]
 PICKAXE_TIERS = ["wooden", "golden", "stone", "iron", "diamond", "netherite"]  # golden counts as wooden-level
 
@@ -135,19 +137,20 @@ def main():
             "description": {"identifier": f"ponce:smelt_{key}"}, "tags": ["furnace", "blast_furnace"],
             "input": f"ponce:raw_{key}", "output": f"ponce:{key}_ingot"}})
 
-        # Underground generation
-        write_json(f"{BP}/features/{key}_node_feature.json", {"format_version": "1.13.0", "minecraft:ore_feature": {
-            "description": {"identifier": f"ponce:{key}_node_feature"}, "count": 3,
-            "replace_rules": [{"places_block": node, "may_replace": [
-                "minecraft:stone", "minecraft:andesite", "minecraft:diorite", "minecraft:granite", "minecraft:deepslate", "minecraft:tuff"]}]}})
-        write_json(f"{BP}/feature_rules/{key}_node_rule.json", {"format_version": "1.13.0", "minecraft:feature_rules": {
-            "description": {"identifier": f"ponce:{key}_node_rule", "places_feature": f"ponce:{key}_node_feature"},
-            "conditions": {"placement_pass": "underground_pass",
-                           "minecraft:biome_filter": [{"test": "has_biome_tag", "operator": "==", "value": "overworld"}]},
-            "distribution": {"iterations": veins, "coordinate_eval_order": "zyx",
-                             "x": {"distribution": "uniform", "extent": [0, 16]},
-                             "y": {"distribution": "uniform", "extent": [ylo, yhi]},
-                             "z": {"distribution": "uniform", "extent": [0, 16]}}}})
+        if veins:
+            # Underground generation (overworld ores only)
+            write_json(f"{BP}/features/{key}_node_feature.json", {"format_version": "1.13.0", "minecraft:ore_feature": {
+                "description": {"identifier": f"ponce:{key}_node_feature"}, "count": 3,
+                "replace_rules": [{"places_block": node, "may_replace": [
+                    "minecraft:stone", "minecraft:andesite", "minecraft:diorite", "minecraft:granite", "minecraft:deepslate", "minecraft:tuff"]}]}})
+            write_json(f"{BP}/feature_rules/{key}_node_rule.json", {"format_version": "1.13.0", "minecraft:feature_rules": {
+                "description": {"identifier": f"ponce:{key}_node_rule", "places_feature": f"ponce:{key}_node_feature"},
+                "conditions": {"placement_pass": "underground_pass",
+                               "minecraft:biome_filter": [{"test": "has_biome_tag", "operator": "==", "value": "overworld"}]},
+                "distribution": {"iterations": veins, "coordinate_eval_order": "zyx",
+                                 "x": {"distribution": "uniform", "extent": [0, 16]},
+                                 "y": {"distribution": "uniform", "extent": [ylo, yhi]},
+                                 "z": {"distribution": "uniform", "extent": [0, 16]}}}})
 
     # Depleted node: can't be mined in survival, regrows by script
     terrain["ponce_depleted_node"] = {"textures": tex("depleted_node", lambda img: (

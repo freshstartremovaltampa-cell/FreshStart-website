@@ -88,6 +88,7 @@ const BLOCKS = {
   lily: ["minecraft:waterlily", "minecraft:lily_pad"], reeds: ["minecraft:reeds", "minecraft:sugar_cane"],
   forge: ["ponce:smithing_forge"], pot: ["ponce:cooking_pot"], stair_gate: ["ponce:stair_gate"],
   ember_copper_node: ["ponce:ember_copper_node"], ironheart_node: ["ponce:ironheart_node"], glimmer_silver_node: ["ponce:glimmer_silver_node"],
+  stormsteel_node: ["ponce:stormsteel_node"],
 };
 const LEAVES = new Set(["oak_leaves", "birch_leaves", "spruce_leaves", "mangrove_leaves"]);
 const resolved = new Map();
@@ -308,6 +309,7 @@ export function mapText(player) {
     `§6${F.name}§7 (town): ${f.gen.inTown(p.x, p.z) ? "you're in town" : directionText(p, F.center)}`,
     `§cGuardian's arena§7: ${directionText(p, f.gen.ARENA)}, at the end of the north trail`,
     `§dStair Gate§7: in the arena's north wall, ${open ? "§aopen to you" : "§csealed until the guardian falls"}`,
+    ...(f.gen.LANDMARKS ?? []).map((l) => `§b${l.name}§7: ${directionText(p, l)}`),
   ].join("\n");
 }
 

@@ -86,7 +86,8 @@ export function describeWeaponReq(data, def) {
   return parts.join("§7, ");
 }
 
-const TIER_NAMES = ["Starter", "Tier I", "Tier II", "§dRelic"];
+// Tier numbers: 0 Starter, 1 Tier I, 2 Tier II, 3 Relic, 4 Tier III (forged, added after the Relics)
+const TIER_NAMES = ["Starter", "Tier I", "Tier II", "§dRelic", "§3Tier III"];
 
 export function weaponLore(def, { quality, infusions = def.infusions ?? [] } = {}) {
   const stats = Object.entries(def.req.stats).map(([k, v]) => `${STATS[k].color}${k.toUpperCase()} ${v}`).join(" §7/ ");

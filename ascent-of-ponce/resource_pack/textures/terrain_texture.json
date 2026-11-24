@@ -13,6 +13,9 @@
     "ponce_glimmer_silver_node": {
       "textures": "textures/blocks/glimmer_silver_node"
     },
+    "ponce_stormsteel_node": {
+      "textures": "textures/blocks/stormsteel_node"
+    },
     "ponce_depleted_node": {
       "textures": "textures/blocks/depleted_node"
     },

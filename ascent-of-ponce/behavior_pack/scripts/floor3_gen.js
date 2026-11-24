@@ -63,6 +63,17 @@ function roadDistance(x, z) {
   return best;
 }
 
+// ---------- Stormsteel Quarry: a flattened stone pit full of regrowing nodes ----------
+
+export const QUARRY = (() => {
+  const a = 0.6, d = 95;
+  return { x: C.x + Math.round(Math.cos(a) * d), z: C.z + Math.round(Math.sin(a) * d), r: 9 };
+})();
+const quarryDistance = (x, z) => Math.hypot(x - QUARRY.x, z - QUARRY.z);
+
+/** Landmarks shown on the map page. */
+export const LANDMARKS = [{ name: "Stormsteel Quarry", x: QUARRY.x, z: QUARRY.z }];
+
 // ---------- Terrain ----------
 
 /** Natural rolling height, before flattening for the town and arena. */
@@ -76,9 +87,14 @@ function rawHeight(x, z) {
   return h;
 }
 
+let quarryY;
 export function surfaceY(x, z) {
   const d = dist(x, z);
   if (d <= TOWN_R + 2) return TOWN_Y;
+  quarryY ??= Math.max(TARN + 2, rawHeight(QUARRY.x, QUARRY.z));
+  const dq = quarryDistance(x, z);
+  if (dq <= QUARRY.r + 1) return quarryY;
+  if (dq < QUARRY.r + 8) return Math.round(quarryY + (rawHeight(x, z) - quarryY) * smooth((dq - QUARRY.r - 1) / 7));
   let h = rawHeight(x, z);
   if (d < TOWN_R + 22) h = Math.round(TOWN_Y + (h - TOWN_Y) * smooth((d - TOWN_R - 2) / 20));
   const da = arenaDistance(x, z);
@@ -91,7 +107,7 @@ export function surfaceY(x, z) {
   return h;
 }
 
-export const isWater = (x, z) => onIsland(x, z) && !inTown(x, z) && surfaceY(x, z) < TARN;
+export const isWater = (x, z) => onIsland(x, z) && !inTown(x, z) && quarryDistance(x, z) > QUARRY.r + 8 && surfaceY(x, z) < TARN;
 
 function steep(x, z, h) {
   return Math.max(Math.abs(surfaceY(x + 1, z) - h), Math.abs(surfaceY(x, z + 1) - h)) >= 2;
@@ -203,6 +219,25 @@ function buildStoneCircle(c) {
 }
 STONE_CIRCLES.forEach(buildStoneCircle);
 
+function buildQuarry() {
+  const Y = surfaceY(QUARRY.x, QUARRY.z);
+  for (let x = -QUARRY.r - 1; x <= QUARRY.r + 1; x++) for (let z = -QUARRY.r - 1; z <= QUARRY.r + 1; z++) {
+    const r = Math.hypot(x, z);
+    if (r > QUARRY.r + 1) continue;
+    P(hash(QUARRY.x + x, QUARRY.z + z, 487) < 0.25 ? "cobble" : "stone", QUARRY.x + x, Y, QUARRY.z + z);
+    P("air", QUARRY.x + x, Y + 1, QUARRY.z + z);
+  }
+  // Nodes: eight Stormsteel and three Ironheart around the pit, a lantern post in the middle
+  for (let i = 0; i < 11; i++) {
+    const a = (i / 11) * Math.PI * 2;
+    const r = 3.5 + hash(i, 7, 491) * 3.5;
+    P(i < 8 ? "stormsteel_node" : "ironheart_node", QUARRY.x + Math.round(Math.cos(a) * r), Y + 1, QUARRY.z + Math.round(Math.sin(a) * r));
+  }
+  box("fence", QUARRY.x, Y + 1, QUARRY.z, QUARRY.x, Y + 2, QUARRY.z);
+  P("lantern", QUARRY.x, Y + 3, QUARRY.z);
+}
+buildQuarry();
+
 function buildArena() {
   const A = ARENA, Y = A.y;
   for (let x = -23; x <= 23; x++) for (let z = -23; z <= 23; z++) {
@@ -257,6 +292,7 @@ function treeInCell(gx, gz) {
   const z = gz * CELL + Math.floor(hash(gx, gz, 437) * CELL);
   const d = dist(x, z);
   if (d < TOWN_R + 6 || d > edgeAt(x, z) - 5 || roadDistance(x, z) < 3.5 || arenaDistance(x, z) < ARENA.radius + 8 || isWater(x, z) || nearLandmark(x, z)) return undefined;
+  if (quarryDistance(x, z) < QUARRY.r + 6) return undefined;
   const grove = fbm(x, z, 55, 439); // groves where this is high
   if (hash(gx, gz, 441) > (grove > 0.62 ? 0.55 : 0.015)) return undefined; // open hills, trees only in sheltered groves
   const kind = hash(gx, gz, 443) < 0.6 ? "spruce" : "birch";
@@ -294,8 +330,9 @@ function outcropInCell(bx, bz) {
   const z = bz * ROCK_CELL + 3 + Math.floor(hash(bx, bz, 457) * (ROCK_CELL - 6));
   const d = dist(x, z);
   if (d < TOWN_R + 10 || d > edgeAt(x, z) - 8 || roadDistance(x, z) < 5 || arenaDistance(x, z) < ARENA.radius + 12 || isWater(x, z) || nearLandmark(x, z)) return undefined;
+  if (quarryDistance(x, z) < QUARRY.r + 8) return undefined;
   const roll = hash(bx, bz, 459);
-  const ore = roll < 0.3 ? "ironheart_node" : roll < 0.55 ? "glimmer_silver_node" : roll < 0.7 ? "ember_copper_node" : undefined;
+  const ore = roll < 0.25 ? "stormsteel_node" : roll < 0.45 ? "ironheart_node" : roll < 0.65 ? "glimmer_silver_node" : roll < 0.75 ? "ember_copper_node" : undefined;
   return { x, z, r: 2 + Math.floor(hash(bx, bz, 461) * 2), h: 2 + Math.floor(hash(bx, bz, 463) * 3), ore };
 }
 
@@ -341,6 +378,7 @@ export function chunkOps(cx, cz) {
     if (road < 1.6 && d > TOWN_R) surface = hash(x, z, 471) < 0.5 ? "path" : "coarse";
     else if (edgeAt(x, z) - d < 2 || steep(x, z, top)) surface = hash(x, z, 473) < 0.4 ? "mossy" : "stone";
     ops.push(["s", surface, x, top, z]);
+    if (quarryDistance(x, z) <= QUARRY.r + 1) surface = "stone";
     if (surface === "grass" && d > TOWN_R + 3 && road > 2.5 && arenaDistance(x, z) > ARENA.radius + 2) {
       const r = hash(x, z, 477);
       const meadow = fbm(x, z, 40, 479) > 0.5;

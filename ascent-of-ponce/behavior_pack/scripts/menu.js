@@ -276,9 +276,10 @@ async function openArmory(player) {
       `${DIV}\n§7Starter §8- chosen once on first login, can't be forged\n${byTier(0)}\n` +
       `${DIV}\n§eTier I §7- Ironheart + Ember Copper, Smithing 1\n${byTier(1)}\n` +
       `${DIV}\n§bTier II §7- Ironheart + Glimmer Silver + Floor 1 materials, Smithing 8\n${byTier(2)}\n` +
+      `${DIV}\n§3Tier III §7- Stormsteel (mined on Floor 3) + Glimmer Silver + Floor 3 drops, Smithing 15\n${byTier(4)}\n` +
       `${DIV}\n§dRelic §7- Legendary quest rewards; unbreakable, 3 built-in infusions\n${byTier(3, "quest")}\n` +
       `${DIV}\n§2Hydra Relic §7- dropped by the Mire Hydra; Hydra Fang, Hydra's Eye (+10% crit) and Hydra's Thirst (heals 4% of damage dealt)\n${byTier(3, "hydra")}\n` +
-      `${DIV}\n§dInfusions §7- optional monster drops added while forging (Tier I: 1 slot, Tier II: 2)\n${infusionList()}`
+      `${DIV}\n§dInfusions §7- optional monster drops added while forging (Tier I: 1 slot, Tier II and III: 2)\n${infusionList()}`
     )
     .button("Back"));
   if (!res.canceled) return openMainMenu(player);

@@ -17,7 +17,7 @@ const COLORS = {
   glass: [190, 220, 230], fence: [150, 120, 80], lantern: [255, 200, 90], bookshelf: [120, 80, 50], furnace: [90, 90, 90],
   anvil: [60, 60, 60], chest: [160, 110, 50], barrel: [130, 95, 60], campfire: [220, 120, 40], hay: [210, 180, 60],
   red_wool: [180, 40, 40], blue_wool: [50, 70, 170], yellow_wool: [230, 200, 50],
-  stair_gate: [150, 120, 240], forge: [150, 70, 50],
+  stair_gate: [150, 120, 240], forge: [150, 70, 50], stormsteel_node: [80, 120, 168],
   mud: [70, 56, 48], moss: [90, 120, 50], moss_carpet: [100, 130, 56], packed_mud: [140, 104, 76], mossy_bricks: [110, 125, 100],
   mangrove_log: [100, 50, 40], mangrove_leaves: [70, 110, 50], mangrove_roots: [80, 56, 40], mangrove_planks: [118, 54, 48],
   lily: [60, 140, 60], reeds: [130, 170, 90], blue_orchid: [60, 150, 220], pot: [200, 110, 60], ember_copper_node: [214, 120, 60], ironheart_node: [170, 50, 50], glimmer_silver_node: [220, 225, 240],

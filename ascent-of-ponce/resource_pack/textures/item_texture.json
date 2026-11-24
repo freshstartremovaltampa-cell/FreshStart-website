@@ -250,6 +250,36 @@
     },
     "ponce_highland_stew": {
       "textures": "textures/items/highland_stew"
+    },
+    "ponce_raw_stormsteel": {
+      "textures": "textures/items/raw_stormsteel"
+    },
+    "ponce_stormsteel_ingot": {
+      "textures": "textures/items/stormsteel_ingot"
+    },
+    "ponce_stormsteel_longsword": {
+      "textures": "textures/items/weapons/stormsteel_longsword"
+    },
+    "ponce_stormsteel_dirk": {
+      "textures": "textures/items/weapons/stormsteel_dirk"
+    },
+    "ponce_stormsteel_rapier": {
+      "textures": "textures/items/weapons/stormsteel_rapier"
+    },
+    "ponce_stormsteel_maul": {
+      "textures": "textures/items/weapons/stormsteel_maul"
+    },
+    "ponce_stormsteel_axe": {
+      "textures": "textures/items/weapons/stormsteel_axe"
+    },
+    "ponce_stormsteel_spear": {
+      "textures": "textures/items/weapons/stormsteel_spear"
+    },
+    "ponce_stormsteel_katana": {
+      "textures": "textures/items/weapons/stormsteel_katana"
+    },
+    "ponce_stormsteel_greatsword": {
+      "textures": "textures/items/weapons/stormsteel_greatsword"
     }
   }
 }

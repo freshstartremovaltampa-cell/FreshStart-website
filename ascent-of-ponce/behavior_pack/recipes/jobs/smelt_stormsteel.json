@@ -1,0 +1,14 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_furnace": {
+    "description": {
+      "identifier": "ponce:smelt_stormsteel"
+    },
+    "tags": [
+      "furnace",
+      "blast_furnace"
+    ],
+    "input": "ponce:raw_stormsteel",
+    "output": "ponce:stormsteel_ingot"
+  }
+}

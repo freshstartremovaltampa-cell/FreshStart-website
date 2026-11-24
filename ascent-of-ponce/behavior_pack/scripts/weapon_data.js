@@ -779,6 +779,286 @@ export const WEAPON_DEFS = {
     ],
     "relic": "quest"
   },
+  "ponce:stormsteel_longsword": {
+    "name": "Stormsteel Longsword",
+    "type": "sword",
+    "tier": 4,
+    "damage": 12,
+    "durability": 1000,
+    "req": {
+      "level": 18,
+      "stats": {
+        "str": 15,
+        "dex": 15
+      }
+    },
+    "forge": {
+      "smithing": 15,
+      "xp": 150,
+      "slots": 2,
+      "materials": [
+        {
+          "item": "ponce:stormsteel_ingot",
+          "count": 3
+        },
+        {
+          "item": "ponce:glimmer_silver_ingot",
+          "count": 1
+        },
+        {
+          "item": "ponce:lizard_scale",
+          "count": 2
+        }
+      ]
+    }
+  },
+  "ponce:stormsteel_dirk": {
+    "name": "Stormsteel Dirk",
+    "type": "dagger",
+    "tier": 4,
+    "damage": 9,
+    "durability": 1000,
+    "req": {
+      "level": 18,
+      "stats": {
+        "dex": 22,
+        "agi": 8
+      }
+    },
+    "forge": {
+      "smithing": 15,
+      "xp": 150,
+      "slots": 2,
+      "materials": [
+        {
+          "item": "ponce:stormsteel_ingot",
+          "count": 2
+        },
+        {
+          "item": "ponce:glimmer_silver_ingot",
+          "count": 1
+        },
+        {
+          "item": "ponce:hawk_feather",
+          "count": 2
+        }
+      ]
+    }
+  },
+  "ponce:stormsteel_rapier": {
+    "name": "Stormsteel Rapier",
+    "type": "rapier",
+    "tier": 4,
+    "damage": 11,
+    "durability": 1000,
+    "req": {
+      "level": 18,
+      "stats": {
+        "dex": 22,
+        "agi": 8
+      }
+    },
+    "forge": {
+      "smithing": 15,
+      "xp": 150,
+      "slots": 2,
+      "materials": [
+        {
+          "item": "ponce:stormsteel_ingot",
+          "count": 3
+        },
+        {
+          "item": "ponce:glimmer_silver_ingot",
+          "count": 1
+        },
+        {
+          "item": "ponce:wind_essence",
+          "count": 2
+        }
+      ]
+    }
+  },
+  "ponce:stormsteel_maul": {
+    "name": "Stormsteel Maul",
+    "type": "hammer",
+    "tier": 4,
+    "damage": 15,
+    "durability": 1000,
+    "req": {
+      "level": 18,
+      "stats": {
+        "str": 24,
+        "vit": 6
+      }
+    },
+    "forge": {
+      "smithing": 15,
+      "xp": 150,
+      "slots": 2,
+      "materials": [
+        {
+          "item": "ponce:stormsteel_ingot",
+          "count": 4
+        },
+        {
+          "item": "ponce:glimmer_silver_ingot",
+          "count": 1
+        },
+        {
+          "item": "ponce:bull_horn",
+          "count": 3
+        }
+      ]
+    }
+  },
+  "ponce:stormsteel_axe": {
+    "name": "Stormsteel Axe",
+    "type": "axe",
+    "tier": 4,
+    "damage": 14,
+    "durability": 1000,
+    "req": {
+      "level": 18,
+      "stats": {
+        "str": 19,
+        "vit": 11
+      }
+    },
+    "forge": {
+      "smithing": 15,
+      "xp": 150,
+      "slots": 2,
+      "materials": [
+        {
+          "item": "ponce:stormsteel_ingot",
+          "count": 3
+        },
+        {
+          "item": "ponce:glimmer_silver_ingot",
+          "count": 1
+        },
+        {
+          "item": "ponce:highland_hide",
+          "count": 2
+        },
+        {
+          "item": "ponce:bull_horn",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "ponce:stormsteel_spear": {
+    "name": "Stormsteel Spear",
+    "type": "spear",
+    "tier": 4,
+    "damage": 12,
+    "durability": 1000,
+    "req": {
+      "level": 18,
+      "stats": {
+        "agi": 19,
+        "str": 11
+      }
+    },
+    "forge": {
+      "smithing": 15,
+      "xp": 150,
+      "slots": 2,
+      "materials": [
+        {
+          "item": "ponce:stormsteel_ingot",
+          "count": 2
+        },
+        {
+          "item": "ponce:glimmer_silver_ingot",
+          "count": 1
+        },
+        {
+          "item": "ponce:hawk_feather",
+          "count": 2
+        },
+        {
+          "item": "ponce:lizard_scale",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "ponce:stormsteel_katana": {
+    "name": "Stormsteel Katana",
+    "type": "katana",
+    "tier": 4,
+    "damage": 12,
+    "durability": 1000,
+    "req": {
+      "level": 18,
+      "stats": {
+        "dex": 18,
+        "agi": 12
+      }
+    },
+    "forge": {
+      "smithing": 15,
+      "xp": 150,
+      "slots": 2,
+      "materials": [
+        {
+          "item": "ponce:stormsteel_ingot",
+          "count": 3
+        },
+        {
+          "item": "ponce:glimmer_silver_ingot",
+          "count": 1
+        },
+        {
+          "item": "ponce:wind_essence",
+          "count": 2
+        },
+        {
+          "item": "ponce:hawk_feather",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "ponce:stormsteel_greatsword": {
+    "name": "Stormsteel Greatsword",
+    "type": "greatsword",
+    "tier": 4,
+    "damage": 18,
+    "durability": 1000,
+    "req": {
+      "level": 18,
+      "stats": {
+        "str": 24,
+        "vit": 8
+      }
+    },
+    "forge": {
+      "smithing": 15,
+      "xp": 150,
+      "slots": 2,
+      "materials": [
+        {
+          "item": "ponce:stormsteel_ingot",
+          "count": 5
+        },
+        {
+          "item": "ponce:glimmer_silver_ingot",
+          "count": 1
+        },
+        {
+          "item": "ponce:highland_hide",
+          "count": 3
+        },
+        {
+          "item": "ponce:bull_horn",
+          "count": 2
+        }
+      ]
+    }
+  },
   "ponce:mireblade": {
     "name": "Mireblade",
     "type": "sword",

@@ -1322,3 +1322,62 @@ console.log("forms shown:", log.length);
   const avg = (diff, k) => { const qs = QUESTS.filter((x) => x.difficulty === diff && !x.repeatable); return qs.reduce((s2, x) => s2 + x.rewards[k], 0) / qs.length; };
   assert([2, 3, 4].every((n) => avg(n, "xp") > avg(n - 1, "xp")), "quest EXP still rises with difficulty");
 }
+
+// ================= Tier III: Stormsteel =================
+{
+  const { WEAPON_DEFS } = await import("../behavior_pack/scripts/weapon_data.js");
+  const { ORES } = await import("../behavior_pack/scripts/jobs_data.js");
+  const g3 = await import("../behavior_pack/scripts/floor3_gen.js");
+  const floors = await import("../behavior_pack/scripts/floors.js");
+  const { ORDER, sessions } = await import("../behavior_pack/scripts/forging.js");
+  const Q = await import("../behavior_pack/scripts/quests.js");
+  const { QUESTS_BY_ID } = await import("../behavior_pack/scripts/quests_data.js");
+  const fs = await import("node:fs");
+  const flush = () => new Promise((r) => setTimeout(r, 5));
+  const fireBefore = (n, e) => { world.beforeEvents[n].h.forEach((f) => f(e)); return e; };
+
+  // Ore
+  const ore = ORES["ponce:stormsteel_node"];
+  assert(ore && ore.level === 16 && ore.pickaxe === "iron" && ore.regen === 150, "Stormsteel: Mining 16, iron pickaxe or better, regrows in 150s");
+  assert(!fs.existsSync(new URL("../behavior_pack/features/stormsteel_node_feature.json", import.meta.url)), "Stormsteel doesn't generate in the overworld (Floor 3 only)");
+  const quarryOps = [];
+  for (let cx = (g3.QUARRY.x - 12) >> 4; cx <= (g3.QUARRY.x + 12) >> 4; cx++)
+    for (let cz = (g3.QUARRY.z - 12) >> 4; cz <= (g3.QUARRY.z + 12) >> 4; cz++) quarryOps.push(...g3.chunkOps(cx, cz));
+  assert(quarryOps.filter((o) => o[1] === "stormsteel_node").length >= 8, "the Stormsteel Quarry holds a cluster of nodes");
+  let outcropOre = 0;
+  for (let cx = g3.CHUNK_BOUNDS.min.x; cx <= g3.CHUNK_BOUNDS.max.x; cx += 2) for (let cz = g3.CHUNK_BOUNDS.min.z; cz <= g3.CHUNK_BOUNDS.max.z; cz += 2) {
+    if (!g3.chunkHasIsland(cx, cz)) continue;
+    outcropOre += g3.chunkOps(cx, cz).filter((o) => o[1] === "stormsteel_node" && Math.hypot(o[2] - g3.QUARRY.x, o[4] - g3.QUARRY.z) > 15).length;
+  }
+  assert(outcropOre > 5, `more Stormsteel turns up in outcrops across the hills (${outcropOre} in a sample)`);
+
+  // Weapons
+  const t3 = Object.entries(WEAPON_DEFS).filter(([, w]) => w.tier === 4);
+  const t2 = (type) => Object.values(WEAPON_DEFS).find((w) => w.tier === 2 && w.type === type);
+  const relic = (type) => Object.values(WEAPON_DEFS).find((w) => w.relic === "quest" && w.type === type);
+  assert(t3.length === 8 && t3.every(([, w]) => w.durability === 1000 && w.req.level === 18 && w.forge.smithing === 15 && w.forge.slots === 2), "8 Tier III weapons: Lv 18, Smithing 15, 1000 durability, 2 infusion slots");
+  assert(t3.every(([, w]) => w.damage > t2(w.type).damage + 2 && w.damage < relic(w.type).damage), "Tier III damage sits between Tier II and the Relics");
+  assert(t3.every(([, w]) => w.forge.materials[0].item === "ponce:stormsteel_ingot" && w.forge.materials.some((m) => m.item === "ponce:glimmer_silver_ingot")), "forged from Stormsteel + Glimmer Silver (+ Floor 3 drops)");
+  assert(ORDER.filter(([id]) => WEAPON_DEFS[id].tier === 4).length === 8, "Tier III weapons appear in the forge");
+
+  // Forge one
+  const s = makePlayer("Stormsmith"); world.players.push(s);
+  Object.assign(s, { dimension: dim, location: { x: 1300.5, y: 64, z: 0.5 }, isSneaking: false, getGameMode: () => "Survival" });
+  fire("playerSpawn", { player: s, initialSpawn: true });
+  const sd = getDataFor(s); sd.starter = "ponce:wayfarers_sword"; sd.jobs.smithing.level = 15;
+  const forge = dim.setBlock({ x: 1300, y: 64, z: 1 }, "ponce:smithing_forge");
+  for (const m of WEAPON_DEFS["ponce:stormsteel_longsword"].forge.materials) s.items[s.items.indexOf(undefined)] = new ItemStack(m.item, m.count);
+  globalThis.nextFormResponse = [{ canceled: false, selection: ORDER.findIndex(([id]) => id === "ponce:stormsteel_longsword") }, { canceled: false, selection: 0 }];
+  fireBefore("playerInteractWithBlock", { block: forge, player: s, isFirstEvent: true, cancel: false });
+  system.tick(1); await flush();
+  for (let i = 0; i < 12 && sessions.has(s.id); i++) { const st = sessions.get(s.id); st.pos = st.zone; fire("entityHitBlock", { damagingEntity: s, hitBlock: forge }); system.tick(5); }
+  const sword = s.items.find((i) => i?.typeId === "ponce:stormsteel_longsword");
+  assert(sword?.getDynamicProperty("ponce:quality") === "masterwork" && sword.lore.some((l) => l.includes("Tier III")), "a Stormsteel Longsword can be forged (tooltip says Tier III)");
+
+  // Quest and map
+  assert(Q.questStatus(s, QUESTS_BY_ID.storm_forged) === "locked", "Bram's Storm-Forged quest needs Floor 3");
+  sd.highestFloor = 3; sd.quests.done.fine_work = 1;
+  assert(Q.questStatus(s, QUESTS_BY_ID.storm_forged) === "available", "it opens on Floor 3");
+  s.location = { x: g3.FLOOR.center.x + 0.5, y: g3.surfaceY(g3.FLOOR.center.x, g3.FLOOR.center.z) + 1, z: g3.FLOOR.center.z + 0.5 };
+  assert(/Stormsteel Quarry.*blocks south-east/.test(floors.mapText(s)), "the map points to the Stormsteel Quarry");
+}

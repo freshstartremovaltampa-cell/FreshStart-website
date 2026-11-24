@@ -27,6 +27,15 @@ export const ORES = {
     "xp": 50,
     "regen": 120,
     "drop": "ponce:raw_glimmer_silver"
+  },
+  "ponce:stormsteel_node": {
+    "key": "stormsteel",
+    "name": "Stormsteel",
+    "level": 16,
+    "pickaxe": "iron",
+    "xp": 80,
+    "regen": 150,
+    "drop": "ponce:raw_stormsteel"
   }
 };
 

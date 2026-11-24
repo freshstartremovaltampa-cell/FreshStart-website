@@ -30,6 +30,7 @@ WOOD, LEATHER, GOLD = (120, 84, 50), (92, 60, 40), (214, 170, 60)
 WORN = {"blade": (150, 148, 140), "edge": (185, 182, 175), "shadow": (100, 98, 92)}
 RELIC = {"blade": (196, 178, 240), "edge": (255, 236, 160), "shadow": (112, 82, 170)}
 HYDRA = {"blade": (60, 120, 96), "edge": (190, 240, 120), "shadow": (30, 64, 50)}
+STORM = {"blade": (96, 132, 176), "edge": (196, 236, 255), "shadow": (52, 72, 104)}
 HYDRA_INFUSIONS = ["ponce:hydra_fang", "relic:hydras_eye", "relic:hydras_thirst"]
 
 WEAPONS = [
@@ -108,6 +109,25 @@ WEAPONS = [
      {"relic": ["ponce:wasp_wing", "ponce:thorn_quill", "ponce:moss_clump"]}, RELIC),
     ("kingsfall", "Kingsfall", "greatsword", 3, 26, None, 25, {"str": 34, "vit": 12},
      {"relic": ["ponce:boar_king_crest", "ponce:golemite_core", "ponce:boar_tusk"]}, RELIC),
+
+    # ---- Tier III: Stormsteel (mined on Floor 3) + Glimmer Silver + Floor 3 drops. Lv 18, Smithing 15.
+    #      Internally tier 4 (tier 3 means Relic). Damage sits between Tier II and the Relics. ----
+    ("stormsteel_longsword", "Stormsteel Longsword", "sword", 4, 12, 1000, 18, {"str": 15, "dex": 15},
+     {"with": [("ponce:lizard_scale", 2)]}, STORM),
+    ("stormsteel_dirk", "Stormsteel Dirk", "dagger", 4, 9, 1000, 18, {"dex": 22, "agi": 8},
+     {"with": [("ponce:hawk_feather", 2)]}, STORM),
+    ("stormsteel_rapier", "Stormsteel Rapier", "rapier", 4, 11, 1000, 18, {"dex": 22, "agi": 8},
+     {"with": [("ponce:wind_essence", 2)]}, STORM),
+    ("stormsteel_maul", "Stormsteel Maul", "hammer", 4, 15, 1000, 18, {"str": 24, "vit": 6},
+     {"with": [("ponce:bull_horn", 3)]}, STORM),
+    ("stormsteel_axe", "Stormsteel Axe", "axe", 4, 14, 1000, 18, {"str": 19, "vit": 11},
+     {"with": [("ponce:highland_hide", 2), ("ponce:bull_horn", 1)]}, STORM),
+    ("stormsteel_spear", "Stormsteel Spear", "spear", 4, 12, 1000, 18, {"agi": 19, "str": 11},
+     {"with": [("ponce:hawk_feather", 2), ("ponce:lizard_scale", 1)]}, STORM),
+    ("stormsteel_katana", "Stormsteel Katana", "katana", 4, 12, 1000, 18, {"dex": 18, "agi": 12},
+     {"with": [("ponce:wind_essence", 2), ("ponce:hawk_feather", 1)]}, STORM),
+    ("stormsteel_greatsword", "Stormsteel Greatsword", "greatsword", 4, 18, 1000, 18, {"str": 24, "vit": 8},
+     {"with": [("ponce:highland_hide", 3), ("ponce:bull_horn", 2)]}, STORM),
 
     # ---- Hydra Relics: dropped by the Mire Hydra (Floor 2 guardian). Unbreakable. Lv 30 with
     #      ~52 stat points (of 87 at Lv 30). Base damage 1 above the quest Relic of the same type.
@@ -205,7 +225,7 @@ def item_json(wid, name, kind, tier, damage, durability):
             tags.append("ponce:hydra_relic")
     comps = {
         "minecraft:icon": f"ponce_{wid}",
-        "minecraft:display_name": {"value": f"§{'7fbd'[tier]}{name}"},
+        "minecraft:display_name": {"value": f"§{ {0: '7', 1: 'f', 2: 'b', 3: 'd', 4: '3'}[tier] }{name}"},
         "minecraft:max_stack_size": 1,
         "minecraft:hand_equipped": {"value": True},
         "minecraft:damage": {"value": damage},
@@ -244,8 +264,10 @@ def forge_recipe(kind, tier, recipe):
     mats = [("ponce:ironheart_ingot", INGOTS[kind]), ("ponce:ember_copper_ingot", 1)]
     if tier == 2:
         mats = [("ponce:ironheart_ingot", INGOTS[kind]), ("ponce:glimmer_silver_ingot", 1)] + list(recipe["with"])
-    return {"smithing": 1 if tier == 1 else 8, "xp": 30 if tier == 1 else 80, "slots": tier,
-            "materials": [{"item": i, "count": n} for i, n in mats]}
+    if tier == 4:  # Tier III
+        mats = [("ponce:stormsteel_ingot", INGOTS[kind]), ("ponce:glimmer_silver_ingot", 1)] + list(recipe["with"])
+    smithing, xp, slots = {1: (1, 30, 1), 2: (8, 80, 2), 4: (15, 150, 2)}[tier]
+    return {"smithing": smithing, "xp": xp, "slots": slots, "materials": [{"item": i, "count": n} for i, n in mats]}
 
 
 # Optional monster-drop infusions added while forging (Tier I: 1 slot, Tier II: 2).

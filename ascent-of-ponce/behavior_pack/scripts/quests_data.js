@@ -206,6 +206,12 @@ export const QUESTS = [
     requires: { quests: ["fine_work"] },
     objectives: [{ type: "job", job: "smithing", count: 10 }, { type: "forge", minQuality: "masterwork", count: 2 }],
     rewards: { xp: 800, col: 400, weapon: { kind: "masterwork_t2", infusions: ["ponce:boar_hide", "ponce:wasp_stinger"] }, jobXp: { smithing: 300 } } },
+  { id: "storm_forged", giver: "smith", difficulty: 3, name: "Storm-Forged",
+    desc: "There's a metal in the highland rock that rings like thunder when you strike it. Stormsteel. " +
+      "Dig some out of the quarry past Cairnhold, then forge me a Tier III blade from it.",
+    requires: { floor: 3, quests: ["fine_work"] },
+    objectives: [{ type: "mine", target: "ponce:stormsteel_node", count: 15 }, { type: "job", job: "smithing", count: 15 }, { type: "forge", minQuality: "standard", count: 1 }],
+    rewards: { xp: 1100, col: 420, items: [["ponce:stormsteel_ingot", 5], ["ponce:glimmer_silver_ingot", 2]], jobXp: { smithing: 400, mining: 300 } } },
   { id: "ore_delivery", giver: "smith", difficulty: 1, repeatable: true, name: "Ore Delivery (repeatable)",
     desc: "I always need copper.",
     objectives: [{ type: "collect", item: "ponce:raw_ember_copper", count: 16 }],
@@ -250,9 +256,9 @@ export const SHOPS = {
       ["ponce:golemite_core", 15], ["ponce:boar_king_crest", 60]],
   },
   smith: {
-    buy: [["ponce:ember_copper_ingot", 10], ["ponce:ironheart_ingot", 25], ["ponce:glimmer_silver_ingot", 60],
+    buy: [["ponce:ember_copper_ingot", 10], ["ponce:ironheart_ingot", 25], ["ponce:glimmer_silver_ingot", 60], ["ponce:stormsteel_ingot", 110],
       ["ponce:smithing_forge", 200], ["minecraft:iron_pickaxe", 80]],
-    sell: [["ponce:raw_ember_copper", 4], ["ponce:raw_ironheart", 10], ["ponce:raw_glimmer_silver", 25]],
+    sell: [["ponce:raw_ember_copper", 4], ["ponce:raw_ironheart", 10], ["ponce:raw_glimmer_silver", 25], ["ponce:raw_stormsteel", 40]],
   },
   warden: {
     buy: [["ponce:mire_lure", 400], ["ponce:marsh_gumbo", 50], ["ponce:frog_legs", 6]],

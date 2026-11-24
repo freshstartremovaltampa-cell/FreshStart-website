@@ -13,6 +13,9 @@
   "ponce:glimmer_silver_node": {
     "sound": "stone"
   },
+  "ponce:stormsteel_node": {
+    "sound": "stone"
+  },
   "ponce:depleted_node": {
     "sound": "stone"
   },

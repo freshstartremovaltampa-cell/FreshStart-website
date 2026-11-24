@@ -65,7 +65,7 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
 - **Dual Wield**: with a Ponce sword in your offhand, each hit is followed by an offhand strike, and it unlocks **Twin Tempest** (six alternating strikes).
 - **32 Ponce weapons** across 8 types:
   - **Starter**: one Wayfarer's weapon per type, chosen once on first login (see below).
-  - **Tier I** (Lv 3) and **Tier II** (Lv 5-8): **forged**, not crafted (see Phase 3).
+  - **Tier I** (Lv 3), **Tier II** (Lv 5-8) and **Tier III** (Lv 18): **forged**, not crafted (see Phase 3 and Floor 3).
   - **Relic** (Lv 25; usable at half strength below that): Legendary quest rewards (see Phase 4).
   - **Hydra Relic** (Lv 30): dropped by the Mire Hydra (see Floor 2).
 
@@ -101,6 +101,7 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
 | Ember Copper | 1 | any | 30 s | y 0 to 80 |
 | Ironheart | 5 | stone+ | 60 s | y -32 to 48 |
 | Glimmer Silver | 12 | iron+ | 120 s | y -64 to 16 |
+| Stormsteel | 16 | iron+ | 150 s | Floor 3 only: outcrops and the Stormsteel Quarry |
 
 - A mined node turns into a **Depleted Node**, which can't be mined, then regrows. Timers use world time and are saved, so they survive restarts. Creative mode breaks nodes normally, for building.
 - Mining above a node's level gives up to a 30% chance of double ore.
@@ -302,6 +303,22 @@ Floor 3 is centered on x -10000, z 10000. Reach it through the Hydra Pool's Stai
   | Thunder Horn | 1 Thunder Horn | +3 damage, +4% crit |
 
 - **New meal**: Highland Stew (2 Beef, Potato, Carrot, Bowl; Cooking 18) gives +4 STR and +2 VIT for 5 minutes.
+- **Stormsteel and Tier III weapons**:
+  - **Stormsteel** is a new ore found only on Floor 3: in highland outcrops, and in the **Stormsteel Quarry**, a stone pit south-east of Cairnhold with eight Stormsteel and three Ironheart nodes, shown on the map page. It needs Mining 16 and an iron pickaxe, regrows in 150 s, and smelts into Stormsteel Ingots.
+  - **Tier III weapons** (one per type) are forged from Stormsteel Ingots, 1 Glimmer Silver and Floor 3 drops. They need **Smithing 15** and **Lv 18** (about 30 stat points), have 1000 durability and 2 infusion slots. Their damage sits between Tier II and the Relics (sword 8 / **12** / 18).
+
+  | Weapon | Damage | Extra materials |
+  |---|---|---|
+  | Stormsteel Longsword | 12 | 2 Lizard Scale |
+  | Stormsteel Dirk | 9 | 2 Hawk Feather |
+  | Stormsteel Rapier | 11 | 2 Wind Essence |
+  | Stormsteel Maul | 15 | 3 Bull Horn |
+  | Stormsteel Axe | 14 | 2 Highland Hide, 1 Bull Horn |
+  | Stormsteel Spear | 12 | 2 Hawk Feather, 1 Lizard Scale |
+  | Stormsteel Katana | 12 | 2 Wind Essence, 1 Hawk Feather |
+  | Stormsteel Greatsword | 18 | 3 Highland Hide, 2 Bull Horn |
+
+  - Bram's new Hard quest **Storm-Forged** has you mine Stormsteel, reach Smithing 15 and forge with it. Bram also buys raw Stormsteel and sells ingots.
 - **Quests** (Corra): six of them, all needing Floor 3 reached. Hard quests give a Masterwork Tier II weapon. The Elite quest "King of the Hills" gives a Masterwork Tier II with Wind Essence and Hawk Feather. There's also a repeatable Highland Patrol.
 
 ### Floor 3 guardian: Thunderhoof, the Highland King
@@ -318,7 +335,7 @@ Lv 22, 2600 HP, a storm-grey bull nearly three times the size of a Highland Bull
    - Floor 4: the Frozen Peaks
    - Floor 5: the Canyon Badlands, the toughest so far, with a high-defense, high-health, poisonous scorpion guardian
    - hydra-kind return as regular floor mobs around Floor 15
-6. Tier III forging, so players have gear that keeps up from Floor 3 on
+6. A Tier IV metal around Floors 4-5
 
 ## Layout
 ```
