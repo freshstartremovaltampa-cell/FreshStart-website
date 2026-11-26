@@ -13,8 +13,8 @@ export const ORES = {
   "ponce:ironheart_node": {
     "key": "ironheart",
     "name": "Ironheart",
-    "level": 5,
-    "pickaxe": "stone",
+    "level": 1,
+    "pickaxe": "wooden",
     "xp": 25,
     "regen": 60,
     "drop": "ponce:raw_ironheart"

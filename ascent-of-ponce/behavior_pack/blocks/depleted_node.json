@@ -12,6 +12,7 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 1200
       },
+      "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
           "texture": "ponce_depleted_node",

@@ -80,10 +80,15 @@ export function heldDamage(player) {
 export function dealSkillDamage(player, target, amount) {
   if (!isTarget(target)) return;
   skillHits.set(target.id, { playerId: player.id, tick: system.currentTick });
+  const hp = target.getComponent("minecraft:health");
+  const before = hp?.currentValue;
   let landed = false;
   try {
     landed = target.applyDamage(amount, { cause: EntityDamageCause.entityAttack, damagingEntity: player });
   } catch { /* target gone */ }
+  // Right after a normal swing the target is briefly immune and the hit is ignored (or only partly applied):
+  // fall back to applying the skill's damage directly so skills never whiff on a valid target
+  if (landed && target.isValid && hp && before !== undefined && hp.currentValue >= before) landed = false;
   if (!landed && target.isValid) {
     skillHits.delete(target.id);
     resolveHit(player, target, amount, { skill: true, direct: true });

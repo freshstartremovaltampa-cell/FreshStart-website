@@ -1,15 +1,15 @@
 // Floor guardians. Floor 1: Ironhide, the Boar King.
 //
-// The fight is tuned to last about 5 minutes for a player around Lv 5-7 with an
-// iron-tier weapon, their first weapon skill, and some armor (1800 HP):
+// A first-floor boss: tuned for a fight of about 3-4 minutes for a player around Lv 5-7
+// with an iron-tier weapon and their first weapon skill (1100 HP):
 //  - Thick Hide: weak weapons (wood, stone, gold, fists) deal only 40% damage.
-//  - Charge: Ironhide roars and stamps (1 s warning), then charges in a straight
-//    line. Step sideways to dodge it. A hit deals 9 damage and heavy knockback.
-//  - Call the Herd: at 80%, 60%, 40% and 20% HP he summons 2 hostile Tusk Boars.
-//  - Earthshaker (below 60%): if you stay in melee range he rears up (1.25 s
-//    warning) and slams the ground. Everyone within 5 blocks takes 7 damage
+//  - Charge: Ironhide roars and stamps (1.25 s warning), then charges in a straight
+//    line every 12 s. Step sideways to dodge it. A hit deals 7 damage and knockback.
+//  - Call the Herd: at 70% and 40% HP he summons 2 hostile Tusk Boars (4 at most).
+//  - Earthshaker (below 50%): if you stay right next to him he rears up (1.5 s
+//    warning) and slams the ground. Everyone within 4 blocks takes 6 damage
 //    and is thrown back. Back off to avoid it.
-//  - Enrage: below 30% HP he gets faster, hits harder and charges more often.
+//  - Enrage: below 25% HP he gets a little faster, hits harder and charges more often.
 // He can only be summoned with the Boar King's Call, and only by a player who
 // has unlocked at least one weapon skill.
 
@@ -32,25 +32,25 @@ const HORN = "ponce:boar_kings_call";
 const MINION_TAG = "ponce_minion";
 const DIMENSIONS = ["overworld", "nether", "the_end"];
 
-const TUNING = {
+export const TUNING = {
   weakWeaponDamageTaken: 0.4,
-  chargeEveryTicks: 180, // 9 s
-  chargeEveryTicksEnraged: 120, // 6 s
-  chargeWindupTicks: 20,
-  chargeDurationTicks: 14,
-  chargeImpulse: 1.6,
-  chargeDamage: 9,
-  chargeHitRadius: 2.4,
-  herdAt: [0.8, 0.6, 0.4, 0.2],
+  chargeEveryTicks: 240, // 12 s
+  chargeEveryTicksEnraged: 160, // 8 s
+  chargeWindupTicks: 25,
+  chargeDurationTicks: 12,
+  chargeImpulse: 1.4,
+  chargeDamage: 7,
+  chargeHitRadius: 2.0,
+  herdAt: [0.7, 0.4],
   herdSize: 2,
-  maxMinions: 6,
-  enrageAt: 0.3,
-  stompBelow: 0.6,
-  stompTriggerRange: 4.5,
-  stompEveryTicks: 240, // 12 s
-  stompWindupTicks: 25,
-  stompRadius: 5,
-  stompDamage: 7,
+  maxMinions: 4,
+  enrageAt: 0.25,
+  stompBelow: 0.5,
+  stompTriggerRange: 3.5,
+  stompEveryTicks: 320, // 16 s
+  stompWindupTicks: 30,
+  stompRadius: 4,
+  stompDamage: 6,
   leashRange: 40,
   leashTicks: 20 * 60, // despawns after 60 s with no player nearby
   rewardRange: 48,

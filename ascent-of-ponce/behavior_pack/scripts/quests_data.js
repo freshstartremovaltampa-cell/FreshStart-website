@@ -323,6 +323,7 @@ export const SHOPS = {
     buy: [
       ["minecraft:bread", 12, { count: 4 }], ["minecraft:apple", 10, { count: 4 }], ["minecraft:baked_potato", 12, { count: 4 }],
       ["minecraft:cooked_beef", 14, { count: 2 }], ["minecraft:cooked_chicken", 12, { count: 2 }],
+      ["minecraft:coal", 16, { count: 8 }],
       ["minecraft:potion", 600, { cmd: "give @s potion 1 21", name: "Potion of Healing" }],
       ["minecraft:potion", 1500, { cmd: "give @s potion 1 22", name: "Potion of Healing II" }],
       ["minecraft:wooden_pickaxe", 20, { miningLevel: 1 }], ["minecraft:stone_pickaxe", 60, { miningLevel: 5 }],

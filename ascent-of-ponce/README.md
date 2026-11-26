@@ -40,13 +40,13 @@ Custom RPG mobs, no vanilla reskins. They spawn in the overworld for now, and mo
 | Moss Golemite | 4 | 40 | Slow, heavy hitter. Hammers deal +50%, blades only 60% | Moss Clump, Cobblestone, Golemite Core (15%) |
 
 ### Floor 1 guardian: Ironhide, the Boar King
-Lv 8, 1800 HP, 2.5x the size of a Tusk Boar. Tuned for a fight of about 5 minutes for a player around Lv 5-7 with an iron-tier weapon, their first weapon skill and some armor. The time is estimated, not yet measured in-game.
+Lv 8, 1100 HP, twice the size of a Tusk Boar. A first-floor boss: tuned for a fight of about 3-4 minutes for a player around Lv 5-7 with an iron-tier weapon and their first weapon skill. His bite only reaches about as far as his snout, and he pauses 1.5 s between bites. The time is estimated, not yet measured in-game.
 - **Summon** with the **Boar King's Call**, crafted from 3 Boar Tusks and 2 Boar Hides (tusk, hide-tusk-tusk, hide pattern). It only works once you've unlocked a weapon skill, and only inside the **Guardian's Arena** on Floor 1. Used anywhere else, it tells you the arena's direction and distance. He appears on the dais, and if he's dragged out of the arena he's pulled back.
 - **Thick Hide**: wood, stone and gold weapons deal only 40% damage.
-- **Charge**: a roar and a 1 s warning, then a straight-line charge for 9 damage and heavy knockback. Step sideways to dodge.
-- **Call the Herd**: at 80%, 60%, 40% and 20% HP he summons 2 hostile Tusk Boars (max 6 at once).
-- **Earthshaker** (below 60%): stay in melee range and he rears up (1.25 s warning) and slams the ground for 7 damage to everyone within 5 blocks. Back off.
-- **Enrage**: below 30% HP he gets faster, hits for 8, and charges every 6 s instead of 9.
+- **Charge**: every 12 s, a roar and a 1.25 s warning, then a straight-line charge for 7 damage and knockback. Step sideways to dodge.
+- **Call the Herd**: at 70% and 40% HP he summons 2 hostile Tusk Boars (4 at most).
+- **Earthshaker** (below 50%): stay right next to him and he rears up (1.5 s warning) and slams the ground for 6 damage to everyone within 4 blocks. Back off.
+- **Enrage**: below 25% HP he gets a little faster, hits for 7, and charges every 8 s instead of 12.
 - **Rewards**: Boar King's Crest, meat, hides, tusks, 600 EXP, +12 weapon mastery, 100 Col, and Floor 1 marked as cleared. That opens the Stair Gate for you.
 - He leaves after 60 s with no player nearby, so a failed attempt doesn't leave him roaming.
 
@@ -102,7 +102,7 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
 | Ore | Mining Lv | Pickaxe | Regrows | Found at |
 |---|---|---|---|---|
 | Ember Copper | 1 | any | 30 s | y 0 to 80 |
-| Ironheart | 5 | stone+ | 60 s | y -32 to 48 |
+| Ironheart | 1 | any pickaxe | 60 s | y -32 to 48 |
 | Glimmer Silver | 12 | iron+ | 120 s | y -64 to 16 |
 | Stormsteel | 16 | iron+ | 150 s | Floor 3 only: outcrops and the Stormsteel Quarry |
 
@@ -114,7 +114,16 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
 - Craft a **Smithing Forge** from 3 Ember Copper Ingots, 5 Bricks blocks and 1 Iron Block.
 - Use it (right-click / long-press), pick a weapon, and the materials go in. Then **punch the forge** whenever the sweeping marker is in the **green** zone (yellow counts as good). Finish before the metal cools (20 s). Stay within 6 blocks or the job is lost.
 - **Recipes**: Tier I is Ironheart plus 1 Ember Copper (Smithing 1). Tier II is Ironheart plus 1 Glimmer Silver plus Floor 1 drops (Smithing 8).
-- **Quality** comes from your average accuracy:
+- **Quality**: your average accuracy sets the best quality you can get, and your **Smithing level** sets how likely you are to get it. Below that, the result drops a grade (you're told when it happens):
+
+  | Smithing | Chance of Fine (when earned) | Chance of Masterwork (when earned) |
+  |---|---|---|
+  | 1 | 25% | 5% |
+  | 5 | 45% | 25% |
+  | 10 | 70% | 50% |
+  | 16 | 100% | 80% |
+  | 20 | 100% | 100% |
+
 
   | Quality | Damage | Durability |
   |---|---|---|
@@ -186,6 +195,7 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
 - **Shops**: each NPC sells useful goods for Col and buys monster drops, raw ore or ingredients.
 - **General store**: **Wren, the Merchant** keeps a market stall in every town (Wayfarer's Rest, Stiltwater, Cairnhold). She sells:
   - plain food for hunger: Bread x4 (12 Col), Apples x4 (10), Baked Potatoes x4 (12), Cooked Beef x2 (14), Cooked Chicken x2 (12)
+  - Coal x8 (16 Col), for smelting your ore
   - healing potions at a steep price: Potion of Healing (600 Col), Potion of Healing II (1500 Col)
   - pickaxes, each unlocked by your **Mining** level (the level its ores need): Wooden (Mining 1, 20 Col), Stone (Mining 5, 60 Col), Iron (Mining 12, 250 Col). Locked ones show the level you need. Diamond is saved for the planned Tier IV ore.
   - Towns built in an older world get Wren the next time you visit.

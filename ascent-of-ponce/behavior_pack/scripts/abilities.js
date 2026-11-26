@@ -64,9 +64,21 @@ const particle = (player, id, loc = player.location) => { try { player.dimension
 const IMPL = {
   // One-handed sword
   sword_dash(p, dmg) {
-    push(p, forward(p), 2.2, 0.15);
+    // Lunge forward and cut whatever you pass: checked every tick along the dash, each enemy hit once
+    const f = forward(p);
+    push(p, f, 2.2, 0.15);
     sound(p, "game.player.attack.strong", 1.2);
-    later(5, () => { const t = closestInFront(p, 3.5); if (t) dealSkillDamage(p, t, dmg * 1.5); });
+    const hit = new Set();
+    const cut = (t) => { if (!t || hit.has(t.id) || !t.isValid) return; hit.add(t.id); dealSkillDamage(p, t, dmg * 1.5); };
+    const start = closestInFront(p, 3, 0.3); // already in reach when you start
+    if (start) later(1, () => cut(start));
+    for (let i = 2; i <= 8; i++) {
+      later(i, () => {
+        if (!p.isValid || hit.size > 0) return; // one target per dash
+        const near = enemiesNear(p, 2.6).sort((a, b) => flatDir(p.location, a.location).dist - flatDir(p.location, b.location).dist)[0];
+        cut(near ?? (i === 8 ? closestInFront(p, 4, 0.2) : undefined));
+      });
+    }
   },
   sword_combo(p, dmg) {
     for (let i = 0; i < 3; i++) {

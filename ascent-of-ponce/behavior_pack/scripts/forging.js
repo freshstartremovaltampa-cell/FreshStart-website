@@ -4,7 +4,8 @@
 //   Perfect (green)  +20% shape, best quality
 //   Good (yellow)    +14% shape
 //   Off              +7% shape, hurts quality
-// Average accuracy decides the quality: Crude, Standard, Fine or Masterwork.
+// Average accuracy decides the best quality you can get: Crude, Standard, Fine or Masterwork.
+// Your Smithing level then decides how likely you are to get it (low at level 1, certain later).
 // Smithing level widens the green zone and slows the marker.
 
 import { world, system, ItemStack } from "@minecraft/server";
@@ -199,6 +200,23 @@ export function strike(player, s) {
   if (s.progress >= 100) finish(player, s, false);
 }
 
+/**
+ * Chance (0-1) that a forge reaches the quality your strikes earned, by Smithing level.
+ * Low at Smithing 1, certain by Smithing 16 (Fine) and 20 (Masterwork). A missed roll drops one grade.
+ */
+export function qualityChance(quality, smithing) {
+  if (quality === "masterwork") return Math.min(1, 0.05 + (smithing - 1) * 0.05);
+  if (quality === "fine") return Math.min(1, 0.25 + (smithing - 1) * 0.05);
+  return 1;
+}
+
+/** Applies the Smithing-level roll to the quality earned by the minigame. */
+export function rollQuality(earned, smithing, rand = Math.random) {
+  if (earned === "masterwork" && rand() >= qualityChance("masterwork", smithing)) earned = "fine";
+  if (earned === "fine" && rand() >= qualityChance("fine", smithing)) earned = "standard";
+  return earned;
+}
+
 export function qualityFor(s, cooled) {
   if (cooled) return "crude";
   const avg = s.strikes ? s.score / s.strikes : -2;
@@ -210,7 +228,13 @@ export function qualityFor(s, cooled) {
 
 function finish(player, s, cooled) {
   sessions.delete(player.id);
-  const key = qualityFor(s, cooled);
+  const earned = qualityFor(s, cooled);
+  const smithing = jobLevel(getData(player), "smithing");
+  const key = rollQuality(earned, smithing);
+  if (key !== earned) {
+    player.sendMessage(`§7[Forge] Your strikes earned ${QUALITIES[earned].name}, but your hands aren't sure enough yet: it came out §f${QUALITIES[key].name}§7. ` +
+      `§8(Smithing ${smithing}: higher levels make better results more likely.)`);
+  }
   const q = QUALITIES[key];
   const item = new ItemStack(s.id, 1);
   item.setDynamicProperty("ponce:quality", key);

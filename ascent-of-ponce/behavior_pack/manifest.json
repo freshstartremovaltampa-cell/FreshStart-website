@@ -4,22 +4,22 @@
     "name": "The Ascent of Ponce §7(Behavior)",
     "description": "Climb the floating tower of Ponce in search of the Fountain of Youth.",
     "uuid": "c210e8b9-2c62-4045-a878-ec69f6d93f53",
-    "version": [0, 1, 0],
+    "version": [0, 2, 0],
     "min_engine_version": [1, 21, 90]
   },
   "modules": [
-    { "type": "data", "uuid": "5de84646-c4fc-4959-9330-1b09f38608a6", "version": [0, 1, 0] },
+    { "type": "data", "uuid": "5de84646-c4fc-4959-9330-1b09f38608a6", "version": [0, 2, 0] },
     {
       "type": "script",
       "language": "javascript",
       "uuid": "d227e16b-0727-4e8a-b50a-92aeeb560f7a",
-      "version": [0, 1, 0],
+      "version": [0, 2, 0],
       "entry": "scripts/main.js"
     }
   ],
   "dependencies": [
     { "module_name": "@minecraft/server", "version": "2.0.0" },
     { "module_name": "@minecraft/server-ui", "version": "2.0.0" },
-    { "uuid": "7fef90b1-546f-416b-8fa8-50546384b7a2", "version": [0, 1, 0] }
+    { "uuid": "7fef90b1-546f-416b-8fa8-50546384b7a2", "version": [0, 2, 0] }
   ]
 }

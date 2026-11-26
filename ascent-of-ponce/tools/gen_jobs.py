@@ -17,7 +17,7 @@ random.seed(11)
 # key, name, mining level, min pickaxe tier, xp, regen seconds, flecks, sparkle, map color, y range, veins per chunk
 ORES = [
     ("ember_copper", "Ember Copper", 1, "wooden", 10, 30, (214, 120, 60), (245, 170, 100), "#B0703C", (0, 80), 8),
-    ("ironheart", "Ironheart", 5, "stone", 25, 60, (150, 40, 40), (210, 90, 80), "#8C3A34", (-32, 48), 5),
+    ("ironheart", "Ironheart", 1, "wooden", 25, 60, (150, 40, 40), (210, 90, 80), "#8C3A34", (-32, 48), 5),
     ("glimmer_silver", "Glimmer Silver", 12, "iron", 50, 120, (205, 212, 228), (255, 255, 255), "#C8D0E0", (-64, 16), 3),
     # Floor 3 only (0 veins = no overworld generation; the floor generator places it)
     ("stormsteel", "Stormsteel", 16, "iron", 80, 150, (80, 120, 168), (190, 236, 255), "#5078A8", (0, 0), 0),
@@ -98,6 +98,7 @@ def block(ident, texture_side, texture_top=None, destroy=2.5, loot=None, map_col
     comps = {
         "minecraft:destructible_by_mining": False if unbreakable else {"seconds_to_destroy": destroy},
         "minecraft:destructible_by_explosion": {"explosion_resistance": 1200 if unbreakable else 30},
+        "minecraft:geometry": "minecraft:geometry.full_block",
         "minecraft:material_instances": mats,
         "minecraft:map_color": map_color,
     }
@@ -253,6 +254,11 @@ def main():
     data = json.load(open(path))
     data["texture_data"].update(items_tex)
     write_json(path, data)
+    # Also list each block's textures here (the older lookup), alongside the material instances
+    for ident in sounds:
+        mats = json.load(open(f"{BP}/blocks/{ident.split(':')[1]}.json"))["minecraft:block"]["components"]["minecraft:material_instances"]
+        side = mats["*"]["texture"]
+        sounds[ident]["textures"] = {"up": mats["up"]["texture"], "down": side, "side": side} if "up" in mats else side
     write_json(f"{RP}/blocks.json", {"format_version": [1, 1, 0], **sounds})
 
     langp = f"{RP}/texts/en_US.lang"

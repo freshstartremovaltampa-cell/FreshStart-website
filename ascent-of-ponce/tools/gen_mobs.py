@@ -764,12 +764,12 @@ def field_wasp():
 
 def ironhide():
     ident, name = "ponce:ironhide", "ironhide"
-    comps = base_components(["boss_boar", "monster", "ponce_boss"], hp=1800, damage=6, speed=0.24,
-                            box=(2.0, 2.0), loot=name)
+    comps = base_components(["boss_boar", "monster", "ponce_boss"], hp=1100, damage=5, speed=0.22,
+                            box=(1.3, 1.2), loot=name)
     for k in ("minecraft:despawn", "minecraft:behavior.random_stroll", "minecraft:pushable"):
         comps.pop(k)
     comps.update({
-        "minecraft:scale": {"value": 2.5},
+        "minecraft:scale": {"value": 2.0},
         "minecraft:boss": {"should_darken_sky": False, "hud_range": 48},
         "minecraft:persistent": {},
         "minecraft:knockback_resistance": {"value": 1.0},
@@ -781,15 +781,17 @@ def ironhide():
         "minecraft:experience_reward": {"on_death": "80"},
         "minecraft:follow_range": {"value": 32, "max": 32},
         "minecraft:behavior.hurt_by_target": {"priority": 1},
-        "minecraft:behavior.melee_attack": {"priority": 2, "speed_multiplier": 1.3, "track_target": True},
+        # reach_multiplier 1: his bite reaches about as far as his snout, not double his (big) body width
+        "minecraft:behavior.melee_attack": {"priority": 2, "speed_multiplier": 1.1, "track_target": True,
+                                            "cooldown_time": 1.5, "reach_multiplier": 1.0},
         "minecraft:behavior.nearest_attackable_target": {
-            "priority": 3, "must_see": False, "reselect_targets": True, "within_radius": 24,
+            "priority": 3, "must_see": True, "reselect_targets": True, "within_radius": 16,
             "entity_types": PLAYER_TARGET},
         "minecraft:behavior.random_stroll": {"priority": 6, "speed_multiplier": 0.6},
     })
     groups = {"ponce:enraged": {
-        "minecraft:movement": {"value": 0.3},
-        "minecraft:attack": {"damage": 8},
+        "minecraft:movement": {"value": 0.27},
+        "minecraft:attack": {"damage": 7},
     }}
     events = {"ponce:enrage": {"add": {"component_groups": ["ponce:enraged"]}}}
     write_json(f"{BP}/entities/{name}.json", bp_entity(ident, comps, groups, events))

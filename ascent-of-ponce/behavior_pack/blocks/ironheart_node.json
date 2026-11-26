@@ -9,11 +9,12 @@
     },
     "components": {
       "minecraft:destructible_by_mining": {
-        "seconds_to_destroy": 2.5
+        "seconds_to_destroy": 2.1
       },
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 30
       },
+      "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
           "texture": "ponce_ironheart_node",

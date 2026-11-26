@@ -163,7 +163,9 @@ console.log("forms shown:", log.length);
   const { getData } = await import("../behavior_pack/scripts/data.js");
   const { ARENA } = await import("../behavior_pack/scripts/floor1_gen.js");
   const AX = ARENA.x, AZ = ARENA.z, AY = ARENA.y + 1; // the fight happens in the Guardian's Arena
-  dim.factory = (id, loc) => { const e = makeEntity(id, id === "ponce:ironhide" ? 1800 : 24); e.location = { ...loc }; return e; };
+  const { TUNING: BT } = await import("../behavior_pack/scripts/bosses.js");
+  const HP = 1100;
+  dim.factory = (id, loc) => { const e = makeEntity(id, id === "ponce:ironhide" ? HP : 24); e.location = { ...loc }; return e; };
   const b = makePlayer("BossTester"); world.players.push(b);
   b.location = { x: AX + 0, y: AY, z: AZ + 0 }; b.dimension = dim;
   b.applyDamage = (n) => { b.health.currentValue -= n; b.hitByBoss = (b.hitByBoss ?? 0) + n; };
@@ -191,36 +193,39 @@ console.log("forms shown:", log.length);
 
   // Thick hide
   b.setHeld(new ItemStack("minecraft:stone_sword", 1, ["minecraft:is_sword"]));
-  boss.health.currentValue = 1800 - 6;
+  boss.health.currentValue = HP - 6;
   fire("entityHurt", { hurtEntity: boss, damage: 6, damageSource: { cause: "entityAttack", damagingEntity: b } });
-  assert(Math.abs(boss.health.currentValue - (1800 - 6 * 0.4)) < 0.6, "stone sword deals ~40%: hp " + boss.health.currentValue.toFixed(1));
+  assert(Math.abs(boss.health.currentValue - (HP - 6 * 0.4)) < 0.6, "stone sword deals ~40%: hp " + boss.health.currentValue.toFixed(1));
   b.setHeld(new ItemStack("minecraft:iron_sword", 1, ["minecraft:is_sword"]));
   system.tick(20);
   const hp0 = boss.health.currentValue - 7; boss.health.currentValue = hp0;
   fire("entityHurt", { hurtEntity: boss, damage: 7, damageSource: { cause: "entityAttack", damagingEntity: b } });
   assert(boss.health.currentValue <= hp0, "iron sword deals full damage");
 
-  // Herd calls at 80/60/40/20%, capped at 6 minions
+  // Herd calls at 70% and 40%, capped at 4 minions
   const minionCount = () => dim.getEntities({ type: "ponce:tusk_boar", tags: ["ponce_minion"] }).length;
-  boss.health.currentValue = 1800 * 0.75; system.tick(2);
-  assert(minionCount() === 2 && dim.getEntities({ tags: ["ponce_minion"] }).every((m) => m.events.includes("ponce:enrage")), "80%: summons 2 hostile boars");
-  boss.health.currentValue = 1800 * 0.55; system.tick(2);
-  assert(minionCount() === 4, "60%: summons 2 more");
+  boss.health.currentValue = HP * 0.75; system.tick(2);
+  assert(minionCount() === 0, "no herd call above 70%");
+  boss.health.currentValue = HP * 0.65; system.tick(2);
+  assert(minionCount() === 2 && dim.getEntities({ tags: ["ponce_minion"] }).every((m) => m.events.includes("ponce:enrage")), "70%: summons 2 hostile boars");
+  boss.health.currentValue = HP * 0.55; system.tick(2);
+  assert(minionCount() === 2, "only two herd calls: nothing more at 55%");
 
-  // Earthshaker: player hugging the boss below 60%
+  // Earthshaker: player hugging the boss below 50%
+  boss.health.currentValue = HP * 0.45; system.tick(2);
   b.location = { x: AX + 0, y: AY, z: AZ + 3 }; boss.location = { x: AX + 0, y: AY, z: AZ + 0 };
   let rearWarn = false;
-  for (let i = 0; i < 60 && !b.hitByBoss; i++) { system.tick(1); if (b.actionBar?.includes("rears up")) rearWarn = true; }
+  for (let i = 0; i < 400 && !b.hitByBoss; i++) { system.tick(1); if (b.actionBar?.includes("rears up")) rearWarn = true; }
   assert(rearWarn, "stomp is telegraphed");
-  assert(b.hitByBoss === 7 && b.knocked, "stomp hits everyone within 5 blocks for 7");
+  assert(b.hitByBoss === BT.stompDamage && b.knocked, `stomp hits everyone within ${BT.stompRadius} blocks for ${BT.stompDamage}`);
 
-  boss.health.currentValue = 1800 * 0.35; system.tick(2);
-  assert(minionCount() === 6, "40%: summons 2 more");
-  assert(!boss.events.includes("ponce:enrage"), "not enraged above 30%");
-  boss.health.currentValue = 1800 * 0.25; system.tick(2);
-  assert(boss.events.includes("ponce:enrage"), "enraged at 25%");
-  boss.health.currentValue = 1800 * 0.15; system.tick(2);
-  assert(minionCount() === 6, "20%: herd call respects the 6-minion cap");
+  boss.health.currentValue = HP * 0.38; system.tick(2);
+  assert(minionCount() === 4, "40%: summons 2 more");
+  assert(!boss.events.includes("ponce:enrage"), "not enraged above 25%");
+  boss.health.currentValue = HP * 0.24; system.tick(2);
+  assert(boss.events.includes("ponce:enrage"), "enraged below 25%");
+  boss.health.currentValue = HP * 0.15; system.tick(2);
+  assert(minionCount() === 4, "no more boars after the second call (4 at most)");
 
   // Charge: player stands in the path
   b.hitByBoss = 0; b.knocked = false;
@@ -228,7 +233,7 @@ console.log("forms shown:", log.length);
   let warned = false;
   for (let i = 0; i < 300 && !b.hitByBoss; i++) { system.tick(1); if (b.actionBar?.includes("about to charge")) warned = true; if (boss.impulses.length) b.location = { x: AX + 0, y: AY, z: AZ + 1 }; }
   assert(warned, "charge is telegraphed");
-  assert(b.hitByBoss === 9 && b.knocked, "charge hits for 9 with knockback: " + b.hitByBoss);
+  assert(b.hitByBoss === BT.chargeDamage && b.knocked, `charge hits for ${BT.chargeDamage} with knockback: ` + b.hitByBoss);
 
   // Dodge: player keeps out of the charge line
   b.hitByBoss = 0; b.knocked = false; b.location = { x: AX + 0, y: AY, z: AZ + 6 };
@@ -340,9 +345,24 @@ console.log("forms shown:", log.length);
   const hp1 = t.health.currentValue;
   useSkill(w, sword); system.tick(6);
   assert(t.health.currentValue === hp1 && w.actionBar.includes("ready in"), "cooldown blocks a second use");
+
   system.tick(120);
   useSkill(w, sword); system.tick(6);
   assert(t.health.currentValue < hp1, "usable again after the cooldown");
+  // Dash Slash cuts an enemy you dash up to (out of reach when you start), and still lands right after
+  // a normal swing, when Minecraft briefly ignores damage on the target
+  system.tick(600);
+  const tWasValid = t.isValid; t.isValid = false;
+  const dashTarget = enemy(0, 5);
+  dashTarget.applyDamage = () => true; // "landed", but ignored (hit immunity)
+  const dashFrom = { ...w.location };
+  useSkill(w, sword);
+  system.tick(3);
+  w.location = { ...dashFrom, z: dashFrom.z + 3 }; // the dash carries you forward
+  system.tick(6);
+  assert(dashTarget.health.currentValue < 100 - 7 * 1.5, "Dash Slash hits an enemy you dash into, even through hit immunity: " + dashTarget.health.currentValue.toFixed(1));
+  w.location = dashFrom; dashTarget.isValid = false; t.isValid = tWasValid;
+  system.tick(600);
 
   // Sneak to cycle
   d.skills.push("sword_combo");
@@ -446,15 +466,15 @@ console.log("forms shown:", log.length);
 
   // ---- Mining ----
   const node = dim.setBlock({ x: 300, y: 10, z: 0 }, "ponce:ironheart_node");
-  let ev = fireBefore("playerBreakBlock", { block: node, player: j, itemStack: pick("wooden"), cancel: false });
-  assert(ev.cancel, "wooden pickaxe can't mine Ironheart");
-  ev = fireBefore("playerBreakBlock", { block: node, player: j, itemStack: pick("stone"), cancel: false });
-  assert(ev.cancel, "Mining level 1 can't mine Ironheart (needs 5)");
+  const silverNode = dim.setBlock({ x: 302, y: 10, z: 0 }, "ponce:glimmer_silver_node");
+  let ev = fireBefore("playerBreakBlock", { block: silverNode, player: j, itemStack: pick("iron"), cancel: false });
+  assert(ev.cancel, "Mining level 1 can't mine Glimmer Silver (needs 12)");
   system.tick(2);
   assert(j.msgs.some((m) => m.includes("needs Mining level")), "player told which Mining level is needed");
-  d.jobs.mining.level = 5;
-  ev = fireBefore("playerBreakBlock", { block: node, player: j, itemStack: pick("stone"), cancel: false });
-  assert(!ev.cancel, "Mining 5 with a stone pickaxe can mine Ironheart");
+  ev = fireBefore("playerBreakBlock", { block: node, player: j, itemStack: { typeId: "minecraft:stick", hasTag: () => false }, cancel: false });
+  assert(ev.cancel, "Ironheart still needs a pickaxe");
+  ev = fireBefore("playerBreakBlock", { block: node, player: j, itemStack: pick("wooden"), cancel: false });
+  assert(!ev.cancel && d.jobs.mining.level === 1, "Ironheart can be mined at Mining 1 with a wooden pickaxe");
   const xp0 = d.jobs.mining.xp;
   fire("playerBreakBlock", { block: node, brokenBlockPermutation: { type: { id: "ponce:ironheart_node" } }, player: j, dimension: dim });
   assert(node.typeId === "ponce:depleted_node", "mined node becomes a Depleted Node");
@@ -486,6 +506,16 @@ console.log("forms shown:", log.length);
   const punch = () => fire("entityHitBlock", { damagingEntity: j, hitBlock: forge });
   const forged = (id) => j.items.filter((i) => i?.typeId === id);
 
+  const F = await import("../behavior_pack/scripts/forging.js");
+  // Quality odds rise with Smithing level
+  assert(F.qualityChance("masterwork", 1) <= 0.05 && F.qualityChance("fine", 1) <= 0.25, "at Smithing 1, Fine and Masterwork results are unlikely");
+  assert(F.qualityChance("masterwork", 10) > F.qualityChance("masterwork", 1) && F.qualityChance("masterwork", 20) === 1 && F.qualityChance("fine", 16) === 1,
+    "the odds rise with Smithing level (Fine certain at 16, Masterwork at 20)");
+  let mw = 0, fine = 0;
+  for (let i = 0; i < 2000; i++) { const q = F.rollQuality("masterwork", 1); if (q === "masterwork") mw++; else if (q === "fine") fine++; }
+  assert(mw / 2000 < 0.1 && fine / 2000 < 0.4, `perfect strikes at Smithing 1: ${(mw / 20).toFixed(0)}% Masterwork, ${(fine / 20).toFixed(0)}% Fine, the rest Standard`);
+  assert(F.rollQuality("standard", 1) === "standard" && F.rollQuality("crude", 1) === "crude", "the roll never makes a result worse than Standard or better than earned");
+  d.jobs.smithing.level = 20; // the rest of this block checks the minigame itself
   const e1 = await startForge("ponce:iron_longsword");
   assert(e1.cancel, "using the forge doesn't place blocks on it");
   assert(sessions.has(j.id), "forging session started");
@@ -495,6 +525,7 @@ console.log("forms shown:", log.length);
   assert(sword?.getDynamicProperty("ponce:quality") === "masterwork", "all-perfect strikes forge a Masterwork: " + sword?.getDynamicProperty("ponce:quality"));
   assert(sword.nameTag.includes("Masterwork") && sword.lore.some((l) => l.includes("Masterwork")), "quality shown in name and tooltip");
   assert(d.jobs.smithing.xp > 0 || d.jobs.smithing.level > 1, "Smithing XP gained");
+  d.jobs.smithing.level = 1; d.jobs.smithing.xp = 0;
 
   await startForge("ponce:iron_dagger");
   for (let i = 0; i < 20 && sessions.has(j.id); i++) { const s = sessions.get(j.id); s.pos = s.zone > 12 ? 0 : 24; punch(); system.tick(5); }
@@ -634,7 +665,7 @@ console.log("forms shown:", log.length);
   const tuskSword = await forgeWith("ponce:iron_longsword", [1]); // option 1 = the only affordable infusion
   assert(JSON.stringify(infusionsOf(tuskSword)) === '["ponce:boar_tusk"]' && count("ponce:boar_tusk") === 0, "Tier I: one infusion slot, Boar Tusk used up");
   assert(tuskSword.lore.some((l) => l.includes("Tusk Edge")) && tuskSword.nameTag.includes("+1"), "infusion shown in tooltip and name");
-  const plain = new ItemStack("ponce:iron_longsword"); plain.setDynamicProperty("ponce:quality", "masterwork");
+  const plain = new ItemStack("ponce:iron_longsword"); plain.setDynamicProperty("ponce:quality", tuskSword.getDynamicProperty("ponce:quality")); // same quality, no infusion
   assert(Math.abs(effectiveDamage(tuskSword) - effectiveDamage(plain) * 8 / 7) < 0.01, `Tusk Edge adds +1 base damage (${effectiveDamage(plain).toFixed(1)} -> ${effectiveDamage(tuskSword).toFixed(1)})`);
 
   // Tier II: two slots, recipe materials and infusion costs add up
@@ -1648,7 +1679,7 @@ console.log("forms shown:", log.length);
   const s = makePlayer("Stormsmith"); world.players.push(s);
   Object.assign(s, { dimension: dim, location: { x: 1300.5, y: 64, z: 0.5 }, isSneaking: false, getGameMode: () => "Survival" });
   fire("playerSpawn", { player: s, initialSpawn: true });
-  const sd = getDataFor(s); sd.starter = "ponce:wayfarers_sword"; sd.jobs.smithing.level = 15;
+  const sd = getDataFor(s); sd.starter = "ponce:wayfarers_sword"; sd.jobs.smithing.level = 20;
   const forge = dim.setBlock({ x: 1300, y: 64, z: 1 }, "ponce:smithing_forge");
   for (const m of WEAPON_DEFS["ponce:stormsteel_longsword"].forge.materials) s.items[s.items.indexOf(undefined)] = new ItemStack(m.item, m.count);
   globalThis.nextFormResponse = [{ canceled: false, selection: ORDER.findIndex(([id]) => id === "ponce:stormsteel_longsword") }, { canceled: false, selection: 0 }];

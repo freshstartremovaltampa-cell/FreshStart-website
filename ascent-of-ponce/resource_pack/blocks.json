@@ -5,27 +5,43 @@
     0
   ],
   "ponce:ember_copper_node": {
-    "sound": "stone"
+    "sound": "stone",
+    "textures": "ponce_ember_copper_node"
   },
   "ponce:ironheart_node": {
-    "sound": "stone"
+    "sound": "stone",
+    "textures": "ponce_ironheart_node"
   },
   "ponce:glimmer_silver_node": {
-    "sound": "stone"
+    "sound": "stone",
+    "textures": "ponce_glimmer_silver_node"
   },
   "ponce:stormsteel_node": {
-    "sound": "stone"
+    "sound": "stone",
+    "textures": "ponce_stormsteel_node"
   },
   "ponce:depleted_node": {
-    "sound": "stone"
+    "sound": "stone",
+    "textures": "ponce_depleted_node"
   },
   "ponce:smithing_forge": {
-    "sound": "anvil"
+    "sound": "anvil",
+    "textures": {
+      "up": "ponce_forge_top",
+      "down": "ponce_forge_side",
+      "side": "ponce_forge_side"
+    }
   },
   "ponce:cooking_pot": {
-    "sound": "metal"
+    "sound": "metal",
+    "textures": {
+      "up": "ponce_pot_top",
+      "down": "ponce_pot_side",
+      "side": "ponce_pot_side"
+    }
   },
   "ponce:stair_gate": {
-    "sound": "glass"
+    "sound": "glass",
+    "textures": "ponce_stair_gate"
   }
 }
