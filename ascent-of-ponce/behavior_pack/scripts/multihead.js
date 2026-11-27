@@ -43,7 +43,7 @@ export const SPECIES = {
     name: "Mire Hydra",
     heads: ["ponce:hydra_head", "ponce:hydra_head_acid", "ponce:hydra_head"], // one per seat
     headNames: ["Left head", "Middle head", "Right head"],
-    seats: [[-1.3, 3.5, -1.5], [0, 3.9, -2.0], [1.3, 3.5, -1.5]],
+    seats: [[-0.65, 2.45, 0.9], [0, 2.45, 1.0], [0.65, 2.45, 0.9]], // body frame, +z forward (matches the rideable seats)
     regrowSeconds: 35, // an introduction: a little room for error
     warnSeconds: 8,
     bite: { damage: 9, everyTicks: 90, windupTicks: 15, reach: 8, radius: 3 },
@@ -68,7 +68,7 @@ function seatPosition(body, seat) {
   const yaw = ((body.getRotation?.().y ?? 0) * Math.PI) / 180;
   const fwd = { x: -Math.sin(yaw), z: Math.cos(yaw) }, left = { x: Math.cos(yaw), z: Math.sin(yaw) };
   const [sx, sy, sz] = seat;
-  return { x: body.location.x + left.x * sx - fwd.x * sz, y: body.location.y + sy, z: body.location.z + left.z * sx - fwd.z * sz };
+  return { x: body.location.x + left.x * sx + fwd.x * sz, y: body.location.y + sy, z: body.location.z + left.z * sx + fwd.z * sz };
 }
 
 function attachHead(body, f, i) {

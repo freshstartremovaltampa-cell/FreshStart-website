@@ -307,6 +307,9 @@
     },
     "ponce_warming_broth": {
       "textures": "textures/items/warming_broth"
+    },
+    "ponce_smith_hammer": {
+      "textures": "textures/items/smith_hammer"
     }
   }
 }

@@ -363,7 +363,7 @@ export const DEV_ACTIONS = [
     const kit = [["ponce:ironheart_ingot", 16], ["ponce:ember_copper_ingot", 8], ["ponce:glimmer_silver_ingot", 4],
       ["ponce:smithing_forge", 1], ["ponce:cooking_pot", 1], ["ponce:raw_boar", 8], ["ponce:raw_hare", 4],
       ["ponce:jelly_gel", 6], ["minecraft:stick", 8], ["minecraft:carrot", 4], ["minecraft:bowl", 4],
-      ["minecraft:wheat", 4], ["minecraft:sugar", 4], ["minecraft:potato", 8], ["minecraft:iron_pickaxe", 1]];
+      ["minecraft:wheat", 4], ["minecraft:sugar", 4], ["minecraft:potato", 8], ["minecraft:iron_pickaxe", 1], ["ponce:smith_hammer", 1]];
     const inv = player.getComponent("minecraft:inventory")?.container;
     for (const [id, n] of kit) inv?.addItem(new ItemStack(id, n));
     player.sendMessage("§a[Ponce] Job kit given (needs free inventory space).");

@@ -191,6 +191,23 @@ def main():
         "key": {"C": {"item": "ponce:ember_copper_ingot"}, "B": {"item": "minecraft:brick_block"}, "I": {"item": "minecraft:iron_block"}},
         "unlock": [{"item": "ponce:ember_copper_ingot"}], "result": {"item": "ponce:smithing_forge"}}})
 
+    # Smith's Hammer: held while forging. Raise it (look up) and swing it down onto the forge to strike.
+    def hammer_icon(img):
+        for i in range(9):  # handle, bottom-left to the head
+            img.putpixel((3 + i, 12 - i), (120, 84, 50, 255))
+            img.putpixel((4 + i, 12 - i), (150, 108, 66, 255))
+        for x in range(8, 15):  # iron head across the top of the handle
+            for y in range(1, 6):
+                if abs((x - 11) - (y - 3)) <= 2:
+                    img.putpixel((x, y), (150, 40, 40, 255) if (x + y) % 4 else (200, 90, 80, 255))
+    items_tex["ponce_smith_hammer"] = {"textures": tex("smith_hammer", hammer_icon, "items")}
+    write_json(f"{BP}/items/jobs/smith_hammer.json", item("ponce:smith_hammer", "§6Smith's Hammer", "ponce_smith_hammer",
+                                                          extra={"minecraft:hand_equipped": True}, stack=1, category="equipment"))
+    write_json(f"{BP}/recipes/jobs/smith_hammer.json", {"format_version": "1.20.10", "minecraft:recipe_shaped": {
+        "description": {"identifier": "ponce:smith_hammer"}, "tags": ["crafting_table"],
+        "pattern": ["III", " S ", " S "], "key": {"I": {"item": "ponce:ironheart_ingot"}, "S": {"item": "minecraft:stick"}},
+        "unlock": [{"item": "ponce:ironheart_ingot"}], "result": {"item": "ponce:smith_hammer"}}})
+
     # Cooking Pot
     def pot_side(img):
         for y in range(16):

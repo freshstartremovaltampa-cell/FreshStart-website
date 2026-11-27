@@ -249,7 +249,10 @@ def marsh_gator():
 # health; scripts/multihead.js handles severing, regrowth and defeat.
 
 HEAD_HP = 250  # kept modest: the challenge is felling all heads together, not chewing through health
-SEATS = [[-1.3, 3.5, -1.5], [0, 3.9, -2.0], [1.3, 3.5, -1.5]]
+# Seat positions are in blocks in the body's own frame, +z = forward (the model is drawn facing -z, so
+# the shoulder stumps at model z -7/-8 sit 0.9-1.0 blocks forward once scaled by 2). Each head entity
+# carries its own neck, rising from these stumps.
+SEATS = [[-0.65, 2.45, 0.9], [0, 2.45, 1.0], [0.65, 2.45, 0.9]]
 
 
 def mire_hydra():
@@ -281,9 +284,10 @@ def mire_hydra():
             cube([-8, 6, -10], [16, 12, 22], [0, 0]),
             cube([-1, 18, -8], [2, 2, 18], [76, 40]),  # back spines
         ]},
-        {"name": "neck_l", "parent": "body", "pivot": [-5, 16, -8], "rotation": [-15, 0, 20], "cubes": [cube([-7, 16, -10], [4, 14, 4], [76, 22])]},
-        {"name": "neck_m", "parent": "body", "pivot": [0, 17, -9], "rotation": [-20, 0, 0], "cubes": [cube([-2, 17, -11], [4, 16, 4], [92, 22])]},
-        {"name": "neck_r", "parent": "body", "pivot": [5, 16, -8], "rotation": [-15, 0, -20], "cubes": [cube([3, 16, -10], [4, 14, 4], [108, 22])]},
+        # Shoulder stumps where the heads' necks join (their red tops show when a head is severed)
+        {"name": "neck_l", "parent": "body", "pivot": [-5, 18, -7], "cubes": [cube([-7, 17, -9], [4, 3, 4], [76, 22])]},
+        {"name": "neck_m", "parent": "body", "pivot": [0, 18, -8], "cubes": [cube([-2, 17, -10], [4, 3, 4], [92, 22])]},
+        {"name": "neck_r", "parent": "body", "pivot": [5, 18, -7], "cubes": [cube([3, 17, -9], [4, 3, 4], [108, 22])]},
         {"name": "tail", "parent": "body", "pivot": [0, 10, 12], "cubes": [
             cube([-4, 7, 12], [8, 6, 16], [0, 34]), cube([-2, 8, 28], [4, 4, 10], [48, 34])]},
     ] + [{"name": n, "parent": "body", "pivot": [o[0] + 2.5, 6, o[2] + 2.5], "cubes": [cube(o, [5, 6, 5], uv)]}
@@ -293,7 +297,7 @@ def mire_hydra():
         scale, dark, belly = (48, 96, 76), (30, 64, 50), (160, 170, 120)
         paint_box(img, (0, 0), (16, 12, 22), {"default": scale, "top": dark, "bottom": belly}, noise=14)
         paint_box(img, (76, 40), (2, 2, 18), {"default": (200, 190, 150)}, noise=8)
-        for uv, h in (([76, 22], 14), ([92, 22], 16), ([108, 22], 14)):
+        for uv, h in (([76, 22], 3), ([92, 22], 3), ([108, 22], 3)):
             paint_box(img, uv, (4, h, 4), {"default": scale, "top": (120, 30, 30)}, noise=12)  # red top = severed stump
         paint_box(img, (0, 34), (8, 6, 16), {"default": scale, "top": dark}, noise=12)
         paint_box(img, (48, 34), (4, 4, 10), {"default": scale, "top": dark}, noise=10)
@@ -324,7 +328,7 @@ def mire_hydra():
         hcomps = {
             "minecraft:type_family": {"family": ["hydra_head", "ponce_boss_part", "monster", "mob"]},
             "minecraft:health": {"value": HEAD_HP, "max": HEAD_HP},
-            "minecraft:collision_box": {"width": 1.2, "height": 1.2},
+            "minecraft:collision_box": {"width": 0.9, "height": 1.5},  # x1.6: covers the neck and head
             "minecraft:scale": {"value": 1.6},
             "minecraft:physics": {},
             "minecraft:knockback_resistance": {"value": 1.0},
@@ -339,13 +343,14 @@ def mire_hydra():
             "minecraft:loot": {"table": "loot_tables/empty.json"},
             "minecraft:behavior.look_at_player": {"priority": 1, "look_distance": 24, "probability": 1.0},
         }
+        N = 13  # neck length (model units): the neck rises from the seat on the body's shoulder
         hbones = [
-            {"name": "head", "pivot": [0, 3, 0], "cubes": [
-                cube([-4, 0, -5], [8, 6, 8], [0, 0]),
-                cube([-3, 1, -11], [6, 4, 6], [32, 0]),
-                cube([-4, 6, -2], [2, 3, 2], [0, 14]), cube([2, 6, -2], [2, 3, 2], [8, 14]),
-                cube([-2.5, -6, -2], [5, 6, 5], [0, 20])]},
-            {"name": "jaw", "parent": "head", "pivot": [0, 1, -5], "cubes": [cube([-3, -1, -10], [6, 2, 6], [32, 10])]},
+            {"name": "neck", "pivot": [0, 0, 0], "cubes": [cube([-2, 0, -2], [4, N + 1, 4], [0, 32])]},
+            {"name": "head", "parent": "neck", "pivot": [0, N + 3, 0], "cubes": [
+                cube([-4, N, -5], [8, 6, 8], [0, 0]),
+                cube([-3, N + 1, -11], [6, 4, 6], [32, 0]),
+                cube([-4, N + 6, -2], [2, 3, 2], [0, 14]), cube([2, N + 6, -2], [2, 3, 2], [8, 14])]},
+            {"name": "jaw", "parent": "head", "pivot": [0, N + 1, -5], "cubes": [cube([-3, N - 1, -10], [6, 2, 6], [32, 10])]},
         ]
 
         def hpaint(img, tint=tint):
@@ -355,7 +360,10 @@ def mire_hydra():
             paint_box(img, (32, 10), (6, 2, 6), {"default": tint, "top": (150, 40, 40)}, noise=10)
             for uv in ([0, 14], [8, 14]):
                 paint_box(img, uv, (2, 3, 2), {"default": (220, 210, 180)}, noise=6)
-            paint_box(img, (0, 20), (5, 6, 5), {"default": tint}, noise=12)
+            paint_box(img, (0, 32), (4, 14, 4), {"default": tint, "bottom": (120, 30, 30)}, noise=12)
+            for y in range(36, 50, 3):  # banded scales down the neck
+                for x in range(0, 16, 2):
+                    img.putpixel((x, y), tuple(max(0, c - 30) for c in tint) + (255,))
             px = img.load()
             for x in (9, 14):  # glowing eyes on the head front
                 px[x, 10] = (255, 220, 60, 255)
@@ -364,14 +372,15 @@ def mire_hydra():
                 px[x + 5, 9] = (240, 235, 220, 255)
 
         write_json(f"{BP}/entities/{hname}.json", m.bp_entity(hident, hcomps))
-        write_json(f"{RP}/models/entity/{hname}.geo.json", m.geometry(f"geometry.ponce.{hname}", 64, 32, hbones, bounds=(2, 2)))
-        img = Image.new("RGBA", (64, 32), (0, 0, 0, 0))
+        write_json(f"{RP}/models/entity/{hname}.geo.json", m.geometry(f"geometry.ponce.{hname}", 64, 64, hbones, bounds=(3, 4)))
+        img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
         hpaint(img)
         save(img, f"{RP}/textures/entity/{hname}.png")
         write_json(f"{RP}/animations/{hname}.animation.json", {"format_version": "1.8.0", "animations": {
             f"animation.ponce.{hname}.snap": {"loop": True, "bones": {
                 "jaw": {"rotation": ["math.max(0, math.sin(query.anim_time * 150)) * 30", 0, 0]},
-                "head": {"rotation": ["math.sin(query.anim_time * 70) * 6", 0, 0]}}}}})
+                "head": {"rotation": ["math.sin(query.anim_time * 70) * 6", 0, 0]},
+                "neck": {"rotation": ["-8 + math.sin(query.anim_time * 45) * 5", 0, "math.sin(query.anim_time * 30) * 4"]}}}}})
         write_json(f"{RP}/entity/{hname}.entity.json", m.rp_entity(
             hident, hname, {"snap": f"animation.ponce.{hname}.snap", "look_at_target": "animation.common.look_at_target"},
             ["snap", "look_at_target"], ("#30604C", "#FFDC3C")))

@@ -1,9 +1,11 @@
 // Forging. Use the Smithing Forge (right-click / long-press) to pick a weapon.
-// The materials go in, and you shape the hot blade by PUNCHING the forge when
-// the sweeping marker is inside the green zone, before the metal cools.
-//   Perfect (green)  +20% shape, best quality
-//   Good (yellow)    +14% shape
-//   Off              +7% shape, hurts quality
+// The materials go in, and you shape the hot blade with your Smith's Hammer:
+// RAISE it (look up), then SWING it down onto the forge (look down at it quickly),
+// timing the blow for when the metal glows white-hot (the marker in the green zone).
+//   Perfect (green, fast swing)   +20% shape, best quality
+//   Good (yellow, or a slow swing) +14% shape
+//   Off                            +7% shape, hurts quality
+// Punching the forge still works as a light tap, but a tap is never better than Good.
 // Average accuracy decides the best quality you can get: Crude, Standard, Fine or Masterwork.
 // Your Smithing level then decides how likely you are to get it (low at level 1, certain later).
 // Smithing level widens the green zone and slows the marker.
@@ -19,11 +21,17 @@ import { QUALITIES, describeInfusion, weaponLore } from "./weapons.js";
 import { hudHoldUntil } from "./combat.js";
 import { show } from "./ui.js";
 import { notify } from "./quests.js";
+import { getHeldItem } from "./progression.js";
 
 const FORGE = "ponce:smithing_forge";
 export const BAR = 25;
 export const HEAT_TICKS = 400; // 20 seconds before the metal cools
 const MAX_DISTANCE = 6;
+export const HAMMER = "ponce:smith_hammer";
+export const RAISE_PITCH = -15; // looking at least this far up raises the hammer
+export const LAND_PITCH = 20; // looking at least this far down brings it down on the forge
+export const SWING_WINDOW = 8; // ticks from raised to landed, or the swing peters out
+export const FAST_SWING = 4; // a swing this quick (or quicker) is a full-strength blow
 
 export const sessions = new Map(); // player id -> forging session
 
@@ -83,8 +91,9 @@ export async function openForgeMenu(player, block) {
     .title("§l§6Smithing Forge")
     .body(
       `§7Smithing level: §e${level}\n` +
-      "§7Pick a weapon to forge. Then §fpunch the forge§7 each time the marker is in the §agreen§7 zone. " +
-      "Finish shaping before the metal cools. Better timing makes a better weapon.\n§8Stay within a few blocks of the forge."
+      "§7Pick a weapon to forge. Then, holding your §6Smith's Hammer§7: §flook up§7 to raise it, and §fswing your view down onto the forge§7 " +
+      "to strike when the metal glows (the marker in the §agreen§7). Quick, full swings strike hardest. " +
+      "Finish shaping before the metal cools. Better blows make a better weapon.\n§8Punching the forge works as a light tap, but never a perfect blow. Stay within a few blocks."
     );
   for (const [, def] of ORDER) {
     const ok = level >= def.forge.smithing && hasAll(player, def.forge.materials);
@@ -159,8 +168,12 @@ function start(player, loc, dimension, id, def, level, infusions = []) {
   };
   newZone(s);
   sessions.set(player.id, s);
+  if (countItem(player, HAMMER) === 0) {
+    give(player, new ItemStack(HAMMER, 1));
+    player.sendMessage("§6[Forge] §fBram's spare Smith's Hammer is yours. §7Hold it, look up to raise it, then swing down onto the forge.");
+  }
   player.onScreenDisplay.setTitle("§6Shape the blade", {
-    subtitle: "§fPunch the forge when the marker is in the §agreen", fadeInDuration: 5, stayDuration: 40, fadeOutDuration: 10,
+    subtitle: "§fRaise your hammer (look up), then swing down when the metal glows", fadeInDuration: 5, stayDuration: 50, fadeOutDuration: 10,
   });
   dimension.playSound("bucket.fill_lava", { x: loc.x + 0.5, y: loc.y + 1, z: loc.z + 0.5 });
 }
@@ -175,26 +188,38 @@ export function renderBar(s) {
     else bar += "§8|";
   }
   const heatColor = s.heat > HEAT_TICKS / 2 ? "§6" : s.heat > HEAT_TICKS / 4 ? "§c" : "§4";
-  return `§fSHAPE ${Math.min(100, Math.floor(s.progress))}%  ${bar}  ${heatColor}HEAT ${Math.ceil(s.heat / 20)}s`;
+  const hammer = s.raised ? "§a▲ RAISED - swing down!" : s.holding === false ? "§7hold your hammer" : "§7look up to raise";
+  return `§fSHAPE ${Math.min(100, Math.floor(s.progress))}%  ${bar}  ${heatColor}HEAT ${Math.ceil(s.heat / 20)}s\n${hammer}`;
 }
 
-export function strike(player, s) {
+/**
+ * One blow on the blade. kind: "swing" (a hammer swing; swingTicks = how long it took) or "tap" (a punch).
+ * The glow timing sets the grade; a tap or a slow swing can't do better than Good.
+ */
+export function strike(player, s, { kind = "tap", swingTicks = 0 } = {}) {
   const now = system.currentTick;
-  if (now - s.lastStrike < 4) return; // one strike per punch
+  if (now - s.lastStrike < 4) return; // one strike per blow
   s.lastStrike = now;
   const p = Math.round(s.pos);
-  const perfect = p >= s.zone && p < s.zone + s.width;
-  const good = !perfect && p >= s.zone - 2 && p < s.zone + s.width + 2;
+  const inZone = p >= s.zone && p < s.zone + s.width;
+  const nearZone = !inZone && p >= s.zone - 2 && p < s.zone + s.width + 2;
+  const full = kind === "swing" && swingTicks <= FAST_SWING;
+  const perfect = inZone && full;
+  const good = !perfect && (inZone || nearZone);
   s.strikes++;
   const dim = world.getDimension(s.dim);
   const top = { x: s.loc.x + 0.5, y: s.loc.y + 1.1, z: s.loc.z + 0.5 };
   if (perfect) { s.progress += 20; s.score += 3; }
   else if (good) { s.progress += 14; s.score += 1; }
   else { s.progress += 7; s.score -= 2; }
-  dim.playSound("random.anvil_use", top, { volume: 0.8, pitch: perfect ? 1.4 : good ? 1.1 : 0.7 });
-  try { dim.spawnParticle("minecraft:lava_particle", top); } catch { /* ignore */ }
+  dim.playSound(kind === "swing" ? "random.anvil_land" : "random.anvil_use", top, { volume: kind === "swing" ? 0.6 : 0.8, pitch: perfect ? 1.5 : good ? 1.1 : 0.7 });
+  try {
+    dim.spawnParticle("minecraft:lava_particle", top);
+    if (kind === "swing") dim.spawnParticle(perfect ? "minecraft:critical_hit_emitter" : "minecraft:basic_crit_particle", top);
+  } catch { /* ignore */ }
+  const why = inZone && !full ? (kind === "tap" ? " §7(tap: swing the hammer for a perfect blow)" : " §7(too slow: swing faster)") : "";
   player.onScreenDisplay.setTitle(" ", {
-    subtitle: perfect ? "§a§lPERFECT" : good ? "§eGood" : "§cOff", fadeInDuration: 0, stayDuration: 8, fadeOutDuration: 4,
+    subtitle: (perfect ? "§a§lPERFECT" : good ? "§eGood" : "§cOff") + why, fadeInDuration: 0, stayDuration: 10, fadeOutDuration: 4,
   });
   newZone(s);
   if (s.progress >= 100) finish(player, s, false);
@@ -264,6 +289,17 @@ function tickSessions() {
       player.sendMessage("§c[Ponce] You left the forge and the metal cooled into scrap. The materials are lost.");
       continue;
     }
+    // The hammer: look up to raise it, then bring your view down onto the forge to swing it
+    s.holding = getHeldItem(player)?.typeId === HAMMER;
+    const pitch = player.getRotation?.().x ?? 0;
+    const now = system.currentTick;
+    if (!s.holding) s.raised = false;
+    else if (pitch <= RAISE_PITCH) { s.raised = true; s.raisedAt = now; }
+    else if (s.raised && pitch >= LAND_PITCH) {
+      s.raised = false;
+      strike(player, s, { kind: "swing", swingTicks: now - s.raisedAt });
+      if (!sessions.has(pid)) continue; // that blow finished the blade
+    } else if (s.raised && now - s.raisedAt > SWING_WINDOW) s.raised = false; // lowered too slowly: no blow
     s.heat--;
     s.pos += s.dir * s.speed;
     if (s.pos >= BAR - 1) { s.pos = BAR - 1; s.dir = -1; }
@@ -290,7 +326,7 @@ export function registerForging() {
   world.afterEvents.entityHitBlock.subscribe(({ damagingEntity, hitBlock }) => {
     if (damagingEntity?.typeId !== "minecraft:player" || hitBlock.typeId !== FORGE) return;
     const s = sessions.get(damagingEntity.id);
-    if (s && sameSpot(s.loc, hitBlock.location)) strike(damagingEntity, s);
+    if (s && sameSpot(s.loc, hitBlock.location)) strike(damagingEntity, s, { kind: "tap" });
   });
 
   // Don't let a forge be broken mid-job

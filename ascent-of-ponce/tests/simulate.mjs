@@ -51,12 +51,22 @@ function makePlayer(name) {
     teleport(loc, o) { p.teleportedTo = { ...loc }; p.teleportOptions = o; }, setSpawnPoint(sp) { p.spawnPoint = sp; },
     commands: [], runCommand(c) { p.commands.push(c); return { successCount: 1 }; },
     velocity: { x: 0, y: 0, z: 0 }, getVelocity() { return p.velocity; },
+    rotation: { x: 0, y: 0 }, getRotation() { return p.rotation; },
     onScreenDisplay: { setTitle: (t, o) => msgs.push("TITLE " + t + " " + (o?.subtitle ?? "")), setActionBar: (t) => (p.actionBar = t) },
     sendMessage: (m) => msgs.push(m), playSound() {}, hasTag: (t) => p.tags.includes(t) });
   return p;
 }
 
 await import("../behavior_pack/scripts/main.js");
+const { sessions: forgeSessions } = await import("../behavior_pack/scripts/forging.js");
+/** One hammer blow: look up (raise), then look down onto the forge `ticks` later. perfectGlow puts the marker in the zone. */
+function swingHammer(p, { ticks = 2, perfectGlow = true } = {}) {
+  p.rotation.x = -40; system.tick(1);
+  for (let i = 1; i < ticks; i++) { p.rotation.x = -5; system.tick(1); }
+  const st = forgeSessions.get(p.id);
+  if (st && perfectGlow) st.pos = st.zone;
+  p.rotation.x = 45; system.tick(1);
+}
 const { getData: getDataFor } = await import("../behavior_pack/scripts/data.js");
 const fire = (n, e) => world.afterEvents[n].h.forEach((f) => f(e));
 globalThis.__fire = fire;
@@ -520,11 +530,31 @@ console.log("forms shown:", log.length);
   assert(e1.cancel, "using the forge doesn't place blocks on it");
   assert(sessions.has(j.id), "forging session started");
   assert(count("ponce:ironheart_ingot") === 0 && count("ponce:ember_copper_ingot") === 0, "materials consumed");
-  for (let i = 0; i < 10 && sessions.has(j.id); i++) { const s = sessions.get(j.id); s.pos = s.zone; punch(); system.tick(5); }
+  assert(count("ponce:smith_hammer") === 1, "your first forge job comes with a Smith's Hammer");
+  const hammer = j.items.find((i) => i?.typeId === "ponce:smith_hammer");
+  j.setHeld(hammer);
+  for (let i = 0; i < 10 && sessions.has(j.id); i++) { swingHammer(j); system.tick(4); }
   let sword = forged("ponce:iron_longsword")[0];
   assert(sword?.getDynamicProperty("ponce:quality") === "masterwork", "all-perfect strikes forge a Masterwork: " + sword?.getDynamicProperty("ponce:quality"));
   assert(sword.nameTag.includes("Masterwork") && sword.lore.some((l) => l.includes("Masterwork")), "quality shown in name and tooltip");
   assert(d.jobs.smithing.xp > 0 || d.jobs.smithing.level > 1, "Smithing XP gained");
+
+  // Taps (punches) and slow swings top out at Good; a hammer swing has to be quick for a perfect blow
+  await startForge("ponce:iron_longsword");
+  for (let i = 0; i < 12 && sessions.has(j.id); i++) { const st = sessions.get(j.id); st.pos = st.zone; punch(); system.tick(5); }
+  assert(forged("ponce:iron_longsword").pop()?.getDynamicProperty("ponce:quality") === "standard", "punching in the zone every time only makes a Standard weapon");
+  await startForge("ponce:iron_longsword");
+  for (let i = 0; i < 12 && sessions.has(j.id); i++) { swingHammer(j, { ticks: 7 }); system.tick(4); }
+  assert(forged("ponce:iron_longsword").pop()?.getDynamicProperty("ponce:quality") === "standard", "slow swings count as Good blows, not Perfect");
+  await startForge("ponce:iron_longsword");
+  const st0 = sessions.get(j.id), p0 = st0.progress;
+  j.rotation.x = -40; system.tick(1); j.rotation.x = 0; system.tick(12); j.rotation.x = 45; system.tick(1);
+  assert(sessions.get(j.id)?.progress === p0, "raising the hammer and lowering it slowly doesn't strike");
+  j.setHeld(undefined);
+  swingHammer(j);
+  assert(sessions.get(j.id)?.progress === p0, "swinging with an empty hand does nothing (hold the hammer)");
+  sessions.delete(j.id);
+  j.setHeld(hammer);
   d.jobs.smithing.level = 1; d.jobs.smithing.xp = 0;
 
   await startForge("ponce:iron_dagger");
@@ -568,19 +598,38 @@ console.log("forms shown:", log.length);
     system.tick(1); await flush();
   };
   const punchPot = () => fire("entityHitBlock", { damagingEntity: j, hitBlock: pot });
+  const { paceBands } = await import("../behavior_pack/scripts/cooking.js");
+  /** Stir for up to `ticks`: look into the pot and turn your view. speed(band) picks degrees per second. */
+  const stir = (ticks, speed = ([lo, hi]) => (lo + hi) / 2, pitch = 50) => {
+    for (let i = 0; i < ticks && pots.has(j.id); i++) {
+      const st = pots.get(j.id);
+      j.rotation.x = pitch; j.rotation.y = (j.rotation.y + speed(st.bands[st.pace]) / 20) % 360;
+      system.tick(1);
+    }
+  };
 
   await startCook(0, [["ponce:raw_boar", 1], ["minecraft:stick", 1]]);
-  assert(pots.has(j.id) && count("ponce:raw_boar") === 0, "cooking started, ingredients used");
-  punchPot();
-  assert(pots.has(j.id), "punching too early does nothing");
-  while (pots.has(j.id) && pots.get(j.id).progress < (pots.get(j.id).perfect[0] + pots.get(j.id).perfect[1]) / 2) system.tick(1);
-  punchPot();
-  assert(count("ponce:boar_skewer") === 2, "perfect timing gives 2 servings");
+  assert(pots.has(j.id) && count("ponce:raw_boar") === 0 && j.msgs.some((m) => m.includes("Stir the pot")), "cooking started, ingredients used, told to stir");
+  const paces = new Set();
+  for (let i = 0; i < 400 && pots.has(j.id); i++) { paces.add(pots.get(j.id).pace); stir(1); }
+  assert(count("ponce:boar_skewer") === 2, "stirring at the called pace the whole time: perfect, 2 servings");
+  assert(paces.size === 2, "the pot calls for both gentle and brisk stirring as it cooks");
   assert(d.jobs.cooking.xp > 0, "Cooking XP gained");
 
   await startCook(0, [["ponce:raw_boar", 1], ["minecraft:stick", 1]]);
-  system.tick(200);
-  assert(!pots.has(j.id) && count("ponce:burnt_mess") === 1, "waiting too long burns it");
+  stir(60, () => 0);
+  assert(pots.has(j.id) && pots.get(j.id).progress === 0 && pots.get(j.id).scorch > 50, "not stirring: nothing cooks and the bottom scorches");
+  stir(60, () => 200, 0);
+  assert(!pots.has(j.id) && count("ponce:burnt_mess") === 1, "circling your view without looking into the pot isn't stirring: it burns");
+
+  await startCook(0, [["ponce:raw_boar", 1], ["minecraft:stick", 1]]);
+  stir(600, ([, hi]) => hi + 150);
+  assert(count("ponce:boar_skewer") === 3, "stirring far too fast still cooks it, but only 1 serving");
+
+  await startCook(0, [["ponce:raw_boar", 1], ["minecraft:stick", 1]]);
+  j.rotation.x = 50;
+  for (let i = 0; i < 300 && pots.has(j.id); i++) { if (i % 6 === 0) punchPot(); system.tick(1); }
+  assert(!pots.has(j.id) && count("ponce:boar_skewer") >= 4, "punching the pot counts as stirring (a fallback that still finishes the dish)");
 
   await startCook(3, [["ponce:raw_boar", 2], ["minecraft:potato", 2]]);
   assert(!pots.has(j.id) && count("ponce:raw_boar") === 2, "Hearty Roast needs Cooking 8: refused, ingredients kept");
@@ -656,7 +705,8 @@ console.log("forms shown:", log.length);
     globalThis.nextFormResponse = [{ canceled: false, selection: ORDER.findIndex(([x]) => x === id) }, { canceled: false, selection: 0 }, { canceled: false, formValues: picks }];
     fireBefore("playerInteractWithBlock", { block: forge, player: c, isFirstEvent: true, cancel: false });
     system.tick(1); await flush();
-    for (let i = 0; i < 12 && sessions.has(c.id); i++) { const s = sessions.get(c.id); s.pos = s.zone; fire("entityHitBlock", { damagingEntity: c, hitBlock: forge }); system.tick(5); }
+    c.setHeld(new ItemStack("ponce:smith_hammer"));
+    for (let i = 0; i < 12 && sessions.has(c.id); i++) { swingHammer(c); system.tick(4); }
     return c.items.filter((i) => i?.typeId === id).pop();
   };
 
@@ -1721,7 +1771,8 @@ console.log("forms shown:", log.length);
   globalThis.nextFormResponse = [{ canceled: false, selection: ORDER.findIndex(([id]) => id === "ponce:stormsteel_longsword") }, { canceled: false, selection: 0 }];
   fireBefore("playerInteractWithBlock", { block: forge, player: s, isFirstEvent: true, cancel: false });
   system.tick(1); await flush();
-  for (let i = 0; i < 12 && sessions.has(s.id); i++) { const st = sessions.get(s.id); st.pos = st.zone; fire("entityHitBlock", { damagingEntity: s, hitBlock: forge }); system.tick(5); }
+  s.setHeld(new ItemStack("ponce:smith_hammer"));
+  for (let i = 0; i < 12 && sessions.has(s.id); i++) { swingHammer(s); system.tick(4); }
   const sword = s.items.find((i) => i?.typeId === "ponce:stormsteel_longsword");
   assert(sword?.getDynamicProperty("ponce:quality") === "masterwork" && sword.lore.some((l) => l.includes("Tier III")), "a Stormsteel Longsword can be forged (tooltip says Tier III)");
 

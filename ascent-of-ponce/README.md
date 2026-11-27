@@ -112,7 +112,13 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
 
 ### Smithing: forging minigame
 - Craft a **Smithing Forge** from 3 Ember Copper Ingots, 5 Bricks blocks and 1 Iron Block.
-- Use it (right-click / long-press), pick a weapon, and the materials go in. Then **punch the forge** whenever the sweeping marker is in the **green** zone (yellow counts as good). Finish before the metal cools (20 s). Stay within 6 blocks or the job is lost.
+- Use it (right-click / long-press), pick a weapon, and the materials go in. Then **swing your Smith's Hammer**:
+  - Hold the hammer and **look up** to raise it (the bar says *RAISED*).
+  - **Swing your view down onto the forge** to strike. Time the blow for when the metal glows white-hot (the sweeping marker in the **green** zone; yellow counts as good).
+  - A **quick, full swing** (from raised to down in about a fifth of a second) is needed for a Perfect blow; a slow swing counts as Good at best, and lowering the hammer too slowly doesn't strike at all.
+  - Punching the forge still works as a light tap, but a tap is never better than Good.
+  - Finish before the metal cools (20 s). Stay within 6 blocks or the job is lost.
+- **Smith's Hammer**: your first forge job comes with one. Otherwise craft it (3 Ironheart Ingots over 2 sticks, like a pickaxe) or buy it from Bram for 30 Col.
 - **Recipes**: Tier I is Ironheart plus 1 Ember Copper (Smithing 1). Tier II is Ironheart plus 1 Glimmer Silver plus Floor 1 drops (Smithing 8).
 - **Quality**: your average accuracy sets the best quality you can get, and your **Smithing level** sets how likely you are to get it. Below that, the result drops a grade (you're told when it happens):
 
@@ -150,7 +156,13 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
 
 ### Cooking: timing minigame and meal buffs
 - Craft a **Cooking Pot** from 7 Ember Copper Ingots and 1 Campfire.
-- Use it, pick a recipe, then **punch the pot** to take the dish off the heat. Green gives 2 servings, yellow gives 1, and waiting too long gives a Burnt Mess. Cooking level widens the green window.
+- Use it, pick a recipe, then **stir**: look down into the pot and **circle your view** around it.
+  - The pot calls for a **gentle** or a **brisk** stir and switches every few seconds (a chime tells you). The meter shows your stirring speed against the green band.
+  - Stirring at the called pace cooks the dish fastest. Too slow cooks slowly and starts to catch; too fast sloshes and cooks slowly.
+  - **Stop stirring** and the bottom scorches (shown as *scorch %*); fully scorched gives a Burnt Mess.
+  - Stir at the right pace for most of the dish for a **perfect** meal (2 servings); otherwise you get 1.
+  - Punching the pot counts as a small stir, as a fallback.
+  - Cooking level widens the pace bands.
 
 | Meal | Ingredients | Buff | Cooking Lv |
 |---|---|---|---|

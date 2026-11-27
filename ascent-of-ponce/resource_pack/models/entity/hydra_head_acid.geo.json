@@ -5,28 +5,55 @@
       "description": {
         "identifier": "geometry.ponce.hydra_head_acid",
         "texture_width": 64,
-        "texture_height": 32,
-        "visible_bounds_width": 2,
-        "visible_bounds_height": 2,
+        "texture_height": 64,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 4,
         "visible_bounds_offset": [
           0,
-          1.0,
+          2.0,
           0
         ]
       },
       "bones": [
         {
-          "name": "head",
+          "name": "neck",
           "pivot": [
             0,
-            3,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -2,
+                0,
+                -2
+              ],
+              "size": [
+                4,
+                14,
+                4
+              ],
+              "uv": [
+                0,
+                32
+              ]
+            }
+          ]
+        },
+        {
+          "name": "head",
+          "parent": "neck",
+          "pivot": [
+            0,
+            16,
             0
           ],
           "cubes": [
             {
               "origin": [
                 -4,
-                0,
+                13,
                 -5
               ],
               "size": [
@@ -42,7 +69,7 @@
             {
               "origin": [
                 -3,
-                1,
+                14,
                 -11
               ],
               "size": [
@@ -58,7 +85,7 @@
             {
               "origin": [
                 -4,
-                6,
+                19,
                 -2
               ],
               "size": [
@@ -74,7 +101,7 @@
             {
               "origin": [
                 2,
-                6,
+                19,
                 -2
               ],
               "size": [
@@ -86,22 +113,6 @@
                 8,
                 14
               ]
-            },
-            {
-              "origin": [
-                -2.5,
-                -6,
-                -2
-              ],
-              "size": [
-                5,
-                6,
-                5
-              ],
-              "uv": [
-                0,
-                20
-              ]
             }
           ]
         },
@@ -110,14 +121,14 @@
           "parent": "head",
           "pivot": [
             0,
-            1,
+            14,
             -5
           ],
           "cubes": [
             {
               "origin": [
                 -3,
-                -1,
+                12,
                 -10
               ],
               "size": [

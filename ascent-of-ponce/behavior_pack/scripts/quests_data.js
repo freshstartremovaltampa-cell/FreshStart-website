@@ -299,7 +299,7 @@ export const SHOPS = {
   },
   smith: {
     buy: [["ponce:ember_copper_ingot", 10], ["ponce:ironheart_ingot", 25], ["ponce:glimmer_silver_ingot", 60], ["ponce:stormsteel_ingot", 110],
-      ["ponce:smithing_forge", 200]],
+      ["ponce:smithing_forge", 200], ["ponce:smith_hammer", 30]],
     sell: [["ponce:raw_ember_copper", 4], ["ponce:raw_ironheart", 10], ["ponce:raw_glimmer_silver", 25], ["ponce:raw_stormsteel", 40]],
   },
   warden: {
