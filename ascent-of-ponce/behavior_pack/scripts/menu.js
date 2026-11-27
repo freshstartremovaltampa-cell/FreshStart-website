@@ -17,7 +17,7 @@ import { buffActive } from "./cooking.js";
 import { needsStarter, offerStarter } from "./starter.js";
 import { activeQuests, completedCount, isComplete, MAX_ACTIVE, objectiveProgress, openQuest } from "./quests.js";
 import { DIFFICULTY, NPCS } from "./quests_data.js";
-import { mapText, travelToFloor, travelToWorldSpawn, unlockedFloors } from "./floors.js";
+import { FLOORS, mapText, travelToFloor, travelToWorldSpawn, unlockedFloors } from "./floors.js";
 import { equippedSkill } from "./abilities.js";
 import { INFUSIONS, WEAPON_DEFS } from "./weapon_data.js";
 import { describeInfusion, describeWeaponReq } from "./weapons.js";
@@ -333,69 +333,67 @@ async function openSettings(player) {
 
 // ---------- Dev tools (players tagged "ponce_dev") ----------
 
+// Each entry: [button label, action]. Exported for the tests.
+export const DEV_ACTIONS = [
+  ["+1,000 EXP", (player) => addXp(player, 1000)],
+  ["+10,000 EXP", (player) => addXp(player, 10000)],
+  ["+100 mastery to all weapons", (player) => WEAPON_KEYS.forEach((k) => addMastery(player, k, 100, true))],
+  ["+1,000 Col", (player, d) => { d.col += 1000; markDirty(player); player.sendMessage(`§a[Ponce] +1,000 Col (now ${d.col}).`); }],
+  ["+10,000 Col", (player, d) => { d.col += 10000; markDirty(player); player.sendMessage(`§a[Ponce] +10,000 Col (now ${d.col}).`); }],
+  ["Unlock all floors", (player, d) => {
+    // Travel to every built floor, with every gate below the top floor open. The top floor's guardian still has to be beaten.
+    d.highestFloor = Math.max(d.highestFloor ?? 1, FLOORS.length);
+    markDirty(player);
+    player.sendMessage(`§a[Ponce] Floors 1-${FLOORS.length} unlocked. §7Use Map & Travel to go to any of them.`);
+  }],
+  ["Give all Ponce weapons", (player) => {
+    const inv = player.getComponent("minecraft:inventory")?.container;
+    for (const id of Object.keys(WEAPON_DEFS)) inv?.addItem(new ItemStack(id, 1));
+    player.sendMessage("§a[Ponce] Gave every Ponce weapon (needs free inventory space).");
+  }],
+  ["Unlock all skills + 60 in every stat", (player, d) => {
+    d.level = Math.max(d.level, 40);
+    for (const k of STAT_KEYS) d.stats[k] = Math.max(d.stats[k], 60);
+    for (const s of SKILLS) if (!d.skills.includes(s.id)) d.skills.push(s.id);
+    markDirty(player);
+    applyStatEffects(player);
+    player.sendMessage("§a[Ponce] All skills unlocked, Lv 40, 60 in every stat.");
+  }],
+  ["Job kit: ingots, forge, pot, ingredients", (player) => {
+    const kit = [["ponce:ironheart_ingot", 16], ["ponce:ember_copper_ingot", 8], ["ponce:glimmer_silver_ingot", 4],
+      ["ponce:smithing_forge", 1], ["ponce:cooking_pot", 1], ["ponce:raw_boar", 8], ["ponce:raw_hare", 4],
+      ["ponce:jelly_gel", 6], ["minecraft:stick", 8], ["minecraft:carrot", 4], ["minecraft:bowl", 4],
+      ["minecraft:wheat", 4], ["minecraft:sugar", 4], ["minecraft:potato", 8], ["minecraft:iron_pickaxe", 1]];
+    const inv = player.getComponent("minecraft:inventory")?.container;
+    for (const [id, n] of kit) inv?.addItem(new ItemStack(id, n));
+    player.sendMessage("§a[Ponce] Job kit given (needs free inventory space).");
+  }],
+  ["All jobs to level 20", (player, d) => {
+    for (const j of Object.values(d.jobs)) j.level = Math.max(j.level, 20);
+    markDirty(player);
+    player.sendMessage("§a[Ponce] Mining, Smithing and Cooking set to level 20.");
+  }],
+  ["Spawn the quest givers here", (player) => {
+    const ids = Object.keys(NPCS);
+    ids.forEach((id, i) => {
+      const a = (i / ids.length) * Math.PI * 2;
+      const loc = { x: player.location.x + Math.cos(a) * 3, y: player.location.y, z: player.location.z + Math.sin(a) * 3 };
+      const npc = player.dimension.spawnEntity(id, loc);
+      npc.nameTag = NPCS[id].name;
+    });
+    player.sendMessage("§a[Ponce] Spawned the quest givers. Use them (right-click / long-press) to talk.");
+  }],
+  ["§cReset my progress", (player) => { resetData(player); applyStatEffects(player); player.sendMessage("§c[Ponce] Progress reset."); }],
+];
+
 async function openDev(player) {
-  const res = await show(player, new ActionFormData()
-    .title("§l§cDev Tools")
-    .button("+1,000 EXP")
-    .button("+10,000 EXP")
-    .button("+100 mastery to all weapons")
-    .button("+10 Col")
-    .button("Give all Ponce weapons")
-    .button("Unlock all skills + 60 in every stat")
-    .button("Job kit: ingots, forge, pot, ingredients")
-    .button("All jobs to level 20")
-    .button("Spawn the quest givers here")
-    .button("§cReset my progress")
-    .button("Back"));
+  const form = new ActionFormData().title("§l§cDev Tools");
+  for (const [label] of DEV_ACTIONS) form.button(label);
+  form.button("Back");
+  const res = await show(player, form);
   if (res.canceled) return;
-  const d = getData(player);
-  switch (res.selection) {
-    case 0: addXp(player, 1000); break;
-    case 1: addXp(player, 10000); break;
-    case 2: WEAPON_KEYS.forEach((k) => addMastery(player, k, 100, true)); break;
-    case 3: d.col += 10; markDirty(player); break;
-    case 4: {
-      const inv = player.getComponent("minecraft:inventory")?.container;
-      for (const id of Object.keys(WEAPON_DEFS)) inv?.addItem(new ItemStack(id, 1));
-      player.sendMessage("§a[Ponce] Gave every Ponce weapon (needs free inventory space).");
-      break;
-    }
-    case 5:
-      d.level = Math.max(d.level, 40);
-      for (const k of STAT_KEYS) d.stats[k] = Math.max(d.stats[k], 60);
-      for (const s of SKILLS) if (!d.skills.includes(s.id)) d.skills.push(s.id);
-      markDirty(player);
-      applyStatEffects(player);
-      player.sendMessage("§a[Ponce] All skills unlocked, Lv 40, 60 in every stat.");
-      break;
-    case 6: {
-      const kit = [["ponce:ironheart_ingot", 16], ["ponce:ember_copper_ingot", 8], ["ponce:glimmer_silver_ingot", 4],
-        ["ponce:smithing_forge", 1], ["ponce:cooking_pot", 1], ["ponce:raw_boar", 8], ["ponce:raw_hare", 4],
-        ["ponce:jelly_gel", 6], ["minecraft:stick", 8], ["minecraft:carrot", 4], ["minecraft:bowl", 4],
-        ["minecraft:wheat", 4], ["minecraft:sugar", 4], ["minecraft:potato", 8], ["minecraft:iron_pickaxe", 1]];
-      const inv = player.getComponent("minecraft:inventory")?.container;
-      for (const [id, n] of kit) inv?.addItem(new ItemStack(id, n));
-      player.sendMessage("§a[Ponce] Job kit given (needs free inventory space).");
-      break;
-    }
-    case 7:
-      for (const j of Object.values(d.jobs)) j.level = Math.max(j.level, 20);
-      markDirty(player);
-      player.sendMessage("§a[Ponce] Mining, Smithing and Cooking set to level 20.");
-      break;
-    case 8: {
-      const ids = Object.keys(NPCS);
-      ids.forEach((id, i) => {
-        const a = (i / ids.length) * Math.PI * 2;
-        const loc = { x: player.location.x + Math.cos(a) * 3, y: player.location.y, z: player.location.z + Math.sin(a) * 3 };
-        const npc = player.dimension.spawnEntity(id, loc);
-        npc.nameTag = NPCS[id].name;
-      });
-      player.sendMessage("§a[Ponce] Spawned the quest givers. Use them (right-click / long-press) to talk.");
-      break;
-    }
-    case 9: resetData(player); applyStatEffects(player); player.sendMessage("§c[Ponce] Progress reset."); break;
-    default: return openMainMenu(player);
-  }
+  const action = DEV_ACTIONS[res.selection];
+  if (!action) return openMainMenu(player);
+  action[1](player, getData(player));
   return openDev(player);
 }

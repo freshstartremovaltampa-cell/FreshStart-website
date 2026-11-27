@@ -8,7 +8,7 @@ A Minecraft Bedrock add-on. Explorers climb a floating tower, floor by floor, se
 3. Create a world, then under **Add-Ons** turn on the behavior pack. The resource pack is added with it.
 4. Spawn in. You get a **Wayfarer's Compass**. Use it to open the menu.
 
-For testing, run `/tag @s add ponce_dev` (cheats on) to show **Dev Tools** in the menu.
+For testing, run `/tag @s add ponce_dev` (cheats on) to show **Dev Tools** in the menu. It has buttons for EXP, mastery, **+1,000 / +10,000 Col**, **Unlock all floors** (travel to every floor from Map & Travel), all weapons, all skills, a job kit, jobs to level 20, the quest givers, and a progress reset. Remove the tag with `/tag @s remove ponce_dev`.
 
 ## World defaults
 - **Keep Inventory is turned on** the first time the add-on runs in a world (new or existing), so a death on a floor doesn't scatter your forged weapons and Relics. It's only set once: if you turn it off in the world settings, it stays off.

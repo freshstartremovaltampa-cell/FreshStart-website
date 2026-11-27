@@ -1464,6 +1464,26 @@ console.log("forms shown:", log.length);
   assert([2, 3, 4].every((n) => avg(n, "xp") > avg(n - 1, "xp")), "quest EXP still rises with difficulty");
 }
 
+// ================= Dev Tools =================
+{
+  const { DEV_ACTIONS } = await import("../behavior_pack/scripts/menu.js");
+  const floors = await import("../behavior_pack/scripts/floors.js");
+  const run = (p, label) => DEV_ACTIONS.find(([l]) => l === label)[1](p, getDataFor(p));
+  const dv = makePlayer("Tester"); world.players.push(dv);
+  Object.assign(dv, { dimension: dim, location: { x: 0, y: 64, z: 0 }, isSneaking: false, getGameMode: () => "Survival" });
+  const dd = getDataFor(dv); dd.starter = "ponce:wayfarers_sword";
+  const col0 = dd.col;
+  run(dv, "+1,000 Col"); run(dv, "+10,000 Col");
+  assert(dd.col === col0 + 11000, "Dev Tools: +1,000 and +10,000 Col buttons");
+  assert(floors.unlockedFloors(dv).length === 1, "a new player has only Floor 1");
+  run(dv, "Unlock all floors");
+  assert(floors.unlockedFloors(dv).length === floors.FLOORS.length && dd.highestFloor === floors.FLOORS.length,
+    `Dev Tools: Unlock all floors opens travel to all ${floors.FLOORS.length} floors`);
+  dd.highestFloor = 9; run(dv, "Unlock all floors");
+  assert(dd.highestFloor === 9, "...and never lowers your progress");
+  world.players.splice(world.players.indexOf(dv), 1);
+}
+
 // ================= World defaults =================
 {
   const GR = await import("../behavior_pack/scripts/gamerules.js");
