@@ -323,6 +323,31 @@ export function useStairGate(player, id) {
   return "open";
 }
 
+// Walking into a Stair Gate works like a portal: stand against it for half a second.
+// (Tapping it also works where the game reports the tap; on some devices it doesn't for custom blocks.)
+const GATE_HOLD_TICKS = 10;
+const GATE_RETRY_TICKS = 100;
+const gateSince = new Map(); // player id -> tick they reached the gate
+const gateCooldown = new Map(); // player id -> tick before which the gate won't fire again
+
+export function atStairGate(f, loc) {
+  const G = f.gen.GATE;
+  return Math.abs(loc.x - (G.x + 0.5)) <= 2.9 && Math.abs(loc.z - (G.z + 0.5)) <= 1.7 && loc.y >= G.y - 1.5 && loc.y <= G.y + 4;
+}
+
+function gateTick() {
+  const t = system.currentTick;
+  for (const p of world.getAllPlayers()) {
+    const f = floorAt(p.location);
+    if (!f || !atStairGate(f, p.location)) { gateSince.delete(p.id); continue; }
+    if (!gateSince.has(p.id)) { gateSince.set(p.id, t); continue; }
+    if (t - gateSince.get(p.id) < GATE_HOLD_TICKS || t < (gateCooldown.get(p.id) ?? 0)) continue;
+    gateSince.delete(p.id);
+    gateCooldown.set(p.id, t + GATE_RETRY_TICKS);
+    useStairGate(p, f.gen.FLOOR.id);
+  }
+}
+
 /** Where you are and how to reach the landmarks, for the map page. */
 export function mapText(player) {
   const p = player.location;
@@ -416,6 +441,8 @@ export function registerFloors() {
   system.runInterval(spawnTick, SPAWN.everyTicks);
   system.runInterval(fogTick, 20);
   system.runInterval(catchUpNpcs, 200);
+  system.runInterval(gateTick, 2);
+  world.afterEvents.playerLeave.subscribe(({ playerId }) => { gateSince.delete(playerId); gateCooldown.delete(playerId); });
   world.afterEvents.entitySpawn.subscribe(onEntitySpawn);
   world.afterEvents.playerLeave.subscribe(({ playerId }) => fogState.delete(playerId));
   world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {

@@ -1051,6 +1051,22 @@ console.log("forms shown:", log.length);
   const F2 = await import("../behavior_pack/scripts/floor2_gen.js");
   assert(a.teleportedTo && Math.abs(a.teleportedTo.x - F2.ARRIVAL.x) < 1 && Math.abs(a.teleportedTo.z - F2.ARRIVAL.z) < 1, "after the victory the gate takes you up to Floor 2");
 
+  // Walking into the gate works too (no tap needed), sealed or open
+  const gateFront = { x: GATE.x + 0.5, y: GATE.y, z: GATE.z + 1.5 };
+  const before = { ...a.location };
+  ad.highestFloor = 1; a.msgs.length = 0; a.teleportedTo = undefined;
+  a.location = { ...gateFront };
+  system.tick(30);
+  const sealedMsgs = a.msgs.filter((m) => m.includes("Stair Gate is sealed")).length;
+  assert(sealedMsgs === 1 && !a.teleportedTo, "walking into a sealed gate tells you it's sealed (once, not every tick)");
+  ad.highestFloor = 2;
+  system.tick(100);
+  assert(a.teleportedTo && Math.abs(a.teleportedTo.x - F2.ARRIVAL.x) < 1, "walking into the open gate takes you up to Floor 2");
+  a.location = { x: GATE.x + 0.5, y: GATE.y, z: GATE.z + 8.5 }; a.teleportedTo = undefined;
+  system.tick(30);
+  assert(!a.teleportedTo, "standing a few blocks away from the gate does nothing");
+  a.location = before;
+
   // Map text
   a.location = { x: FLOOR1.center.x + 0.5, y: FLOOR1.base + 1, z: FLOOR1.center.z + 10.5 };
   const t1 = f1.mapText(a);

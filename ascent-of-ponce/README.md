@@ -219,7 +219,7 @@ Floor 1 is a **floating island** about 500 blocks across at y 200, centered on x
   - Menu > **Travel** goes to Wayfarer's Rest or back to world spawn.
   - Your spawn point is set to the town.
 - **Guardian's Arena**: at the end of the north trail, 185 blocks from town. It's a flat ring of stone with lantern pillars, a chiseled dais where Ironhide appears, and an entrance from the trail on the south side.
-- **Stair Gate**: a glowing, unbreakable gate in the arena's north wall, with a stairway climbing away behind it. It's sealed until you've beaten Ironhide, and it opens per player. Floor 2 is still being built, so for now the open gate tells you that. Once Floor 2 exists, it will take you there.
+- **Stair Gate**: a glowing, unbreakable gate in the arena's north wall, with a stairway climbing away behind it. It's sealed until you've beaten Ironhide, and it opens per player. **Walk up against it** (or tap it) and it takes you to Floor 2; every floor's gate works the same way, leading to the next floor. The floors you've unlocked are also in **Map & Travel**.
 - **Map & Travel** (menu):
   - shows whether you're on Floor 1
   - gives the direction and distance to the town and the arena
