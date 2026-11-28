@@ -1,0 +1,108 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.ponce.cook_display.show": {
+      "loop": true,
+      "bones": {
+        "grill": {
+          "scale": [
+            "query.property('ponce:dish') == 0 ? 1 : 0",
+            "query.property('ponce:dish') == 0 ? 1 : 0",
+            "query.property('ponce:dish') == 0 ? 1 : 0"
+          ]
+        },
+        "stew": {
+          "scale": [
+            "query.property('ponce:dish') == 1 ? 1 : 0",
+            "query.property('ponce:dish') == 1 ? 1 : 0",
+            "query.property('ponce:dish') == 1 ? 1 : 0"
+          ]
+        },
+        "bake": {
+          "scale": [
+            "query.property('ponce:dish') == 2 ? 1 : 0",
+            "query.property('ponce:dish') == 2 ? 1 : 0",
+            "query.property('ponce:dish') == 2 ? 1 : 0"
+          ]
+        },
+        "roast": {
+          "scale": [
+            "query.property('ponce:dish') == 3 ? 1 : 0",
+            "query.property('ponce:dish') == 3 ? 1 : 0",
+            "query.property('ponce:dish') == 3 ? 1 : 0"
+          ]
+        },
+        "meat": {
+          "rotation": [
+            "query.property('ponce:side') * 120",
+            0,
+            0
+          ]
+        },
+        "swirl": {
+          "rotation": [
+            0,
+            "query.property('ponce:stir')",
+            0
+          ]
+        },
+        "filling": {
+          "scale": [
+            1,
+            "math.max(0.05, query.property('ponce:fill') / 10)",
+            1
+          ]
+        },
+        "soup0": {
+          "scale": [
+            "query.property('ponce:soup') == 0 ? 1 : 0",
+            "query.property('ponce:soup') == 0 ? 1 : 0",
+            "query.property('ponce:soup') == 0 ? 1 : 0"
+          ]
+        },
+        "soup1": {
+          "scale": [
+            "query.property('ponce:soup') == 1 ? 1 : 0",
+            "query.property('ponce:soup') == 1 ? 1 : 0",
+            "query.property('ponce:soup') == 1 ? 1 : 0"
+          ]
+        },
+        "soup2": {
+          "scale": [
+            "query.property('ponce:soup') == 2 ? 1 : 0",
+            "query.property('ponce:soup') == 2 ? 1 : 0",
+            "query.property('ponce:soup') == 2 ? 1 : 0"
+          ]
+        },
+        "soup3": {
+          "scale": [
+            "query.property('ponce:soup') == 3 ? 1 : 0",
+            "query.property('ponce:soup') == 3 ? 1 : 0",
+            "query.property('ponce:soup') == 3 ? 1 : 0"
+          ]
+        },
+        "bit1": {
+          "scale": [
+            "query.property('ponce:added') >= 1 ? 1 : 0",
+            "query.property('ponce:added') >= 1 ? 1 : 0",
+            "query.property('ponce:added') >= 1 ? 1 : 0"
+          ]
+        },
+        "bit2": {
+          "scale": [
+            "query.property('ponce:added') >= 2 ? 1 : 0",
+            "query.property('ponce:added') >= 2 ? 1 : 0",
+            "query.property('ponce:added') >= 2 ? 1 : 0"
+          ]
+        },
+        "bit3": {
+          "scale": [
+            "query.property('ponce:added') >= 3 ? 1 : 0",
+            "query.property('ponce:added') >= 3 ? 1 : 0",
+            "query.property('ponce:added') >= 3 ? 1 : 0"
+          ]
+        }
+      }
+    }
+  }
+}

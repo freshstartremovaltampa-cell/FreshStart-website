@@ -1,0 +1,28 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "ponce:forge_work",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/forge_work"
+      },
+      "geometry": {
+        "default": "geometry.ponce.forge_work"
+      },
+      "render_controllers": [
+        "controller.render.ponce.forge_work"
+      ],
+      "animations": {
+        "shape": "animation.ponce.forge_work.shape"
+      },
+      "scripts": {
+        "animate": [
+          "shape"
+        ]
+      }
+    }
+  }
+}

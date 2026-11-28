@@ -1,0 +1,28 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "ponce:cook_display",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/cook_display"
+      },
+      "geometry": {
+        "default": "geometry.ponce.cook_display"
+      },
+      "render_controllers": [
+        "controller.render.ponce.cook_display"
+      ],
+      "animations": {
+        "show": "animation.ponce.cook_display.show"
+      },
+      "scripts": {
+        "animate": [
+          "show"
+        ]
+      }
+    }
+  }
+}

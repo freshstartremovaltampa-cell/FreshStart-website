@@ -1,0 +1,73 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.ponce.forge_work.shape": {
+      "loop": true,
+      "bones": {
+        "s0": {
+          "scale": [
+            1,
+            "math.max(0.06, query.property('ponce:s0') / 5)",
+            1
+          ]
+        },
+        "s1": {
+          "scale": [
+            1,
+            "math.max(0.06, query.property('ponce:s1') / 5)",
+            1
+          ]
+        },
+        "s2": {
+          "scale": [
+            1,
+            "math.max(0.06, query.property('ponce:s2') / 5)",
+            1
+          ]
+        },
+        "s3": {
+          "scale": [
+            1,
+            "math.max(0.06, query.property('ponce:s3') / 5)",
+            1
+          ]
+        },
+        "s4": {
+          "scale": [
+            1,
+            "math.max(0.06, query.property('ponce:s4') / 5)",
+            1
+          ]
+        },
+        "s5": {
+          "scale": [
+            1,
+            "math.max(0.06, query.property('ponce:s5') / 5)",
+            1
+          ]
+        },
+        "s6": {
+          "scale": [
+            1,
+            "math.max(0.06, query.property('ponce:s6') / 5)",
+            1
+          ]
+        },
+        "s7": {
+          "scale": [
+            1,
+            "math.max(0.06, query.property('ponce:s7') / 5)",
+            1
+          ]
+        },
+        "s8": {
+          "scale": [
+            1,
+            "math.max(0.06, query.property('ponce:s8') / 5)",
+            1
+          ]
+        }
+      }
+    }
+  }
+}

@@ -25,6 +25,7 @@ import { hudHoldUntil } from "./combat.js";
 import { show } from "./ui.js";
 import { notify } from "./quests.js";
 import { getHeldItem } from "./progression.js";
+import { removeDisplay, setDisplay, spawnDisplay, sweepDisplays } from "./displays.js";
 
 const FORGE = "ponce:smithing_forge";
 const MAX_DISTANCE = 6;
@@ -58,6 +59,24 @@ export function coolRate(level) {
 }
 
 export const sessions = new Map(); // player id -> forging session
+const DISPLAY = "ponce:forge_work";
+
+/** Ends a forging job and clears the blade off the forge. */
+function endForge(pid) {
+  removeDisplay(sessions.get(pid)?.display);
+  sessions.delete(pid);
+}
+
+/** 0 dull, 1 cherry, 2 orange, 3 yellow, 4 white: how the blade on the forge glows. */
+export function heatLevel(h) {
+  return h > HEAT.burn ? 4 : h >= 80 ? 3 : h >= HEAT.workable ? 2 : h >= HEAT.crack ? 1 : 0;
+}
+
+function showForge(s) {
+  const props = { heat: heatLevel(s.heat) };
+  s.profile.forEach((v, i) => { props[`s${i}`] = Math.max(0, v); });
+  setDisplay(s.display, s.shown, props);
+}
 
 function sameSpot(a, b) {
   return a.x === b.x && a.y === b.y && a.z === b.z;
@@ -181,6 +200,10 @@ function start(player, loc, dimension, id, def, level, infusions = []) {
     heat: HEAT.start, phase: "shape", cracks: 0, burn: 0, quench: undefined, ticks: 0, lastStrike: -10, section: 4,
   };
   sessions.set(player.id, s);
+  // The blank on the forge, turned the way the smith faces so the tip is on their left
+  s.display = spawnDisplay(dimension, DISPLAY, { x: loc.x + 0.5, y: loc.y + 1, z: loc.z + 0.5 }, player.getRotation?.().y ?? 0);
+  s.shown = {};
+  showForge(s);
   if (countItem(player, HAMMER) === 0) {
     give(player, new ItemStack(HAMMER, 1));
     player.sendMessage("§6[Forge] §fBram's spare Smith's Hammer is yours.");
@@ -275,7 +298,10 @@ function quench(player, s) {
   s.quench = h >= QUENCH.perfect[0] && h <= QUENCH.perfect[1] ? "perfect" : h >= QUENCH.ok[0] && h <= QUENCH.ok[1] ? "ok" : "bad";
   const { dim, top } = spark(s, false);
   dim.playSound("random.fizz", top, { volume: 1, pitch: 0.8 });
-  try { dim.spawnParticle("minecraft:large_explosion", top); } catch { /* ignore */ }
+  try {
+    dim.spawnParticle("minecraft:large_explosion", top);
+    for (let k = 0; k < 6; k++) dim.spawnParticle("minecraft:basic_smoke_particle", { x: top.x + (k % 3 - 1) * 0.3, y: top.y + 0.2, z: top.z + (k < 3 ? -0.2 : 0.2) });
+  } catch { /* ignore */ }
   finish(player, s);
 }
 
@@ -313,7 +339,7 @@ export function rollQuality(earned, smithing, rand = Math.random) {
 }
 
 function finish(player, s) {
-  sessions.delete(player.id);
+  endForge(player.id);
   const earned = qualityForError(forgeError(s));
   const smithing = jobLevel(getData(player), "smithing");
   const key = rollQuality(earned, smithing);
@@ -344,11 +370,11 @@ function finish(player, s) {
 function tickSessions() {
   for (const [pid, s] of sessions) {
     const player = world.getEntity(pid);
-    if (!player?.isValid) { sessions.delete(pid); continue; }
+    if (!player?.isValid) { endForge(pid); continue; }
     const dx = player.location.x - (s.loc.x + 0.5), dz = player.location.z - (s.loc.z + 0.5);
     const dist = Math.hypot(dx, dz);
     if (dist > MAX_DISTANCE || player.dimension.id !== s.dim) {
-      sessions.delete(pid);
+      endForge(pid);
       player.sendMessage("§c[Ponce] You left the forge and the metal cooled into scrap. The materials are lost.");
       continue;
     }
@@ -376,6 +402,7 @@ function tickSessions() {
       finish(player, s);
       continue;
     }
+    showForge(s);
     player.onScreenDisplay.setActionBar(renderForge(s));
     hudHoldUntil.set(pid, now + 5);
   }
@@ -406,4 +433,6 @@ export function registerForging() {
   });
 
   system.runInterval(tickSessions, 1);
+  // Clear any blade left on a forge without a job (e.g. after the world was closed mid-forge)
+  system.runInterval(() => sweepDisplays(DISPLAY, new Set([...sessions.values()].map((s) => s.display?.id))), 100);
 }

@@ -575,6 +575,11 @@ console.log("forms shown:", log.length);
   assert(st.heat > h0 + 30 && F.heatName(st.heat).length > 0, "crouching at the forge pumps the bellows and heats the metal");
   st.heat = 90; aimAt(j, st, 4); swingHammer(j); system.tick(4);
   assert(st.profile[4] === 3, "a quick, full swing knocks 2 off a section");
+  const blade = dim.entities.find((e) => e.isValid && e.typeId === "ponce:forge_work");
+  assert(blade && Math.abs(blade.location.x - 300.5) < 0.01 && Math.abs(blade.location.y - 65) < 0.01, "a blade blank lies on top of the forge while you work");
+  assert(blade.getProperty("ponce:s4") === 3 && blade.getProperty("ponce:s0") === 5, "the blade on the forge takes the shape you hammer into it");
+  assert(blade.getProperty("ponce:heat") === F.heatLevel(st.heat) && F.heatLevel(99) === 4 && F.heatLevel(60) === 2 && F.heatLevel(10) === 0,
+    "and it glows by heat (dull, cherry, orange, yellow, white)");
   st.heat = 90; aimAt(j, st, 5); swingHammer(j, { ticks: 7 }); system.tick(4);
   assert(st.profile[5] === 4, "a slow swing knocks off 1");
   st.heat = 90; system.tick(1); punch(); system.tick(4);
@@ -586,6 +591,8 @@ console.log("forms shown:", log.length);
   assert(st.profile.join() === p0, "swinging with an empty hand does nothing (hold the hammer)");
   j.setHeld(hammer);
   sessions.delete(j.id);
+  system.tick(100);
+  assert(!blade.isValid, "a blade left without a job is cleared off the forge");
 
   // A clean job: right heat, every section on the outline, quenched orange
   await startForge("ponce:iron_longsword");
@@ -595,6 +602,7 @@ console.log("forms shown:", log.length);
   assert(sword.nameTag.includes("Masterwork") && sword.lore.some((l) => l.includes("Masterwork")), "quality shown in name and tooltip");
   assert(d.jobs.smithing.xp > 0 || d.jobs.smithing.level > 1, "Smithing XP gained");
   assert(j.msgs.some((m) => m.includes("Shape off by 0.0") && m.includes("perfect quench")), "the smith is told how close the shape was and how the quench went");
+  assert(!dim.entities.some((e) => e.isValid && e.typeId === "ponce:forge_work"), "the finished blade leaves the forge (it's in your hands)");
 
   // Mistakes cost quality: over-working a section, burning it in the forge, a cold quench
   await startForge("ponce:iron_longsword");
@@ -678,7 +686,14 @@ console.log("forms shown:", log.length);
   // ---- Grill (Boar Skewer): turn each side when it's golden ----
   await startCook(0, skewer);
   assert(pots.has(j.id) && pot0().method === "grill" && count("ponce:raw_boar") === 0, "a skewer goes on the grill, ingredients used");
-  for (let side = 0; side < 3; side++) { waitFor(golden); side === 1 ? flick() : punchPot(); system.tick(C.FLICK_DEGREES && 7); }
+  const food = () => dim.entities.find((e) => e.isValid && e.typeId === "ponce:cook_display");
+  assert(food()?.getProperty("ponce:dish") === 0 && Math.abs(food().location.y - 65) < 0.01, "the skewer sits over the pot");
+  waitFor(golden);
+  assert(food().getProperty("ponce:cook") >= 5, "the meat browns as it grills");
+  punchPot(); system.tick(2);
+  assert(food().getProperty("ponce:side") === 1 && food().getProperty("ponce:cook") === 0, "turning it shows the next (raw) side");
+  for (let side = 1; side < 3; side++) { system.tick(7); waitFor(golden); side === 1 ? flick() : punchPot(); }
+  assert(!food(), "the food comes off the pot when it's served");
   assert(count("ponce:boar_skewer") === 2, "turning each side at golden (by punching or flicking your view): perfect, 2 servings");
   assert(d.jobs.cooking.xp > 0, "Cooking XP gained");
   await startCook(0, skewer);
@@ -701,10 +716,20 @@ console.log("forms shown:", log.length);
     stir(1);
   }
   assert(cued && count("ponce:hare_stew") === 2, "stirring at the called pace and adding the carrot in time: perfect, 2 servings");
+  await startCook(1, hareStew);
+  const a0 = food()?.getProperty("ponce:stir") ?? 0;
+  stir(5);
+  assert(food()?.getProperty("ponce:dish") === 1 && food().getProperty("ponce:soup") === 0 && food().getProperty("ponce:stir") !== a0, "the stew swirls in the pot as you stir");
+  assert(food().getProperty("ponce:added") === 1, "only the hare is in at first");
+  for (let i = 0; i < 300 && pots.has(j.id) && !pot0().cue; i++) stir(1);
+  punchPot(); system.tick(1);
+  assert(food()?.getProperty("ponce:added") === 2, "the carrot shows up in the pot when you add it");
+  stir(500);
   assert(paces.size === 2, "the pot calls for both gentle and brisk stirring as it cooks");
+  const stews = count("ponce:hare_stew");
   await startCook(1, hareStew);
   stir(500);
-  assert(count("ponce:hare_stew") === 3, "missing the call to add the carrot: 1 serving");
+  assert(count("ponce:hare_stew") === stews + 1, "missing the call to add the carrot: 1 serving");
   await startCook(1, hareStew);
   stir(60, () => 0);
   assert(pots.has(j.id) && pot0().progress === 0 && pot0().scorch > 50, "not stirring: nothing cooks and the bottom scorches");
@@ -713,17 +738,19 @@ console.log("forms shown:", log.length);
   await startCook(1, hareStew);
   j.rotation.x = 50;
   for (let i = 0; i < 400 && pots.has(j.id); i++) { if (i % 6 === 0) punchPot(); system.tick(1); }
-  assert(!pots.has(j.id) && count("ponce:hare_stew") >= 4, "punching the pot counts as stirring (a fallback that still finishes the stew)");
+  assert(!pots.has(j.id) && count("ponce:hare_stew") >= stews + 2, "punching the pot counts as stirring (a fallback that still finishes the stew)");
 
   // ---- Bake (Jelly Tart): whisk briskly, then take it out when golden ----
   const tart = [["ponce:jelly_gel", 2], ["minecraft:wheat", 1], ["minecraft:sugar", 1]];
   await startCook(2, tart);
   assert(pot0()?.method === "bake" && pot0().phase === "mix", "a tart starts with whisking the batter");
+  assert(food()?.getProperty("ponce:dish") === 2 && food().getProperty("ponce:fill") === 0, "an empty tin sits on the pot");
   stir(30, ([lo]) => lo / 2);
   assert(pot0().phase === "mix", "stirring gently doesn't whisk it");
   const brisk = () => (pot0().bands.brisk[0] + pot0().bands.brisk[1]) / 2;
   stir(80, brisk);
   assert(pot0().phase === "bake", "a brisk whisk mixes the batter, then it bakes");
+  assert(food().getProperty("ponce:fill") === 10, "the batter fills the tin as you whisk");
   flick();
   assert(pots.has(j.id), "taking it out before it's set does nothing");
   waitFor(golden); system.tick(1); punchPot();
@@ -737,6 +764,7 @@ console.log("forms shown:", log.length);
   const roast = [["ponce:raw_boar", 2], ["minecraft:potato", 2]];
   await startCook(3, roast);
   assert(pot0()?.method === "roast", "the Hearty Roast is roasted");
+  assert(food()?.getProperty("ponce:dish") === 3, "a joint of meat sits over the fire");
   for (let i = 0; i < 400 && pots.has(j.id); i++) {
     const st = pot0();
     if (st.done !== undefined) { punchPot(); break; }

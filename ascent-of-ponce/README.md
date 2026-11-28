@@ -117,6 +117,7 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
   - **Shape**: the blade shows as 9 sections, tip to tang, beside the **outline** for this weapon type (a tapering sword, a broad axe head, a spear point, and so on). **Look left or right** along the forge to pick a section. Hold your **Smith's Hammer**, **look up** to raise it, and **swing your view down onto the forge**. A quick, full swing knocks **2** off that section; a slower swing or a punch knocks off **1**. Bring every section down to the outline, but not past it: metal you hammer away is gone.
   - **Quench**: once no section is thicker than the outline, strike the forge to plunge the blade. Do it while the metal is **orange** for the hardest steel.
   - You have two minutes. Stay within 6 blocks or the job is lost.
+  - **You can see the work**: the blade lies on top of the forge while you work. Each section visibly shrinks as you hammer it, the whole blade glows by heat (dull, cherry, orange, yellow, white), and the quench sends up a burst of steam.
 - **Smith's Hammer**: your first forge job comes with one. Otherwise craft it (3 Ironheart Ingots over 2 sticks, like a pickaxe) or buy it from Bram for 30 Col.
 - **Recipes**: Tier I is Ironheart plus 1 Ember Copper (Smithing 1). Tier II is Ironheart plus 1 Glimmer Silver plus Floor 1 drops (Smithing 8).
 - **Quality** comes from your work: how close the shape is to the outline (over-worked sections count extra), plus any cracks, burning, and the quench. A clean job is a Masterwork; a few small slips make it Fine or Standard. Your **Smithing level** then sets how likely you are to get the quality you earned; below that it drops a grade, and you're told when it happens:
@@ -161,6 +162,7 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
   - **Roast** (Hearty Roast): the meat dries as it roasts. **Baste** it when it starts drying (basting while it's still juicy washes the flavour off), then **take it off** the fire as soon as it's done.
   - Turning, adding, taking out and basting are all the same action: **punch the pot**, or **flick your view sideways** while looking into it.
   - Do it well throughout for a **perfect** meal (2 servings); otherwise you get 1. Letting it burn gives a Burnt Mess. Cooking level widens the windows and pace bands.
+  - **You can see the food**: the skewer sits over the pot and turns to a new side when you turn it; the stew swirls as you stir, in its own colour, and each ingredient appears when you add it; the batter fills the tin as you whisk; and everything browns as it cooks (almost black if it burns). Basting splashes.
 
 | Meal | Ingredients | Buff | Cooking Lv |
 |---|---|---|---|
@@ -447,6 +449,7 @@ tools/gen_npcs.py     generates the quest-giver NPC entities and skins
 tools/gen_floor2_mobs.py  generates the Floor 2 creatures, the hydra, drops, lure and marsh fog
 tools/gen_floor3_mobs.py  generates the Floor 3 creatures, Thunderhoof, drops and the Thunder Call
 tools/gen_floor4_mobs.py  generates the Floor 4 creatures, the Frost Giant, drops and the Frost Sigil
+tools/gen_displays.py     generates the work displays shown on the forge and pot while you work
 tools/preview_floor.mjs   renders a floor's data from the real generator for previews
 tests/                run ./tests/run.sh (needs Node) to simulate gameplay against mock APIs
 ```

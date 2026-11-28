@@ -1,0 +1,24 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.ponce.cook_display": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "overlay_color": {
+        "r": "query.property('ponce:cook') >= 10 ? 0.08 : 0.45",
+        "g": "query.property('ponce:cook') >= 10 ? 0.06 : 0.25",
+        "b": "query.property('ponce:cook') >= 10 ? 0.05 : 0.05",
+        "a": "query.property('ponce:cook') >= 10 ? 0.75 : query.property('ponce:cook') * 0.055"
+      },
+      "is_hurt_color": {},
+      "on_fire_color": {}
+    }
+  }
+}

@@ -21,6 +21,7 @@ import { applyStatEffects } from "./progression.js";
 import { hudHoldUntil } from "./combat.js";
 import { show } from "./ui.js";
 import { notify } from "./quests.js";
+import { removeDisplay, setDisplay, spawnDisplay, sweepDisplays } from "./displays.js";
 
 const POT = "ponce:cooking_pot";
 export const COOK_TICKS = 120; // 6 seconds of stirring at the right pace cooks a dish
@@ -54,6 +55,26 @@ const METER = 20, METER_MAX = 400; // the pace meter shows 0-400 degrees per sec
 const MAX_DISTANCE = 6;
 
 export const pots = new Map(); // player id -> cooking session
+const DISPLAY = "ponce:cook_display";
+const DISH = { grill: 0, stew: 1, bake: 2, roast: 3 };
+const SOUP = { "ponce:hare_stew": 0, "ponce:marsh_gumbo": 1, "ponce:highland_stew": 2, "ponce:warming_broth": 3 };
+
+/** Ends a cooking job and clears the food off the pot. */
+function endPot(pid) {
+  removeDisplay(pots.get(pid)?.display);
+  pots.delete(pid);
+}
+
+/** What the model on the pot shows: the dish, how far it's cooked, the skewer side, the stew's swirl. */
+function showPot(s) {
+  const brown = (b) => Math.max(0, Math.min(10, Math.floor(b / 13)));
+  const props = { dish: DISH[s.method], soup: SOUP[s.recipe.result] ?? 0 };
+  if (s.method === "grill") Object.assign(props, { side: Math.min(2, s.side), cook: brown(s.brown) });
+  if (s.method === "stew") Object.assign(props, { stir: Math.floor(s.angle ?? 0) % 360, added: Math.min(3, 1 + s.cues.filter((c) => c.added).length), cook: 0 });
+  if (s.method === "bake") Object.assign(props, { fill: s.phase === "mix" ? Math.min(10, Math.floor(s.mix / 10)) : 10, cook: s.phase === "mix" ? 0 : brown(s.brown) });
+  if (s.method === "roast") Object.assign(props, { cook: Math.min(10, Math.floor(s.progress / 11) + (s.dry > 120 ? 2 : 0)) });
+  setDisplay(s.display, s.shown, props);
+}
 
 /** The two paces the pot can call for, in degrees of stirring per second. Cooking level widens them. */
 export function paceBands(level) {
@@ -116,6 +137,10 @@ export async function openPotMenu(player, block) {
   if (method === "bake") Object.assign(s, { phase: "mix", mix: 0, brown: 0, golden: windowFor(level, [66, 86]) });
   if (method === "roast") Object.assign(s, { moisture: 100, dry: 0, soggy: 0, done: undefined });
   pots.set(player.id, s);
+  s.display = spawnDisplay(block.dimension, DISPLAY, { x: loc.x + 0.5, y: loc.y + 1, z: loc.z + 0.5 }, player.getRotation?.().y ?? 0);
+  s.shown = {};
+  s.angle = 0;
+  showPot(s);
   const title = { grill: "Grill the skewer", stew: "Stir the pot", bake: "Whisk the batter", roast: "Roast the meat" }[method];
   player.onScreenDisplay.setTitle(`§e${title}`, { subtitle: `§7${HOW[method]}`, fadeInDuration: 5, stayDuration: 60, fadeOutDuration: 10 });
   player.sendMessage(`§e[Cooking] ${r.name}: §7${HOW[method]}.`);
@@ -165,7 +190,7 @@ export function renderPot(s) {
 }
 
 function serve(player, s, result) {
-  pots.delete(player.id);
+  endPot(player.id);
   const r = s.recipe;
   if (result === "burnt") {
     give(player, new ItemStack("ponce:burnt_mess", 1));
@@ -223,6 +248,7 @@ export function cookAction(player, s) {
     if (s.moisture > 75) { s.soggy++; say(player, "§9Still juicy - basting now just washes it off"); }
     else say(player, "§eBasted");
     s.moisture = Math.min(100, s.moisture + 45);
+    try { player.dimension.spawnParticle("minecraft:water_splash_particle", at); } catch { /* ignore */ }
     player.dimension.playSound("bucket.empty_water", at, { volume: 0.4, pitch: 1.4 });
     return;
   }
@@ -230,6 +256,8 @@ export function cookAction(player, s) {
   s.taps += TAP_DEGREES;
   if (s.cue) {
     say(player, `§aAdded the ${itemName(s.cue.item)}`);
+    const added = s.cues.find((c) => c.item === s.cue.item && !c.added);
+    if (added) added.added = true;
     player.dimension.playSound("bucket.empty_water", at, { volume: 0.5, pitch: 1.2 });
     s.cue = undefined;
   }
@@ -248,6 +276,7 @@ function tickPot(player, s) {
   let delta = lookingIn ? Math.min(raw, 45) : 0; // circling the camera only stirs while you're looking into the pot
   delta += s.taps;
   s.taps = 0;
+  s.angle = ((s.angle ?? 0) + delta) % 360; // the stew's surface swirls with your stirring
   s.history.push(delta);
   if (s.history.length > 20) s.history.shift();
   s.ticks++;
@@ -308,6 +337,7 @@ function tickPot(player, s) {
         : share >= 0.55 && s.scorch < 50 && s.faults === 0 && !s.cue && s.cues.every((c) => c.called) ? "perfect" : "done");
     }
   }
+  showPot(s);
   player.onScreenDisplay.setActionBar(renderPot(s));
   hudHoldUntil.set(player.id, now + 5);
 }
@@ -315,10 +345,10 @@ function tickPot(player, s) {
 function tickPots() {
   for (const [pid, s] of pots) {
     const player = world.getEntity(pid);
-    if (!player?.isValid) { pots.delete(pid); continue; }
+    if (!player?.isValid) { endPot(pid); continue; }
     const dx = player.location.x - (s.loc.x + 0.5), dz = player.location.z - (s.loc.z + 0.5);
     if (Math.hypot(dx, dz) > MAX_DISTANCE || player.dimension.id !== s.dim) {
-      pots.delete(pid);
+      endPot(pid);
       player.sendMessage("§c[Ponce] You walked away from the pot and the meal was ruined.");
       continue;
     }
@@ -391,5 +421,6 @@ export function registerCooking() {
   });
 
   system.runInterval(tickPots, 1);
+  system.runInterval(() => sweepDisplays(DISPLAY, new Set([...pots.values()].map((s) => s.display?.id))), 100);
   system.runInterval(expireBuffs, 20);
 }
