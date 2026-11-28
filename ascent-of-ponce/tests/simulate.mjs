@@ -59,13 +59,35 @@ function makePlayer(name) {
 
 await import("../behavior_pack/scripts/main.js");
 const { sessions: forgeSessions } = await import("../behavior_pack/scripts/forging.js");
-/** One hammer blow: look up (raise), then look down onto the forge `ticks` later. perfectGlow puts the marker in the zone. */
-function swingHammer(p, { ticks = 2, perfectGlow = true } = {}) {
+/** One hammer blow: look up (raise), then look down onto the forge `ticks` later (2 = quick and heavy, 7 = slow and light). */
+function swingHammer(p, { ticks = 2 } = {}) {
   p.rotation.x = -40; system.tick(1);
   for (let i = 1; i < ticks; i++) { p.rotation.x = -5; system.tick(1); }
-  const st = forgeSessions.get(p.id);
-  if (st && perfectGlow) st.pos = st.zone;
   p.rotation.x = 45; system.tick(1);
+}
+/** Look along the forge at section i (0 = tip, 8 = tang). */
+function aimAt(p, st, i) {
+  const dx = st.loc.x + 0.5 - p.location.x, dz = st.loc.z + 0.5 - p.location.z;
+  p.rotation.y = (Math.atan2(-dx, dz) * 180) / Math.PI + (i - 4) * 8;
+}
+/** Crouch at the forge (the bellows) until the metal is at least `to` hot. */
+function heatUp(p, to = 88) {
+  const st = forgeSessions.get(p.id);
+  p.isSneaking = true;
+  for (let i = 0; i < 200 && st.heat < to; i++) system.tick(1);
+  p.isSneaking = false;
+}
+/** Forge the current blade well: keep it hot, bring each section down to the outline, quench it at `quench` heat. */
+function forgeIt(p, { quench = 70 } = {}) {
+  for (let n = 0; n < 300 && forgeSessions.has(p.id); n++) {
+    const st = forgeSessions.get(p.id);
+    if (st.phase === "quench") { st.heat = quench; swingHammer(p); continue; }
+    const i = st.profile.findIndex((v, k) => v > st.target[k]);
+    if (st.heat < 70) heatUp(p);
+    aimAt(p, st, i);
+    swingHammer(p, { ticks: st.profile[i] - st.target[i] >= 2 ? 2 : 7 });
+    system.tick(4);
+  }
 }
 const { getData: getDataFor } = await import("../behavior_pack/scripts/data.js");
 const fire = (n, e) => world.afterEvents[n].h.forEach((f) => f(e));
@@ -525,7 +547,7 @@ console.log("forms shown:", log.length);
   for (let i = 0; i < 2000; i++) { const q = F.rollQuality("masterwork", 1); if (q === "masterwork") mw++; else if (q === "fine") fine++; }
   assert(mw / 2000 < 0.1 && fine / 2000 < 0.4, `perfect strikes at Smithing 1: ${(mw / 20).toFixed(0)}% Masterwork, ${(fine / 20).toFixed(0)}% Fine, the rest Standard`);
   assert(F.rollQuality("standard", 1) === "standard" && F.rollQuality("crude", 1) === "crude", "the roll never makes a result worse than Standard or better than earned");
-  d.jobs.smithing.level = 20; // the rest of this block checks the minigame itself
+  d.jobs.smithing.level = 20; // the rest of this block checks the minigame itself, without the level roll
   const e1 = await startForge("ponce:iron_longsword");
   assert(e1.cancel, "using the forge doesn't place blocks on it");
   assert(sessions.has(j.id), "forging session started");
@@ -533,38 +555,70 @@ console.log("forms shown:", log.length);
   assert(count("ponce:smith_hammer") === 1, "your first forge job comes with a Smith's Hammer");
   const hammer = j.items.find((i) => i?.typeId === "ponce:smith_hammer");
   j.setHeld(hammer);
-  for (let i = 0; i < 10 && sessions.has(j.id); i++) { swingHammer(j); system.tick(4); }
-  let sword = forged("ponce:iron_longsword")[0];
-  assert(sword?.getDynamicProperty("ponce:quality") === "masterwork", "all-perfect strikes forge a Masterwork: " + sword?.getDynamicProperty("ponce:quality"));
+  let st = sessions.get(j.id);
+  assert(st.target.join() === F.TARGETS.sword.join() && st.profile.every((v) => v === F.START_THICKNESS), "the metal starts as a thick blank, beside the sword's outline");
+  assert(new Set(Object.values(F.TARGETS).map((t) => t.join())).size === 8, "every weapon type has its own outline");
+  aimAt(j, st, 0); system.tick(1);
+  const tip = st.section;
+  aimAt(j, st, 8); system.tick(1);
+  assert(tip === 0 && st.section === 8, "looking left and right along the forge picks the tip or the tang");
+  assert(F.renderForge(st).includes("Outline") && F.renderForge(st).includes("section 9/9"), "the display shows the outline, the blade and the picked section");
+  st.heat = 45; aimAt(j, st, 4);
+  let before = st.profile.join();
+  swingHammer(j);
+  assert(st.profile.join() === before && st.cracks === 0, "cherry-red metal is too cold to shape");
+  st.heat = 10; system.tick(5);
+  swingHammer(j);
+  assert(st.cracks === 1 && st.profile.join() === before, "striking cold metal cracks it");
+  const h0 = st.heat;
+  j.isSneaking = true; system.tick(20); j.isSneaking = false;
+  assert(st.heat > h0 + 30 && F.heatName(st.heat).length > 0, "crouching at the forge pumps the bellows and heats the metal");
+  st.heat = 90; aimAt(j, st, 4); swingHammer(j); system.tick(4);
+  assert(st.profile[4] === 3, "a quick, full swing knocks 2 off a section");
+  st.heat = 90; aimAt(j, st, 5); swingHammer(j, { ticks: 7 }); system.tick(4);
+  assert(st.profile[5] === 4, "a slow swing knocks off 1");
+  st.heat = 90; system.tick(1); punch(); system.tick(4);
+  assert(st.profile[5] === 3, "a punch is a light blow (1)");
+  st.heat = 90; const p0 = st.profile.join();
+  j.rotation.x = -40; system.tick(1); j.rotation.x = 0; system.tick(12); j.rotation.x = 45; system.tick(1);
+  assert(st.profile.join() === p0, "raising the hammer and lowering it slowly doesn't strike");
+  j.setHeld(undefined); st.heat = 90; swingHammer(j);
+  assert(st.profile.join() === p0, "swinging with an empty hand does nothing (hold the hammer)");
+  j.setHeld(hammer);
+  sessions.delete(j.id);
+
+  // A clean job: right heat, every section on the outline, quenched orange
+  await startForge("ponce:iron_longsword");
+  forgeIt(j);
+  let sword = forged("ponce:iron_longsword").pop();
+  assert(sword?.getDynamicProperty("ponce:quality") === "masterwork", "shaped to the outline and quenched orange: a Masterwork: " + sword?.getDynamicProperty("ponce:quality"));
   assert(sword.nameTag.includes("Masterwork") && sword.lore.some((l) => l.includes("Masterwork")), "quality shown in name and tooltip");
   assert(d.jobs.smithing.xp > 0 || d.jobs.smithing.level > 1, "Smithing XP gained");
+  assert(j.msgs.some((m) => m.includes("Shape off by 0.0") && m.includes("perfect quench")), "the smith is told how close the shape was and how the quench went");
 
-  // Taps (punches) and slow swings top out at Good; a hammer swing has to be quick for a perfect blow
+  // Mistakes cost quality: over-working a section, burning it in the forge, a cold quench
   await startForge("ponce:iron_longsword");
-  for (let i = 0; i < 12 && sessions.has(j.id); i++) { const st = sessions.get(j.id); st.pos = st.zone; punch(); system.tick(5); }
-  assert(forged("ponce:iron_longsword").pop()?.getDynamicProperty("ponce:quality") === "standard", "punching in the zone every time only makes a Standard weapon");
+  st = sessions.get(j.id);
+  heatUp(j); aimAt(j, st, 0);
+  for (let i = 0; i < 3; i++) { swingHammer(j); system.tick(4); }
+  assert(st.profile[0] === 0 && F.renderForge(st).length > 0, "hammering past the outline takes metal you can't put back");
+  forgeIt(j);
+  assert(forged("ponce:iron_longsword").pop()?.getDynamicProperty("ponce:quality") === "fine", "one over-worked section: Fine, not Masterwork");
   await startForge("ponce:iron_longsword");
-  for (let i = 0; i < 12 && sessions.has(j.id); i++) { swingHammer(j, { ticks: 7 }); system.tick(4); }
-  assert(forged("ponce:iron_longsword").pop()?.getDynamicProperty("ponce:quality") === "standard", "slow swings count as Good blows, not Perfect");
+  st = sessions.get(j.id);
+  st.heat = 99; j.isSneaking = true; system.tick(60); j.isSneaking = false;
+  assert(st.burn >= 40, "pumping the bellows past white-hot burns the metal");
+  forgeIt(j);
+  assert(forged("ponce:iron_longsword").pop()?.getDynamicProperty("ponce:quality") === "fine", "burning it in the forge costs the Masterwork");
   await startForge("ponce:iron_longsword");
-  const st0 = sessions.get(j.id), p0 = st0.progress;
-  j.rotation.x = -40; system.tick(1); j.rotation.x = 0; system.tick(12); j.rotation.x = 45; system.tick(1);
-  assert(sessions.get(j.id)?.progress === p0, "raising the hammer and lowering it slowly doesn't strike");
-  j.setHeld(undefined);
-  swingHammer(j);
-  assert(sessions.get(j.id)?.progress === p0, "swinging with an empty hand does nothing (hold the hammer)");
-  sessions.delete(j.id);
-  j.setHeld(hammer);
-  d.jobs.smithing.level = 1; d.jobs.smithing.xp = 0;
+  forgeIt(j, { quench: 15 });
+  assert(forged("ponce:iron_longsword").pop()?.getDynamicProperty("ponce:quality") !== "masterwork", "quenching it cold costs the Masterwork");
 
+  // Running out of time with nothing shaped: Crude, and it starts worn
   await startForge("ponce:iron_dagger");
-  for (let i = 0; i < 20 && sessions.has(j.id); i++) { const s = sessions.get(j.id); s.pos = s.zone > 12 ? 0 : 24; punch(); system.tick(5); }
-  assert(forged("ponce:iron_dagger")[0]?.getDynamicProperty("ponce:quality") === "crude", "sloppy strikes make a Crude weapon");
+  system.tick(F.TIME_LIMIT + 2);
+  assert(!sessions.has(j.id) && forged("ponce:iron_dagger")[0]?.getDynamicProperty("ponce:quality") === "crude", "an unworked blank ends up Crude");
   assert(forged("ponce:iron_dagger")[0].dur.damage > 0, "Crude weapons start worn");
-
-  await startForge("ponce:iron_spear");
-  system.tick(401);
-  assert(!sessions.has(j.id) && forged("ponce:iron_spear")[0]?.getDynamicProperty("ponce:quality") === "crude", "metal cooling ends the job as Crude");
 
   await startForge("ponce:iron_rapier");
   j.location = { x: 320, y: 64, z: 0 }; system.tick(1);
@@ -608,31 +662,95 @@ console.log("forms shown:", log.length);
     }
   };
 
-  await startCook(0, [["ponce:raw_boar", 1], ["minecraft:stick", 1]]);
-  assert(pots.has(j.id) && count("ponce:raw_boar") === 0 && j.msgs.some((m) => m.includes("Stir the pot")), "cooking started, ingredients used, told to stir");
-  const paces = new Set();
-  for (let i = 0; i < 400 && pots.has(j.id); i++) { paces.add(pots.get(j.id).pace); stir(1); }
-  assert(count("ponce:boar_skewer") === 2, "stirring at the called pace the whole time: perfect, 2 servings");
-  assert(paces.size === 2, "the pot calls for both gentle and brisk stirring as it cooks");
-  assert(d.jobs.cooking.xp > 0, "Cooking XP gained");
-
-  await startCook(0, [["ponce:raw_boar", 1], ["minecraft:stick", 1]]);
-  stir(60, () => 0);
-  assert(pots.has(j.id) && pots.get(j.id).progress === 0 && pots.get(j.id).scorch > 50, "not stirring: nothing cooks and the bottom scorches");
-  stir(60, () => 200, 0);
-  assert(!pots.has(j.id) && count("ponce:burnt_mess") === 1, "circling your view without looking into the pot isn't stirring: it burns");
-
-  await startCook(0, [["ponce:raw_boar", 1], ["minecraft:stick", 1]]);
-  stir(600, ([, hi]) => hi + 150);
-  assert(count("ponce:boar_skewer") === 3, "stirring far too fast still cooks it, but only 1 serving");
-
-  await startCook(0, [["ponce:raw_boar", 1], ["minecraft:stick", 1]]);
-  j.rotation.x = 50;
-  for (let i = 0; i < 300 && pots.has(j.id); i++) { if (i % 6 === 0) punchPot(); system.tick(1); }
-  assert(!pots.has(j.id) && count("ponce:boar_skewer") >= 4, "punching the pot counts as stirring (a fallback that still finishes the dish)");
+  const C = await import("../behavior_pack/scripts/cooking.js");
+  const skewer = [["ponce:raw_boar", 1], ["minecraft:stick", 1]];
+  const pot0 = () => pots.get(j.id);
+  /** Wait (looking into the pot, not moving) until `cond` holds, up to `max` ticks. */
+  const waitFor = (cond, max = 400) => { j.rotation.x = 50; for (let i = 0; i < max && pots.has(j.id) && !cond(pot0()); i++) system.tick(1); };
+  const flick = () => { j.rotation.x = 50; j.rotation.y += 40; system.tick(1); };
+  const golden = (st) => st.brown >= (st.golden[0] + st.golden[1]) / 2;
 
   await startCook(3, [["ponce:raw_boar", 2], ["minecraft:potato", 2]]);
   assert(!pots.has(j.id) && count("ponce:raw_boar") === 2, "Hearty Roast needs Cooking 8: refused, ingredients kept");
+  j.items.forEach((it, i) => { if (["ponce:raw_boar", "minecraft:potato"].includes(it?.typeId)) j.items[i] = undefined; });
+  assert(Object.keys(C.METHODS).length >= 7 && new Set(Object.values(C.METHODS)).size === 4, "dishes are grilled, stewed, baked or roasted");
+
+  // ---- Grill (Boar Skewer): turn each side when it's golden ----
+  await startCook(0, skewer);
+  assert(pots.has(j.id) && pot0().method === "grill" && count("ponce:raw_boar") === 0, "a skewer goes on the grill, ingredients used");
+  for (let side = 0; side < 3; side++) { waitFor(golden); side === 1 ? flick() : punchPot(); system.tick(C.FLICK_DEGREES && 7); }
+  assert(count("ponce:boar_skewer") === 2, "turning each side at golden (by punching or flicking your view): perfect, 2 servings");
+  assert(d.jobs.cooking.xp > 0, "Cooking XP gained");
+  await startCook(0, skewer);
+  for (let side = 0; side < 3; side++) { punchPot(); system.tick(8); }
+  assert(count("ponce:boar_skewer") === 3, "turning it too soon: undercooked, 1 serving");
+  await startCook(0, skewer);
+  waitFor(() => false, 300);
+  assert(!pots.has(j.id) && count("ponce:burnt_mess") === 1, "never turning it: charred, a Burnt Mess");
+
+  d.jobs.cooking.level = 10;
+  // ---- Stew (Hare Stew): stir at the called pace, add each ingredient when called ----
+  const hareStew = [["ponce:raw_hare", 1], ["minecraft:carrot", 1], ["minecraft:bowl", 1]];
+  await startCook(1, hareStew);
+  assert(pot0()?.method === "stew" && pot0().cues.length === 1 && pot0().cues[0].item === "minecraft:carrot", "a stew calls for its extra ingredients (the carrot) as it cooks");
+  const paces = new Set();
+  let cued = false;
+  for (let i = 0; i < 500 && pots.has(j.id); i++) {
+    paces.add(pot0().pace);
+    if (pot0().cue) { cued = true; punchPot(); }
+    stir(1);
+  }
+  assert(cued && count("ponce:hare_stew") === 2, "stirring at the called pace and adding the carrot in time: perfect, 2 servings");
+  assert(paces.size === 2, "the pot calls for both gentle and brisk stirring as it cooks");
+  await startCook(1, hareStew);
+  stir(500);
+  assert(count("ponce:hare_stew") === 3, "missing the call to add the carrot: 1 serving");
+  await startCook(1, hareStew);
+  stir(60, () => 0);
+  assert(pots.has(j.id) && pot0().progress === 0 && pot0().scorch > 50, "not stirring: nothing cooks and the bottom scorches");
+  stir(60, () => 200, 0);
+  assert(!pots.has(j.id) && count("ponce:burnt_mess") === 2, "circling your view without looking into the pot isn't stirring: it burns");
+  await startCook(1, hareStew);
+  j.rotation.x = 50;
+  for (let i = 0; i < 400 && pots.has(j.id); i++) { if (i % 6 === 0) punchPot(); system.tick(1); }
+  assert(!pots.has(j.id) && count("ponce:hare_stew") >= 4, "punching the pot counts as stirring (a fallback that still finishes the stew)");
+
+  // ---- Bake (Jelly Tart): whisk briskly, then take it out when golden ----
+  const tart = [["ponce:jelly_gel", 2], ["minecraft:wheat", 1], ["minecraft:sugar", 1]];
+  await startCook(2, tart);
+  assert(pot0()?.method === "bake" && pot0().phase === "mix", "a tart starts with whisking the batter");
+  stir(30, ([lo]) => lo / 2);
+  assert(pot0().phase === "mix", "stirring gently doesn't whisk it");
+  const brisk = () => (pot0().bands.brisk[0] + pot0().bands.brisk[1]) / 2;
+  stir(80, brisk);
+  assert(pot0().phase === "bake", "a brisk whisk mixes the batter, then it bakes");
+  flick();
+  assert(pots.has(j.id), "taking it out before it's set does nothing");
+  waitFor(golden); system.tick(1); punchPot();
+  assert(count("ponce:jelly_tart") === 2, "taken out golden: perfect, 2 servings");
+  await startCook(2, tart);
+  stir(80, brisk);
+  waitFor(() => false, 200);
+  assert(count("ponce:burnt_mess") === 3, "left in the heat: burnt");
+
+  // ---- Roast (Hearty Roast): baste when it dries, take it off when done ----
+  const roast = [["ponce:raw_boar", 2], ["minecraft:potato", 2]];
+  await startCook(3, roast);
+  assert(pot0()?.method === "roast", "the Hearty Roast is roasted");
+  for (let i = 0; i < 400 && pots.has(j.id); i++) {
+    const st = pot0();
+    if (st.done !== undefined) { punchPot(); break; }
+    if (st.moisture < 30) punchPot();
+    j.rotation.x = 50; system.tick(1);
+  }
+  assert(count("ponce:hearty_roast") === 2, "basted as it dried and taken off when done: perfect, 2 servings");
+  await startCook(3, roast);
+  for (let i = 0; i < 400 && pots.has(j.id); i++) { if (pot0().done !== undefined) { punchPot(); break; } if (i % 10 === 0) punchPot(); system.tick(1); }
+  assert(count("ponce:hearty_roast") === 3 && j.msgs.length >= 0, "basting it while it's still juicy: 1 serving");
+  await startCook(3, roast);
+  waitFor(() => false, 400);
+  assert(count("ponce:burnt_mess") === 4, "never basting it: it dries out and burns");
+  d.jobs.cooking.level = 1;
 
   // ---- Eating ----
   const strBefore = effectiveStats(d).str, multBefore = damageMultiplier(d);
@@ -706,7 +824,7 @@ console.log("forms shown:", log.length);
     fireBefore("playerInteractWithBlock", { block: forge, player: c, isFirstEvent: true, cancel: false });
     system.tick(1); await flush();
     c.setHeld(new ItemStack("ponce:smith_hammer"));
-    for (let i = 0; i < 12 && sessions.has(c.id); i++) { swingHammer(c); system.tick(4); }
+    forgeIt(c);
     return c.items.filter((i) => i?.typeId === id).pop();
   };
 
@@ -1772,7 +1890,7 @@ console.log("forms shown:", log.length);
   fireBefore("playerInteractWithBlock", { block: forge, player: s, isFirstEvent: true, cancel: false });
   system.tick(1); await flush();
   s.setHeld(new ItemStack("ponce:smith_hammer"));
-  for (let i = 0; i < 12 && sessions.has(s.id); i++) { swingHammer(s); system.tick(4); }
+  forgeIt(s);
   const sword = s.items.find((i) => i?.typeId === "ponce:stormsteel_longsword");
   assert(sword?.getDynamicProperty("ponce:quality") === "masterwork" && sword.lore.some((l) => l.includes("Tier III")), "a Stormsteel Longsword can be forged (tooltip says Tier III)");
 

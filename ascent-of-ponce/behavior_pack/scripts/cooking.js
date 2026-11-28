@@ -1,13 +1,14 @@
-// Cooking. Use the Cooking Pot (right-click / long-press) to pick a recipe,
-// then STIR it: look down into the pot and circle your view around it.
-// The pot calls for a GENTLE or a BRISK stir, and changes its mind as it cooks.
-//   Stirring at the called pace   cooks the dish fastest and counts toward a perfect meal
-//   Too slow / too fast           still cooks, but slowly (too slow also lets it catch)
-//   Not stirring                  the bottom scorches; fully scorched = a Burnt Mess
-// When the dish is cooked: mostly at the right pace = perfect (2 servings), otherwise 1.
-// Punching the pot counts as a small stir, for when circling the camera isn't practical.
-// Meals give a temporary stat buff (one at a time). Cooking level unlocks
-// recipes and widens the pace bands.
+// Cooking. Use the Cooking Pot (right-click / long-press) to pick a recipe. Each dish is cooked its own way:
+//   GRILL  (skewers)  Each side browns over the fire: turn the skewer when the side is golden. Three sides.
+//   STEW   (stews, soups, broths)  Look into the pot and circle your view to stir, at the gentle or brisk pace
+//          the pot calls for. It calls for each extra ingredient as it cooks: add it (punch the pot) in time.
+//          Stop stirring and the bottom scorches.
+//   BAKE   (tarts)  First whisk the batter (stir briskly), then watch it bake and take it out when golden.
+//   ROAST  (roasts)  The meat dries as it roasts: baste it when it's drying (not when it's still wet),
+//          then take it off the fire as soon as it's done.
+// "Turn", "add", "take out" and "baste" are all the same action: punch the pot, or flick your view sideways
+// while looking into it. Do it well throughout for a perfect meal (2 servings); otherwise you get 1, and
+// letting it burn gives a Burnt Mess. Cooking level widens the windows.
 
 import { world, system, ItemStack } from "@minecraft/server";
 import { ActionFormData } from "@minecraft/server-ui";
@@ -28,6 +29,27 @@ export const MAX_TICKS = 20 * 40; // a safety limit: a dish never takes longer t
 export const LOOK_IN_PITCH = 15; // look at least this far down to be stirring the pot
 export const TAP_DEGREES = 60; // a punch counts as this much stirring
 export const PACE_CHANGE_TICKS = 60;
+export const FLICK_DEGREES = 30; // a sideways flick of the view this big in one tick counts as an action
+const ACTION_COOLDOWN = 6;
+
+/** How each dish is cooked. */
+export const METHODS = {
+  "ponce:boar_skewer": "grill",
+  "ponce:hare_stew": "stew", "ponce:marsh_gumbo": "stew", "ponce:highland_stew": "stew", "ponce:warming_broth": "stew",
+  "ponce:jelly_tart": "bake",
+  "ponce:hearty_roast": "roast",
+};
+const HOW = {
+  grill: "turn the skewer when each side is §6golden§7 (punch the pot or flick your view)",
+  stew: "§fstir§7: look into the pot and circle your view; add each ingredient when it's called for (punch the pot)",
+  bake: "§fwhisk§7 the batter (stir briskly), then take it out when §6golden§7",
+  roast: "§fbaste§7 when the meat starts drying, then take it off as soon as it's done",
+};
+/** Golden/done windows widen with Cooking level. */
+export function windowFor(level, [lo, hi]) {
+  const w = Math.min(8, level * 0.4);
+  return [lo - w, hi + w];
+}
 const METER = 20, METER_MAX = 400; // the pace meter shows 0-400 degrees per second
 const MAX_DISTANCE = 6;
 
@@ -55,15 +77,18 @@ export async function openPotMenu(player, block) {
     .title("§l§eCooking Pot")
     .body(
       `§7Cooking level: §e${level}\n` +
-      "§7Pick a recipe, then §fstir§7: look down into the pot and §fcircle your view§7 around it. " +
-      "Keep to the pace it calls for (§agently§7 or §abriskly§7). Stop stirring and it scorches. " +
-      "Stir well most of the time for a §aperfect§7 meal (2 servings).\n§8Punching the pot counts as a small stir."
+      "§7Every dish is cooked its own way:\n" +
+      "§6Grill§7 (skewers): turn each side when it's golden.\n" +
+      "§6Stew§7 (stews and soups): stir at the pace the pot calls for, and add each ingredient in time.\n" +
+      "§6Bake§7 (tarts): whisk the batter, then take it out when golden.\n" +
+      "§6Roast§7: baste when it dries, take it off when done.\n" +
+      "§8Stir by looking into the pot and circling your view. Every other action: punch the pot, or flick your view sideways."
     );
   for (const r of COOK_RECIPES) {
     const food = FOODS[r.result];
     const buff = Object.entries(food.stats).map(([k, v]) => `+${v} ${k.toUpperCase()}`).join(" ");
     const ok = level >= r.level && hasAll(player, r.ingredients);
-    form.button(`${ok ? "§f" : "§8"}${r.name} §7(${buff}, Cooking ${r.level})`);
+    form.button(`${ok ? "§f" : "§8"}${r.name} §7(${buff}, Cooking ${r.level})\n§8${{ grill: "Grill", stew: "Stew", bake: "Bake", roast: "Roast" }[METHODS[r.result] ?? "stew"]}`);
   }
   form.button("Close");
   const res = await show(player, form);
@@ -76,36 +101,67 @@ export async function openPotMenu(player, block) {
   }
   if (pots.has(player.id)) return;
   takeAll(player, r.ingredients);
-  pots.set(player.id, {
-    recipe: r, loc, dim: block.dimension.id, progress: 0, scorch: 0, ticks: 0, inPace: 0,
+  const method = METHODS[r.result] ?? "stew";
+  const s = {
+    recipe: r, method, level, loc, dim: block.dimension.id, progress: 0, scorch: 0, ticks: 0, inPace: 0,
     bands: paceBands(level), pace: "gentle", nextChange: system.currentTick + PACE_CHANGE_TICKS,
-    history: [], yaw: player.getRotation?.().y ?? 0, taps: 0,
-  });
-  player.onScreenDisplay.setTitle("§eStir the pot", {
-    subtitle: "§fLook into the pot and circle your view around it", fadeInDuration: 5, stayDuration: 50, fadeOutDuration: 10,
-  });
+    history: [], yaw: player.getRotation?.().y ?? 0, taps: 0, lastAction: -99, faults: 0,
+  };
+  if (method === "grill") Object.assign(s, { side: 0, brown: 0, speed: grillSpeed(), golden: windowFor(level, [68, 88]), sides: [] });
+  if (method === "stew") {
+    const extras = r.ingredients.filter((i) => i.item !== "minecraft:bowl").slice(1).map((i) => i.item);
+    s.cues = extras.map((item, k) => ({ item, at: Math.round(((k + 1) / (extras.length + 1)) * 80) + 5 }));
+    s.cue = undefined;
+  }
+  if (method === "bake") Object.assign(s, { phase: "mix", mix: 0, brown: 0, golden: windowFor(level, [66, 86]) });
+  if (method === "roast") Object.assign(s, { moisture: 100, dry: 0, soggy: 0, done: undefined });
+  pots.set(player.id, s);
+  const title = { grill: "Grill the skewer", stew: "Stir the pot", bake: "Whisk the batter", roast: "Roast the meat" }[method];
+  player.onScreenDisplay.setTitle(`§e${title}`, { subtitle: `§7${HOW[method]}`, fadeInDuration: 5, stayDuration: 60, fadeOutDuration: 10 });
+  player.sendMessage(`§e[Cooking] ${r.name}: §7${HOW[method]}.`);
   block.dimension.playSound("bucket.fill_water", { x: loc.x + 0.5, y: loc.y + 1, z: loc.z + 0.5 });
 }
 
 // ---------- Minigame ----------
 
+const grillSpeed = () => 1.5 + Math.random() * 0.9; // browning per tick: each side cooks a little differently
+
 export function stirRate(s) {
   return s.history.reduce((n, d) => n + d, 0) * (20 / Math.max(1, s.history.length)); // degrees per second
 }
 
-export function renderPot(s) {
-  const [lo, hi] = s.bands[s.pace];
-  const rate = stirRate(s);
-  const at = Math.min(METER - 1, Math.floor((rate / METER_MAX) * METER));
-  let meter = "";
-  for (let i = 0; i < METER; i++) {
-    const deg = ((i + 0.5) / METER) * METER_MAX;
-    if (i === at) meter += "§f§l|§r";
-    else if (deg >= lo && deg <= hi) meter += "§a|";
-    else meter += "§8|";
+function meter(value, max, band, cells = 20) {
+  const at = Math.min(cells - 1, Math.floor((value / max) * cells));
+  let out = "";
+  for (let i = 0; i < cells; i++) {
+    const v = ((i + 0.5) / cells) * max;
+    if (i === at) out += "§f§l|§r";
+    else if (band && v >= band[0] && v <= band[1]) out += "§a|";
+    else if (v > (band?.[1] ?? max)) out += "§c|";
+    else out += "§8|";
   }
+  return out;
+}
+
+export function renderPot(s) {
+  const name = `§e${s.recipe.name}`;
+  if (s.method === "grill") {
+    return `${name}  §7side ${s.side + 1}/3  ${meter(s.brown, 130, s.golden)}  §7turn when §6golden`;
+  }
+  if (s.method === "bake") {
+    if (s.phase === "mix") return `${name}  §7whisk briskly  §fmixed ${Math.floor(s.mix)}%  ${meter(stirRate(s), METER_MAX, s.bands.brisk)}`;
+    return `${name}  §7baking  ${meter(s.brown, 130, s.golden)}  §7take it out when §6golden`;
+  }
+  if (s.method === "roast") {
+    const m = s.moisture < 25 ? "§c§ldrying - baste!" : s.moisture > 75 ? "§9juicy" : "§fbasted";
+    const done = s.done !== undefined ? "  §a§lDONE - take it off!" : `  §fdone ${Math.floor(s.progress)}%`;
+    return `${name}  ${m}  ${meter(s.moisture, 100, [25, 75])}${done}`;
+  }
+  // stew
+  const [lo, hi] = s.bands[s.pace];
   const scorch = s.scorch > 66 ? "§4" : s.scorch > 33 ? "§c" : "§7";
-  return `§e${s.recipe.name} §f${Math.min(100, Math.floor(s.progress))}%  §7Stir ${s.pace === "gentle" ? "§bgently" : "§6briskly"}  ${meter}  ${scorch}scorch ${Math.floor(s.scorch)}%`;
+  const cue = s.cue ? `  §6§lADD THE ${itemName(s.cue.item).toUpperCase()}!` : "";
+  return `${name} §f${Math.min(100, Math.floor(s.progress))}%  §7Stir ${s.pace === "gentle" ? "§bgently" : "§6briskly"}  ${meter(stirRate(s), METER_MAX, [lo, hi])}  ${scorch}scorch ${Math.floor(s.scorch)}%${cue}`;
 }
 
 function serve(player, s, result) {
@@ -114,7 +170,7 @@ function serve(player, s, result) {
   if (result === "burnt") {
     give(player, new ItemStack("ponce:burnt_mess", 1));
     addJobXp(player, "cooking", r.xp * 0.25);
-    player.onScreenDisplay.setTitle(" ", { subtitle: "§8Burnt... keep stirring next time", fadeInDuration: 0, stayDuration: 30, fadeOutDuration: 10 });
+    player.onScreenDisplay.setTitle(" ", { subtitle: "§8Burnt...", fadeInDuration: 0, stayDuration: 30, fadeOutDuration: 10 });
     player.playSound("random.fizz");
     return;
   }
@@ -129,46 +185,128 @@ function serve(player, s, result) {
   player.playSound(perfect ? "random.levelup" : "random.pop", { pitch: 1.5 });
 }
 
-/** A punch on the pot: a small stir, for when circling the camera isn't practical. */
-export function stirTap(player, s) {
+function say(player, text, ticks = 14) {
+  player.onScreenDisplay.setTitle(" ", { subtitle: text, fadeInDuration: 0, stayDuration: ticks, fadeOutDuration: 4 });
+}
+
+/** The one action every method uses: turn, add, take out or baste. From a punch or a sideways flick. */
+export function cookAction(player, s) {
+  const now = system.currentTick;
+  if (now - s.lastAction < ACTION_COOLDOWN) return;
+  s.lastAction = now;
+  const at = { x: s.loc.x + 0.5, y: s.loc.y + 1, z: s.loc.z + 0.5 };
+  if (s.method === "grill") {
+    const b = s.brown;
+    const grade = b >= s.golden[0] && b <= s.golden[1] ? "golden" : b < 45 ? "raw" : b > 110 ? "charred" : "fair";
+    s.sides.push(grade);
+    player.dimension.playSound("random.fizz", at, { volume: 0.4, pitch: 1.6 });
+    say(player, { golden: "§6§lGolden!", fair: "§eNot bad", raw: "§7Still raw on that side", charred: "§8Charred..." }[grade]);
+    s.side++; s.brown = 0; s.speed = grillSpeed();
+    if (s.side >= 3) {
+      const golden = s.sides.filter((g) => g === "golden").length, charred = s.sides.filter((g) => g === "charred").length;
+      serve(player, s, charred >= 2 ? "burnt" : golden === 3 ? "perfect" : "done");
+    }
+    return;
+  }
+  if (s.method === "bake") {
+    if (s.phase === "mix") { s.taps += TAP_DEGREES; return; } // a punch while mixing is a stroke of the whisk
+    const b = s.brown;
+    if (b < 40) return say(player, "§7Not set yet - leave it in");
+    serve(player, s, b >= s.golden[0] && b <= s.golden[1] ? "perfect" : b > 110 ? "burnt" : "done");
+    return;
+  }
+  if (s.method === "roast") {
+    if (s.done !== undefined) {
+      const late = system.currentTick - s.done;
+      return serve(player, s, s.dry <= 40 && s.soggy <= 1 && late <= windowFor(s.level, [0, 40])[1] ? "perfect" : "done");
+    }
+    if (s.moisture > 75) { s.soggy++; say(player, "§9Still juicy - basting now just washes it off"); }
+    else say(player, "§eBasted");
+    s.moisture = Math.min(100, s.moisture + 45);
+    player.dimension.playSound("bucket.empty_water", at, { volume: 0.4, pitch: 1.4 });
+    return;
+  }
+  // stew: a punch adds the called ingredient (if one is called) and also counts as a small stir
   s.taps += TAP_DEGREES;
-  player.dimension.playSound("bucket.empty_water", { x: s.loc.x + 0.5, y: s.loc.y + 1, z: s.loc.z + 0.5 }, { volume: 0.4, pitch: 1.6 });
+  if (s.cue) {
+    say(player, `§aAdded the ${itemName(s.cue.item)}`);
+    player.dimension.playSound("bucket.empty_water", at, { volume: 0.5, pitch: 1.2 });
+    s.cue = undefined;
+  }
+}
+
+/** Kept for compatibility: a punch on the pot. */
+export function stirTap(player, s) {
+  cookAction(player, s);
 }
 
 function tickPot(player, s) {
   const rot = player.getRotation?.() ?? { x: 0, y: s.yaw };
-  let delta = Math.abs(((rot.y - s.yaw + 540) % 360) - 180);
+  const raw = Math.abs(((rot.y - s.yaw + 540) % 360) - 180);
   s.yaw = rot.y;
-  if (rot.x < LOOK_IN_PITCH) delta = 0; // circling the camera only stirs while you're looking into the pot
-  delta = Math.min(delta, 45) + s.taps; // a wild flick isn't a stir
+  const lookingIn = rot.x >= LOOK_IN_PITCH;
+  let delta = lookingIn ? Math.min(raw, 45) : 0; // circling the camera only stirs while you're looking into the pot
+  delta += s.taps;
   s.taps = 0;
   s.history.push(delta);
   if (s.history.length > 20) s.history.shift();
   s.ticks++;
-
   const now = system.currentTick;
-  if (now >= s.nextChange) {
-    s.pace = s.pace === "gentle" ? "brisk" : "gentle";
-    s.nextChange = now + PACE_CHANGE_TICKS + Math.floor(Math.random() * 40);
-    player.playSound("note.pling", { pitch: s.pace === "brisk" ? 1.4 : 0.9 });
-  }
-
-  const rate = stirRate(s);
-  const [lo, hi] = s.bands[s.pace];
-  const step = 100 / COOK_TICKS;
   const top = { x: s.loc.x + 0.5, y: s.loc.y + 1.1, z: s.loc.z + 0.5 };
-  if (rate < 20) s.scorch += 100 / SCORCH_TICKS; // not stirring: the bottom catches
-  else if (rate < lo) { s.progress += step * 0.4; s.scorch += 100 / SCORCH_TICKS / 3; }
-  else if (rate > hi) s.progress += step * 0.5; // sloshing: cooks, but unevenly
-  else { s.progress += step; s.inPace++; s.scorch = Math.max(0, s.scorch - 0.5); }
-  if (s.ticks % 8 === 0) {
-    try { player.dimension.spawnParticle(s.scorch > 50 ? "minecraft:basic_smoke_particle" : "minecraft:bubble_column_up_particle", top); } catch { /* ignore */ }
-  }
+  const puff = (id) => { if (s.ticks % 8 === 0) try { player.dimension.spawnParticle(id, top); } catch { /* ignore */ } };
+  // A sideways flick while looking into the pot is the same action as a punch (except while stirring a stew)
+  if (lookingIn && raw >= FLICK_DEGREES && !(s.method === "stew" || (s.method === "bake" && s.phase === "mix"))) cookAction(player, s);
+  if (!pots.has(player.id)) return;
 
-  if (s.scorch >= 100) return serve(player, s, "burnt");
-  if (s.progress >= 100 || s.ticks >= MAX_TICKS) {
-    const share = s.inPace / s.ticks;
-    return serve(player, s, s.progress < 100 ? (s.scorch > 50 ? "burnt" : "done") : share >= 0.55 && s.scorch < 50 ? "perfect" : "done");
+  if (s.method === "grill") {
+    s.brown += s.speed;
+    puff("minecraft:basic_smoke_particle");
+    if (s.brown >= 130) { s.sides.push("charred"); say(player, "§8That side charred - turn it!"); s.side++; s.brown = 0; s.speed = grillSpeed(); }
+    if (s.side >= 3) return serve(player, s, "burnt");
+  } else if (s.method === "bake") {
+    if (s.phase === "mix") {
+      const rate = stirRate(s);
+      if (rate >= s.bands.brisk[0]) s.mix += 100 / 50;
+      if (s.mix >= 100) { s.phase = "bake"; say(player, "§aMixed! §fInto the heat - take it out when golden", 30); }
+      if (s.ticks > MAX_TICKS) return serve(player, s, "done");
+    } else {
+      s.brown += 100 / 110;
+      puff(s.brown > s.golden[1] ? "minecraft:basic_smoke_particle" : "minecraft:basic_flame_particle");
+      if (s.brown >= 130) return serve(player, s, "burnt");
+    }
+  } else if (s.method === "roast") {
+    s.moisture = Math.max(0, s.moisture - 1.1);
+    if (s.moisture < 25) s.dry++;
+    if (s.done === undefined) {
+      s.progress += 100 / 200;
+      if (s.progress >= 100) { s.done = now; say(player, "§a§lDone! §fTake it off the fire", 30); player.playSound("note.pling", { pitch: 1.6 }); }
+    } else if (now - s.done > 100) return serve(player, s, s.dry > 120 ? "burnt" : "done"); // left on the fire: overdone
+    if (s.dry > 160) return serve(player, s, "burnt");
+    puff(s.moisture < 25 ? "minecraft:basic_smoke_particle" : "minecraft:basic_flame_particle");
+  } else {
+    // stew
+    if (now >= s.nextChange) {
+      s.pace = s.pace === "gentle" ? "brisk" : "gentle";
+      s.nextChange = now + PACE_CHANGE_TICKS + Math.floor(Math.random() * 40);
+      player.playSound("note.pling", { pitch: s.pace === "brisk" ? 1.4 : 0.9 });
+    }
+    const next = s.cues.find((c) => !c.called && s.progress >= c.at);
+    if (next && !s.cue) { next.called = true; s.cue = { ...next, until: now + 50 }; player.playSound("note.bell", { pitch: 1.2 }); }
+    if (s.cue && now > s.cue.until) { s.faults++; say(player, `§7The ${itemName(s.cue.item)} went in late`); s.cue = undefined; }
+    const rate = stirRate(s);
+    const [lo, hi] = s.bands[s.pace];
+    const step = 100 / COOK_TICKS;
+    if (rate < 20) s.scorch += 100 / SCORCH_TICKS;
+    else if (rate < lo) { s.progress += step * 0.4; s.scorch += 100 / SCORCH_TICKS / 3; }
+    else if (rate > hi) s.progress += step * 0.5;
+    else { s.progress += step; s.inPace++; s.scorch = Math.max(0, s.scorch - 0.5); }
+    puff(s.scorch > 50 ? "minecraft:basic_smoke_particle" : "minecraft:bubble_column_up_particle");
+    if (s.scorch >= 100) return serve(player, s, "burnt");
+    if (s.progress >= 100 || s.ticks >= MAX_TICKS) {
+      const share = s.inPace / s.ticks;
+      return serve(player, s, s.progress < 100 ? (s.scorch > 50 ? "burnt" : "done")
+        : share >= 0.55 && s.scorch < 50 && s.faults === 0 && !s.cue && s.cues.every((c) => c.called) ? "perfect" : "done");
+    }
   }
   player.onScreenDisplay.setActionBar(renderPot(s));
   hudHoldUntil.set(player.id, now + 5);

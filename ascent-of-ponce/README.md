@@ -112,15 +112,14 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
 
 ### Smithing: forging minigame
 - Craft a **Smithing Forge** from 3 Ember Copper Ingots, 5 Bricks blocks and 1 Iron Block.
-- Use it (right-click / long-press), pick a weapon, and the materials go in. Then **swing your Smith's Hammer**:
-  - Hold the hammer and **look up** to raise it (the bar says *RAISED*).
-  - **Swing your view down onto the forge** to strike. Time the blow for when the metal glows white-hot (the sweeping marker in the **green** zone; yellow counts as good).
-  - A **quick, full swing** (from raised to down in about a fifth of a second) is needed for a Perfect blow; a slow swing counts as Good at best, and lowering the hammer too slowly doesn't strike at all.
-  - Punching the forge still works as a light tap, but a tap is never better than Good.
-  - Finish before the metal cools (20 s). Stay within 6 blocks or the job is lost.
+- Use it (right-click / long-press) and pick a weapon. The materials go in as a bar of hot metal, and you work it like a smith:
+  - **Heat**: crouch at the forge to pump the bellows. The metal glows **cherry** (too cold to shape), **orange**, **yellow**, then **white**, where it starts to burn. It cools while you work; hammering only shapes orange or hotter metal, and striking it once it's gone dull **cracks** it.
+  - **Shape**: the blade shows as 9 sections, tip to tang, beside the **outline** for this weapon type (a tapering sword, a broad axe head, a spear point, and so on). **Look left or right** along the forge to pick a section. Hold your **Smith's Hammer**, **look up** to raise it, and **swing your view down onto the forge**. A quick, full swing knocks **2** off that section; a slower swing or a punch knocks off **1**. Bring every section down to the outline, but not past it: metal you hammer away is gone.
+  - **Quench**: once no section is thicker than the outline, strike the forge to plunge the blade. Do it while the metal is **orange** for the hardest steel.
+  - You have two minutes. Stay within 6 blocks or the job is lost.
 - **Smith's Hammer**: your first forge job comes with one. Otherwise craft it (3 Ironheart Ingots over 2 sticks, like a pickaxe) or buy it from Bram for 30 Col.
 - **Recipes**: Tier I is Ironheart plus 1 Ember Copper (Smithing 1). Tier II is Ironheart plus 1 Glimmer Silver plus Floor 1 drops (Smithing 8).
-- **Quality**: your average accuracy sets the best quality you can get, and your **Smithing level** sets how likely you are to get it. Below that, the result drops a grade (you're told when it happens):
+- **Quality** comes from your work: how close the shape is to the outline (over-worked sections count extra), plus any cracks, burning, and the quench. A clean job is a Masterwork; a few small slips make it Fine or Standard. Your **Smithing level** then sets how likely you are to get the quality you earned; below that it drops a grade, and you're told when it happens:
 
   | Smithing | Chance of Fine (when earned) | Chance of Masterwork (when earned) |
   |---|---|---|
@@ -130,7 +129,6 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
   | 16 | 100% | 80% |
   | 20 | 100% | 100% |
 
-
   | Quality | Damage | Durability |
   |---|---|---|
   | Crude | 90% | starts 25% worn, wears faster |
@@ -138,7 +136,7 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
   | Fine | 110% | 20% less wear |
   | Masterwork | 120% | 33% less wear |
 
-  Running out of heat always gives Crude. Smithing level widens the green zone and slows the marker.
+  An unworked blank (time runs out) comes out Crude. Higher Smithing levels also make the metal cool more slowly.
 - **Infusions (optional)**: after picking a weapon, add Floor 1 monster drops to change its stats. Tier I has 1 slot and Tier II has 2. The cost is on top of the recipe. Infusions change stats only, never abilities, and they show in the weapon's name and tooltip:
 
   | Infusion | Cost | Effect |
@@ -156,13 +154,13 @@ Models, textures, loot and spawn rules come from `tools/gen_mobs.py`. Edit it an
 
 ### Cooking: timing minigame and meal buffs
 - Craft a **Cooking Pot** from 7 Ember Copper Ingots and 1 Campfire.
-- Use it, pick a recipe, then **stir**: look down into the pot and **circle your view** around it.
-  - The pot calls for a **gentle** or a **brisk** stir and switches every few seconds (a chime tells you). The meter shows your stirring speed against the green band.
-  - Stirring at the called pace cooks the dish fastest. Too slow cooks slowly and starts to catch; too fast sloshes and cooks slowly.
-  - **Stop stirring** and the bottom scorches (shown as *scorch %*); fully scorched gives a Burnt Mess.
-  - Stir at the right pace for most of the dish for a **perfect** meal (2 servings); otherwise you get 1.
-  - Punching the pot counts as a small stir, as a fallback.
-  - Cooking level widens the pace bands.
+- Use it and pick a recipe. **Each dish is cooked its own way** (the recipe list shows which):
+  - **Grill** (Boar Skewer): each of the three sides browns over the fire. **Turn** the skewer when the side is **golden**. Too soon is raw, too late chars it.
+  - **Stew** (Hare Stew, Marsh Gumbo, Highland Stew, Warming Broth): **stir** by looking into the pot and circling your view, at the **gentle** or **brisk** pace the pot calls for (it switches with a chime). As it cooks it calls for each extra ingredient ("ADD THE CARROT!"): **add** it in time. Stop stirring and the bottom scorches.
+  - **Bake** (Jelly Tart): first **whisk** the batter (stir briskly), then watch it bake and **take it out** when it's golden.
+  - **Roast** (Hearty Roast): the meat dries as it roasts. **Baste** it when it starts drying (basting while it's still juicy washes the flavour off), then **take it off** the fire as soon as it's done.
+  - Turning, adding, taking out and basting are all the same action: **punch the pot**, or **flick your view sideways** while looking into it.
+  - Do it well throughout for a **perfect** meal (2 servings); otherwise you get 1. Letting it burn gives a Burnt Mess. Cooking level widens the windows and pace bands.
 
 | Meal | Ingredients | Buff | Cooking Lv |
 |---|---|---|---|
